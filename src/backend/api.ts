@@ -3,6 +3,7 @@ import { addNumbers } from "../shared/addNumbers";
 import { authMiddleware } from "./auth";
 import {serverTiming} from "@elysiajs/server-timing";
 import { prisma } from "./prisma";
+import {Database} from 'bun:sqlite';
 
 const dbPath = (process.env.DATABASE_URL || "").replace('file:', '')
 const dbFile = Bun.file(dbPath)
@@ -23,6 +24,11 @@ export const api = new Elysia({prefix: '/api'})
 	])
 
 	return results.map((result) => result.status === 'fulfilled' ? result.value : result.reason)
+})
+.get('/db/list', () => {
+	const db = new Database(dbPath)
+	const tables = db.query('SELECT name FROM sqlite_master WHERE type="table" AND name NOT LIKE "sqlite_%"').all()
+	return tables
 })
 .get('/file', () => Bun.file(new URL(import.meta.url)))
 
