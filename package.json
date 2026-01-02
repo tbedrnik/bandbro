@@ -2,14 +2,46 @@
   "name": "bandbro",
   "version": "1.0.50",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts"
+    "test": "bun test",
+    "dev": "NODE_ENV=development bun run --watch src/backend/index.ts",
+    "prod": "NODE_ENV=production bun run src/backend/index.ts",
+    "auth:generate": "bunx @better-auth/cli@latest generate --output prisma/models/auth.prisma",
+    "db:generate": "bun --bun run prisma generate",
+    "db:create": "bun --bun run prisma migrate dev --create-only",
+    "db:migrate": "bun --bun run prisma migrate deploy",
+    "db:push": "bun --bun run prisma db push",
+    "db:reset": "bun --bun run prisma db reset"
   },
   "dependencies": {
-    "elysia": "latest"
+    "@base-ui/react": "^1.0.0",
+    "@elysiajs/eden": "^1.4.6",
+    "@elysiajs/server-timing": "^1.4.0",
+    "@elysiajs/static": "^1.4.7",
+    "@fontsource-variable/inter": "^5.2.8",
+    "@nanostores/react": "^1.0.0",
+    "@prisma/adapter-libsql": "^7.2.0",
+    "@prisma/client": "^7.2.0",
+    "@tabler/icons-react": "^3.36.0",
+    "@tanstack/react-query": "^5.90.16",
+    "@tanstack/react-router": "^1.144.0",
+    "better-auth": "^1.4.10",
+    "bun-plugin-tailwind": "^0.1.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "eden-tanstack-react-query": "^0.1.4",
+    "elysia": "^1.4.19",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "shadcn": "^3.6.2",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss": "^4.1.18",
+    "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "@tanstack/router-cli": "^1.145.2",
+    "@types/react-dom": "^19.2.3",
+    "bun-types": "latest",
+    "prisma": "^7.2.0"
   },
-  "module": "src/index.js"
+  "module": "src/backend/index.js"
 }

@@ -1,0 +1,7 @@
+{
+  "routesDirectory": "./src/frontend/routes",
+  "routeToken": "layout",
+  "generatedRouteTree": "./src/generated/tanstack-router/routeTree.gen.ts",
+  "routeFileIgnorePrefix": "-",
+  "quoteStyle": "single"
+}
