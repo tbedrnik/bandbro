@@ -5,7 +5,7 @@
     "test": "bun test",
     "dev": "NODE_ENV=development bun run --watch src/backend/index.ts",
     "prod": "NODE_ENV=production bun run src/backend/index.ts",
-    "auth:generate": "bunx @better-auth/cli@latest generate --output prisma/models/auth.prisma",
+    "auth:generate": "bunx @better-auth/cli@latest generate --config src/backend/auth.ts --output prisma/models/auth.prisma",
     "db:generate": "bun --bun run prisma generate",
     "db:create": "bun --bun run prisma migrate dev --create-only",
     "db:migrate": "bun --bun run prisma migrate deploy",
