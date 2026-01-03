@@ -1,10 +1,119 @@
 model Song {
 	id String @id @default(cuid())
-	title String
-	artist String
-	content String
+	slug String @unique
+	name String
+	year Int?
+
+	// Ownership - Custom Songs (null for public library songs)
+	userId String?
+	user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+	credits Credit[]
+	charts  Chart[]
+
+	// Potential future Album relation:
+	// albums Album[]
+
 	createdAt DateTime @default(now())
 	updatedAt DateTime @updatedAt
 
 	@@map("song")
+}
+
+model Chart {
+	id          String   @id @default(cuid())
+	
+	content     String
+	description String?
+	key         String?
+	capo        Int?
+
+	songId      String
+	song        Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+	userId      String
+	user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+	// Forking
+	forkedFromId   String?
+	forkedFrom     Chart?   @relation("ChartForks", fields: [forkedFromId], references: [id], onDelete: SetNull)
+	forks       Chart[]  @relation("ChartForks")
+
+	songbooks   SongbookSong[]
+
+	createdAt   DateTime @default(now())
+	updatedAt   DateTime @updatedAt
+
+	@@map("chart")
+}
+
+model Artist {
+	id String @id @default(cuid())
+	slug String @unique
+	name String
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+
+	credits Credit[]
+
+	@@map("artist")
+}
+
+// Connects Artists to Songs with a specific role
+model Credit {
+	id String @id @default(cuid())
+	
+	songId String
+	song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
+	
+	artistId String
+	artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+	
+	role CreditRole @default(ARTIST)
+
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+
+	@@unique([songId, artistId, role])
+	@@map("credit")
+}
+
+enum CreditRole {
+	ARTIST      // The main performing artist/band
+	COMPOSER    // Wrote the music
+	LYRICIST    // Wrote the lyrics
+	ARRANGER    // Arranged the music
+	PRODUCER    // Produced the track
+}
+
+model Songbook {
+	id          String   @id @default(cuid())
+	title       String
+	description String?
+	
+	userId      String
+	user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+	
+	songs       SongbookSong[]
+	
+	createdAt   DateTime @default(now())
+	updatedAt   DateTime @updatedAt
+	
+	@@map("songbook")
+}
+
+model SongbookSong {
+	songbookId String
+	songbook   Songbook @relation(fields: [songbookId], references: [id], onDelete: Cascade)
+	
+	chartId    String
+	chart      Chart    @relation(fields: [chartId], references: [id], onDelete: Cascade)
+	
+	order      Int      @default(0)
+	
+	createdAt   DateTime @default(now())
+	updatedAt   DateTime @updatedAt
+	
+	@@id([songbookId, chartId])
+	@@map("songbook_song")
 }

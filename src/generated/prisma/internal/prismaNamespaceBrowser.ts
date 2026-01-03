@@ -55,7 +55,12 @@ export const ModelName = {
   Session: 'Session',
   Account: 'Account',
   Verification: 'Verification',
-  Song: 'Song'
+  Song: 'Song',
+  Chart: 'Chart',
+  Artist: 'Artist',
+  Credit: 'Credit',
+  Songbook: 'Songbook',
+  SongbookSong: 'SongbookSong'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -131,14 +136,77 @@ export type VerificationScalarFieldEnum = (typeof VerificationScalarFieldEnum)[k
 
 export const SongScalarFieldEnum = {
   id: 'id',
-  title: 'title',
-  artist: 'artist',
-  content: 'content',
+  slug: 'slug',
+  name: 'name',
+  year: 'year',
+  userId: 'userId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type SongScalarFieldEnum = (typeof SongScalarFieldEnum)[keyof typeof SongScalarFieldEnum]
+
+
+export const ChartScalarFieldEnum = {
+  id: 'id',
+  content: 'content',
+  description: 'description',
+  key: 'key',
+  capo: 'capo',
+  songId: 'songId',
+  userId: 'userId',
+  forkedFromId: 'forkedFromId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ChartScalarFieldEnum = (typeof ChartScalarFieldEnum)[keyof typeof ChartScalarFieldEnum]
+
+
+export const ArtistScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ArtistScalarFieldEnum = (typeof ArtistScalarFieldEnum)[keyof typeof ArtistScalarFieldEnum]
+
+
+export const CreditScalarFieldEnum = {
+  id: 'id',
+  songId: 'songId',
+  artistId: 'artistId',
+  role: 'role',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CreditScalarFieldEnum = (typeof CreditScalarFieldEnum)[keyof typeof CreditScalarFieldEnum]
+
+
+export const SongbookScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  description: 'description',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SongbookScalarFieldEnum = (typeof SongbookScalarFieldEnum)[keyof typeof SongbookScalarFieldEnum]
+
+
+export const SongbookSongScalarFieldEnum = {
+  songbookId: 'songbookId',
+  chartId: 'chartId',
+  order: 'order',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SongbookSongScalarFieldEnum = (typeof SongbookSongScalarFieldEnum)[keyof typeof SongbookSongScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -42,3 +42,28 @@ export type Verification = Prisma.VerificationModel
  * 
  */
 export type Song = Prisma.SongModel
+/**
+ * Model Chart
+ * 
+ */
+export type Chart = Prisma.ChartModel
+/**
+ * Model Artist
+ * 
+ */
+export type Artist = Prisma.ArtistModel
+/**
+ * Model Credit
+ * 
+ */
+export type Credit = Prisma.CreditModel
+/**
+ * Model Songbook
+ * 
+ */
+export type Songbook = Prisma.SongbookModel
+/**
+ * Model SongbookSong
+ * 
+ */
+export type SongbookSong = Prisma.SongbookSongModel

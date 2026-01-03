@@ -388,7 +388,12 @@ export const ModelName = {
   Session: 'Session',
   Account: 'Account',
   Verification: 'Verification',
-  Song: 'Song'
+  Song: 'Song',
+  Chart: 'Chart',
+  Artist: 'Artist',
+  Credit: 'Credit',
+  Songbook: 'Songbook',
+  SongbookSong: 'SongbookSong'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -404,7 +409,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "account" | "verification" | "song"
+    modelProps: "user" | "session" | "account" | "verification" | "song" | "chart" | "artist" | "credit" | "songbook" | "songbookSong"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -778,6 +783,376 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Chart: {
+      payload: Prisma.$ChartPayload<ExtArgs>
+      fields: Prisma.ChartFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ChartFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChartPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ChartFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChartPayload>
+        }
+        findFirst: {
+          args: Prisma.ChartFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChartPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ChartFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChartPayload>
+        }
+        findMany: {
+          args: Prisma.ChartFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChartPayload>[]
+        }
+        create: {
+          args: Prisma.ChartCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChartPayload>
+        }
+        createMany: {
+          args: Prisma.ChartCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ChartCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChartPayload>[]
+        }
+        delete: {
+          args: Prisma.ChartDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChartPayload>
+        }
+        update: {
+          args: Prisma.ChartUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChartPayload>
+        }
+        deleteMany: {
+          args: Prisma.ChartDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ChartUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ChartUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChartPayload>[]
+        }
+        upsert: {
+          args: Prisma.ChartUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChartPayload>
+        }
+        aggregate: {
+          args: Prisma.ChartAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateChart>
+        }
+        groupBy: {
+          args: Prisma.ChartGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ChartGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ChartCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ChartCountAggregateOutputType> | number
+        }
+      }
+    }
+    Artist: {
+      payload: Prisma.$ArtistPayload<ExtArgs>
+      fields: Prisma.ArtistFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ArtistFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ArtistFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistPayload>
+        }
+        findFirst: {
+          args: Prisma.ArtistFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ArtistFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistPayload>
+        }
+        findMany: {
+          args: Prisma.ArtistFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistPayload>[]
+        }
+        create: {
+          args: Prisma.ArtistCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistPayload>
+        }
+        createMany: {
+          args: Prisma.ArtistCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ArtistCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistPayload>[]
+        }
+        delete: {
+          args: Prisma.ArtistDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistPayload>
+        }
+        update: {
+          args: Prisma.ArtistUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistPayload>
+        }
+        deleteMany: {
+          args: Prisma.ArtistDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ArtistUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ArtistUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistPayload>[]
+        }
+        upsert: {
+          args: Prisma.ArtistUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistPayload>
+        }
+        aggregate: {
+          args: Prisma.ArtistAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateArtist>
+        }
+        groupBy: {
+          args: Prisma.ArtistGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ArtistGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ArtistCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ArtistCountAggregateOutputType> | number
+        }
+      }
+    }
+    Credit: {
+      payload: Prisma.$CreditPayload<ExtArgs>
+      fields: Prisma.CreditFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CreditFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CreditFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPayload>
+        }
+        findFirst: {
+          args: Prisma.CreditFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CreditFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPayload>
+        }
+        findMany: {
+          args: Prisma.CreditFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPayload>[]
+        }
+        create: {
+          args: Prisma.CreditCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPayload>
+        }
+        createMany: {
+          args: Prisma.CreditCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CreditCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPayload>[]
+        }
+        delete: {
+          args: Prisma.CreditDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPayload>
+        }
+        update: {
+          args: Prisma.CreditUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPayload>
+        }
+        deleteMany: {
+          args: Prisma.CreditDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CreditUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CreditUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPayload>[]
+        }
+        upsert: {
+          args: Prisma.CreditUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreditPayload>
+        }
+        aggregate: {
+          args: Prisma.CreditAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCredit>
+        }
+        groupBy: {
+          args: Prisma.CreditGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CreditCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreditCountAggregateOutputType> | number
+        }
+      }
+    }
+    Songbook: {
+      payload: Prisma.$SongbookPayload<ExtArgs>
+      fields: Prisma.SongbookFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SongbookFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SongbookFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookPayload>
+        }
+        findFirst: {
+          args: Prisma.SongbookFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SongbookFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookPayload>
+        }
+        findMany: {
+          args: Prisma.SongbookFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookPayload>[]
+        }
+        create: {
+          args: Prisma.SongbookCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookPayload>
+        }
+        createMany: {
+          args: Prisma.SongbookCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SongbookCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookPayload>[]
+        }
+        delete: {
+          args: Prisma.SongbookDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookPayload>
+        }
+        update: {
+          args: Prisma.SongbookUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookPayload>
+        }
+        deleteMany: {
+          args: Prisma.SongbookDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SongbookUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SongbookUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookPayload>[]
+        }
+        upsert: {
+          args: Prisma.SongbookUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookPayload>
+        }
+        aggregate: {
+          args: Prisma.SongbookAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSongbook>
+        }
+        groupBy: {
+          args: Prisma.SongbookGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SongbookGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SongbookCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SongbookCountAggregateOutputType> | number
+        }
+      }
+    }
+    SongbookSong: {
+      payload: Prisma.$SongbookSongPayload<ExtArgs>
+      fields: Prisma.SongbookSongFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SongbookSongFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookSongPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SongbookSongFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookSongPayload>
+        }
+        findFirst: {
+          args: Prisma.SongbookSongFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookSongPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SongbookSongFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookSongPayload>
+        }
+        findMany: {
+          args: Prisma.SongbookSongFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookSongPayload>[]
+        }
+        create: {
+          args: Prisma.SongbookSongCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookSongPayload>
+        }
+        createMany: {
+          args: Prisma.SongbookSongCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SongbookSongCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookSongPayload>[]
+        }
+        delete: {
+          args: Prisma.SongbookSongDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookSongPayload>
+        }
+        update: {
+          args: Prisma.SongbookSongUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookSongPayload>
+        }
+        deleteMany: {
+          args: Prisma.SongbookSongDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SongbookSongUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SongbookSongUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookSongPayload>[]
+        }
+        upsert: {
+          args: Prisma.SongbookSongUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongbookSongPayload>
+        }
+        aggregate: {
+          args: Prisma.SongbookSongAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSongbookSong>
+        }
+        groupBy: {
+          args: Prisma.SongbookSongGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SongbookSongGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SongbookSongCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SongbookSongCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -874,14 +1249,77 @@ export type VerificationScalarFieldEnum = (typeof VerificationScalarFieldEnum)[k
 
 export const SongScalarFieldEnum = {
   id: 'id',
-  title: 'title',
-  artist: 'artist',
-  content: 'content',
+  slug: 'slug',
+  name: 'name',
+  year: 'year',
+  userId: 'userId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type SongScalarFieldEnum = (typeof SongScalarFieldEnum)[keyof typeof SongScalarFieldEnum]
+
+
+export const ChartScalarFieldEnum = {
+  id: 'id',
+  content: 'content',
+  description: 'description',
+  key: 'key',
+  capo: 'capo',
+  songId: 'songId',
+  userId: 'userId',
+  forkedFromId: 'forkedFromId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ChartScalarFieldEnum = (typeof ChartScalarFieldEnum)[keyof typeof ChartScalarFieldEnum]
+
+
+export const ArtistScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ArtistScalarFieldEnum = (typeof ArtistScalarFieldEnum)[keyof typeof ArtistScalarFieldEnum]
+
+
+export const CreditScalarFieldEnum = {
+  id: 'id',
+  songId: 'songId',
+  artistId: 'artistId',
+  role: 'role',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CreditScalarFieldEnum = (typeof CreditScalarFieldEnum)[keyof typeof CreditScalarFieldEnum]
+
+
+export const SongbookScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  description: 'description',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SongbookScalarFieldEnum = (typeof SongbookScalarFieldEnum)[keyof typeof SongbookScalarFieldEnum]
+
+
+export const SongbookSongScalarFieldEnum = {
+  songbookId: 'songbookId',
+  chartId: 'chartId',
+  order: 'order',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SongbookSongScalarFieldEnum = (typeof SongbookSongScalarFieldEnum)[keyof typeof SongbookSongScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -931,6 +1369,20 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'Int'
  */
 export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'CreditRole'
+ */
+export type EnumCreditRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CreditRole'>
+    
+
+
+/**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
     
 
 /**
@@ -1033,6 +1485,11 @@ export type GlobalOmitConfig = {
   account?: Prisma.AccountOmit
   verification?: Prisma.VerificationOmit
   song?: Prisma.SongOmit
+  chart?: Prisma.ChartOmit
+  artist?: Prisma.ArtistOmit
+  credit?: Prisma.CreditOmit
+  songbook?: Prisma.SongbookOmit
+  songbookSong?: Prisma.SongbookSongOmit
 }
 
 /* Types for Logging */
