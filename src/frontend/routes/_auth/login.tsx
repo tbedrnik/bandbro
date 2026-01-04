@@ -13,9 +13,8 @@ import {
 	Field,
 	FieldDescription,
 	FieldGroup,
-	FieldLabel,
 } from "@frontend/components/ui/field"
-import { Input } from "@frontend/components/ui/input"
+import { useAppForm } from '@frontend/components/ui/form'
 
 export const Route = createFileRoute('/_auth/login')({
 	component: RouteComponent,
@@ -23,13 +22,30 @@ export const Route = createFileRoute('/_auth/login')({
 
 function RouteComponent() {
 	const mutation = useMutation({
-		mutationFn: ({ email, password }: { email: string, password: string }) => auth.signIn.email({ email, password, fetchOptions: { throw: true } }),
+		mutationFn: async (opts: Parameters<typeof auth.signIn.email>[0]) => {
+			const result = await auth.signIn.email(opts)
+
+			if (result.error) {
+				throw result.error?.message
+			}
+
+			return result.data
+		}
 	})
 
-	const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		mutation.mutate({ email: e.currentTarget.email.value, password: e.currentTarget.password.value })
-	}
+	const form = useAppForm({
+		defaultValues: {
+			email: '',
+			password: '',
+		},
+		onSubmit: async ({ value }) => {
+			await mutation.mutateAsync({
+				email: value.email,
+				password: value.password,
+			});
+		},
+	})
+
 	return (
 		<div className='grid place-items-center min-h-dvh'>
 			<div className="flex flex-col gap-6 w-sm max-w-dvw">
@@ -41,32 +57,54 @@ function RouteComponent() {
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<form onSubmit={onSubmit}>
+						{mutation.error && <div>{mutation.error.message}</div>}
+						<form onSubmit={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							form.handleSubmit();
+						}}>
 							<FieldGroup>
+								<form.AppField
+									name="email"
+									children={(field) => (
+										<Field>
+											<field.Label>Email</field.Label>
+											<field.Input type="email" placeholder="m@example.com" />
+											<field.Errors />
+										</Field>
+									)}
+								/>
+								<form.AppField
+									name="password"
+									children={(field) => (
+										<Field>
+											<div className="flex items-center">
+												<field.Label>Password</field.Label>
+												<a
+													href="#"
+													className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+												>
+													Forgot your password?
+												</a>
+											</div>
+											<field.Password />
+											<field.Errors />
+										</Field>
+									)}
+								/>
+
 								<Field>
-									<FieldLabel htmlFor="email">Email</FieldLabel>
-									<Input
-										id="email"
-										type="email"
-										name="email"
-										placeholder="m@example.com"
-										required
+									<form.Subscribe
+										selector={(state) => [state.canSubmit, state.isSubmitting]}
+										children={([canSubmit, isSubmitting]) => (
+											<Button
+												type="submit"
+												disabled={!canSubmit}
+											>
+												{isSubmitting ? 'Logging in...' : 'Login'}
+											</Button>
+										)}
 									/>
-								</Field>
-								<Field>
-									<div className="flex items-center">
-										<FieldLabel htmlFor="password">Password</FieldLabel>
-										<a
-											href="#"
-											className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-										>
-											Forgot your password?
-										</a>
-									</div>
-									<Input id="password" type="password" name="password" required />
-								</Field>
-								<Field>
-									<Button type="submit" disabled={mutation.isPending}>Login</Button>
 									<FieldDescription className="text-center">
 										Don&apos;t have an account? <Link to="/register">Sign up</Link>
 									</FieldDescription>

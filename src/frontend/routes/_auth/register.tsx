@@ -13,9 +13,8 @@ import {
 	Field,
 	FieldDescription,
 	FieldGroup,
-	FieldLabel,
 } from "@frontend/components/ui/field"
-import { Input } from "@frontend/components/ui/input"
+import { useAppForm } from '@frontend/components/ui/form'
 
 export const Route = createFileRoute('/_auth/register')({
 	component: RouteComponent,
@@ -23,51 +22,92 @@ export const Route = createFileRoute('/_auth/register')({
 
 function RouteComponent() {
 	const mutation = useMutation({
-		mutationFn: ({ name, email, password }: { name: string; email: string, password: string }) => auth.signUp.email({ name, email, password, fetchOptions: { throw: true } }),
+		mutationFn: async ({ name, email, password }: { name: string; email: string, password: string }) => {
+			const result = await auth.signUp.email({ name, email, password })
+
+			if (result.error) {
+				throw result.error?.message
+			}
+
+			return result.data
+		},
 	})
 
-	const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		mutation.mutate({ name: e.currentTarget.fullname.value, email: e.currentTarget.email.value, password: e.currentTarget.password.value })
-	}
+	const form = useAppForm({
+		defaultValues: {
+			name: '',
+			email: '',
+			password: '',
+		},
+		onSubmit: async ({ value }) => {
+			await mutation.mutateAsync({
+				name: value.name,
+				email: value.email,
+				password: value.password,
+			});
+		},
+	})
+
 	return (
 		<div className='grid place-items-center min-h-dvh'>
 			<div className="flex flex-col gap-6 w-sm max-w-dvw">
 				<Card>
 					<CardHeader>
-						<CardTitle>Login to your account</CardTitle>
+						<CardTitle>Sign up for an account</CardTitle>
 						<CardDescription>
-							Enter your email below to login to your account
+							Enter your details below to create your account
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<form onSubmit={onSubmit}>
+						{mutation.error && <div>{mutation.error.message}</div>}
+						<form onSubmit={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							form.handleSubmit();
+						}}>
 							<FieldGroup>
+								<form.AppField
+									name="name"
+									children={(field) => (
+										<Field>
+											<field.Label>Name</field.Label>
+											<field.Input placeholder="John Doe" required />
+											<field.Errors />
+										</Field>
+									)}
+								/>
+								<form.AppField
+									name="email"
+									children={(field) => (
+										<Field>
+											<field.Label>Email</field.Label>
+											<field.Input type="email" placeholder="m@example.com" required />
+											<field.Errors />
+										</Field>
+									)}
+								/>
+								<form.AppField
+									name="password"
+									children={(field) => (
+										<Field>
+											<field.Label>Password</field.Label>
+											<field.Password required />
+											<field.Errors />
+										</Field>
+									)}
+								/>
 								<Field>
-									<FieldLabel htmlFor="fullname">Name</FieldLabel>
-									<Input
-										id='fullname'
-										name='fullname'
-										placeholder='John Doe'
-										required
+									<form.Subscribe
+										selector={(state) => [state.canSubmit, state.isSubmitting]}
+										children={([canSubmit, isSubmitting]) => (
+											<Button
+												type="submit"
+												disabled={!canSubmit}
+											>
+												{isSubmitting ? 'Registering...' : 'Register'}
+											</Button>
+										)}
 									/>
-								</Field>
-								<Field>
-									<FieldLabel htmlFor="email">Email</FieldLabel>
-									<Input
-										id='email'
-										type='email'
-										name='email'
-										placeholder='m@example.com'
-										required
-									/>
-								</Field>
-								<Field>
-									<FieldLabel htmlFor="password">Password</FieldLabel>
-									<Input id="password" type="password" name="password" required />
-								</Field>
-								<Field>
-									<Button type="submit" disabled={mutation.isPending}>Register</Button>
 									<FieldDescription className="text-center">
 										Already have an account? <Link to="/login">Log in</Link>
 									</FieldDescription>

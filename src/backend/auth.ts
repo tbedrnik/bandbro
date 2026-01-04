@@ -5,11 +5,16 @@ import { prisma } from "./prisma";
 import Elysia from "elysia";
 
 export const auth = betterAuth({
-  database: prismaAdapter(prisma, {provider: 'sqlite'}),
-  emailAndPassword: {
-    enabled: true,
-  },
-  plugins: [organization({allowUserToCreateOrganization: true})],
+    database: prismaAdapter(prisma, {provider: 'sqlite'}),
+    emailAndPassword: {
+        enabled: true,
+    },
+    plugins: [
+        organization({
+            allowUserToCreateOrganization: true,
+            cancelPendingInvitationsOnReInvite: true,
+        })
+    ],
 });
 
 export const authMiddleware = new Elysia({ name: 'better-auth' })
