@@ -1,39 +1,47 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChordProParser, Song } from 'chordsheetjs';
-import { ScrollArea } from '@frontend/components/ui/scroll-area';
-import { SongPreview } from '@frontend/components/SongPreview';
-import { SongEditor } from '@frontend/components/SongEditor';
+import { SongEditor } from "@frontend/components/SongEditor";
+import { SongPreview } from "@frontend/components/SongPreview";
+import { ScrollArea } from "@frontend/components/ui/scroll-area";
+import { createFileRoute } from "@tanstack/react-router";
+import { ChordProParser } from "chordsheetjs";
+import { useMemo, useState } from "react";
 
-export const Route = createFileRoute('/_protected/song/$slug')({
+export const Route = createFileRoute("/_protected/song/$slug")({
 	component: RouteComponent,
-})
+});
 
 function RouteComponent() {
-	const [content, setContent] = useState(EXAMPLE)
+	const [content, setContent] = useState(EXAMPLE);
 
 	const { song, error } = useMemo(() => {
 		try {
-			const song = new ChordProParser().parse(content, { /** chopFirstWord: false // wait for pr to be merged */ });
-			return { song, error: null }
+			const song = new ChordProParser().parse(content, {
+				/** chopFirstWord: false // wait for pr to be merged */
+			});
+			return { song, error: null };
 		} catch (error) {
-			return { song: null, error }
+			return { song: null, error };
 		}
-	}, [content])
+	}, [content]);
 
-	return <div className='grid grid-cols-2 gap-4 p-4 h-dvh'>
-		<div className='h-full overflow-hidden'>
-			<ScrollArea className="h-full">
-				<SongEditor content={content} onChange={setContent} />
-			</ScrollArea>
+	return (
+		<div className="grid grid-cols-2 gap-4 p-4 h-dvh">
+			<div className="h-full overflow-hidden">
+				<ScrollArea className="h-full">
+					<SongEditor content={content} onChange={setContent} />
+				</ScrollArea>
+			</div>
+			<div className="h-full overflow-hidden">
+				<ScrollArea className="h-full">
+					{error ? (
+						<div className="text-red-500">
+							{error instanceof Error ? error.message : String(error)}
+						</div>
+					) : null}
+					{song ? <SongPreview song={song} /> : null}
+				</ScrollArea>
+			</div>
 		</div>
-		<div className='h-full overflow-hidden'>
-			<ScrollArea className="h-full">
-				{error ? <div className="text-red-500">{error instanceof Error ? error.message : String(error)}</div> : null}
-				{song ? <SongPreview song={song} /> : null}
-			</ScrollArea>
-		</div>
-	</div>
+	);
 }
 
 const EXAMPLE = `{title:Let It Be}
@@ -68,4 +76,4 @@ Mother Mary comes to me,
 Whisper words of wisdom, let it be.
 
 {chorus}
-`
+`;

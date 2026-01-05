@@ -1,14 +1,18 @@
-import { Auth } from "@frontend/auth";
+import type { Auth } from "@frontend/auth";
 import { createContext, useContext } from "react";
 
-const SessionContext = createContext<Auth['Session']['session'] | null>(null)
+const SessionContext = createContext<Auth["Session"]["session"] | null>(null);
 
-export const SessionProvider = SessionContext.Provider
+export const SessionProvider = SessionContext.Provider;
 
-export const useSession = ({ optional = false }: { optional?: boolean } = {}) => {
-	const session = useContext(SessionContext)
+export const useSession = ({
+	optional = false,
+}: {
+	optional?: boolean;
+} = {}) => {
+	const session = useContext(SessionContext);
 	if (!session && !optional) {
-		throw new Error('No session found')
+		throw new Error("No session found");
 	}
-	return session
-}
+	return session;
+};

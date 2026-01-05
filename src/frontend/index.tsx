@@ -1,34 +1,41 @@
-import { RouterProvider } from '@tanstack/react-router';
-import React from 'react'
-import ReactDOM from 'react-dom/client';
-import { routeTree } from '../generated/tanstack-router/routeTree.gen';
-
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createRouter } from '@tanstack/react-router';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createRouter, RouterProvider } from "@tanstack/react-router";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { routeTree } from "../generated/tanstack-router/routeTree.gen";
 
 const queryClient = new QueryClient();
 
 const router = createRouter({
-	basepath: '/app', // matches with basepath in backend
+	basepath: "/app", // matches with basepath in backend
 	routeTree,
 	scrollRestoration: true,
-	defaultPreload: 'intent',
+	defaultPreload: "intent",
 	defaultPendingComponent: () => "loading...",
-	context: { queryClient }
+	context: { queryClient },
 });
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
 	interface Register {
 		router: typeof router;
 	}
 
-	interface HistoryState { }
+	interface HistoryState {}
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const root =
+	document.getElementById("root") ??
+	(() => {
+		const root = document.createElement("div");
+		root.id = "root";
+		document.body.prepend(root);
+		return root;
+	})();
+
+ReactDOM.createRoot(root).render(
 	<React.StrictMode>
 		<QueryClientProvider client={queryClient}>
 			<RouterProvider router={router} />
 		</QueryClientProvider>
 	</React.StrictMode>,
-)
+);

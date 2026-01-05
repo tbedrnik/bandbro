@@ -1,14 +1,14 @@
-import { useSession } from '@frontend/contexts/SessionContext'
-import { createFileRoute, Navigate, Outlet } from '@tanstack/react-router'
+import { useSession } from "@frontend/contexts/SessionContext";
+import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/_auth')({
+export const Route = createFileRoute("/_auth")({
 	component: () => {
-		const session = useSession({ optional: true })
+		const session = useSession({ optional: true });
 
 		if (session) {
-			return <Navigate to="/" />
+			return <Navigate to="/" />;
 		}
 
-		return <Outlet />
-	}
-})
+		return <Outlet />;
+	},
+});

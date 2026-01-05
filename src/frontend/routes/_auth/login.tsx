@@ -1,42 +1,42 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { auth } from '@frontend/auth'
-import { useMutation } from '@tanstack/react-query'
-import { Button } from "@frontend/components/ui/button"
+import { auth } from "@frontend/auth";
+import {
+	Alert,
+	AlertDescription,
+	AlertTitle,
+} from "@frontend/components/ui/alert";
+import { Button } from "@frontend/components/ui/button";
 import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from "@frontend/components/ui/card"
+} from "@frontend/components/ui/card";
 import {
 	Field,
 	FieldDescription,
 	FieldGroup,
-} from "@frontend/components/ui/field"
-import { useAppForm } from '@frontend/components/ui/form'
+} from "@frontend/components/ui/field";
+import { useAppForm } from "@frontend/components/ui/form";
+import { IconExclamationCircle } from "@tabler/icons-react";
+import { useMutation } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/_auth/login')({
+export const Route = createFileRoute("/_auth/login")({
 	component: RouteComponent,
-})
+});
 
 function RouteComponent() {
 	const mutation = useMutation({
-		mutationFn: async (opts: Parameters<typeof auth.signIn.email>[0]) => {
-			const result = await auth.signIn.email(opts)
-
-			if (result.error) {
-				throw result.error?.message
-			}
-
-			return result.data
-		}
-	})
+		mutationKey: ["auth", "signIn", "email"],
+		mutationFn: async (opts: Parameters<typeof auth.signIn.email>[0]) =>
+			auth.signIn.email(opts),
+	});
 
 	const form = useAppForm({
 		defaultValues: {
-			email: '',
-			password: '',
+			email: "",
+			password: "",
 		},
 		onSubmit: async ({ value }) => {
 			await mutation.mutateAsync({
@@ -44,11 +44,18 @@ function RouteComponent() {
 				password: value.password,
 			});
 		},
-	})
+	});
 
 	return (
-		<div className='grid place-items-center min-h-dvh'>
-			<div className="flex flex-col gap-6 w-sm max-w-dvw">
+		<div className="grid place-items-center min-h-dvh">
+			<div className="flex flex-col gap-4 w-sm max-w-dvw">
+				{mutation.data?.error && (
+					<Alert variant="destructive" className="rounded-xl">
+						<IconExclamationCircle />
+						<AlertTitle>{mutation.data.error.statusText}</AlertTitle>
+						<AlertDescription>{mutation.data.error.message}</AlertDescription>
+					</Alert>
+				)}
 				<Card>
 					<CardHeader>
 						<CardTitle>Login to your account</CardTitle>
@@ -57,26 +64,25 @@ function RouteComponent() {
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
-						{mutation.error && <div>{mutation.error.message}</div>}
-						<form onSubmit={(e) => {
-							e.preventDefault();
-							e.stopPropagation();
-							form.handleSubmit();
-						}}>
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								form.handleSubmit();
+							}}
+						>
 							<FieldGroup>
-								<form.AppField
-									name="email"
-									children={(field) => (
+								<form.AppField name="email">
+									{(field) => (
 										<Field>
 											<field.Label>Email</field.Label>
 											<field.Input type="email" placeholder="m@example.com" />
 											<field.Errors />
 										</Field>
 									)}
-								/>
-								<form.AppField
-									name="password"
-									children={(field) => (
+								</form.AppField>
+								<form.AppField name="password">
+									{(field) => (
 										<Field>
 											<div className="flex items-center">
 												<field.Label>Password</field.Label>
@@ -91,22 +97,21 @@ function RouteComponent() {
 											<field.Errors />
 										</Field>
 									)}
-								/>
+								</form.AppField>
 
 								<Field>
 									<form.Subscribe
 										selector={(state) => [state.canSubmit, state.isSubmitting]}
-										children={([canSubmit, isSubmitting]) => (
-											<Button
-												type="submit"
-												disabled={!canSubmit}
-											>
-												{isSubmitting ? 'Logging in...' : 'Login'}
+									>
+										{([canSubmit, isSubmitting]) => (
+											<Button type="submit" disabled={!canSubmit}>
+												{isSubmitting ? "Logging in..." : "Login"}
 											</Button>
 										)}
-									/>
+									</form.Subscribe>
 									<FieldDescription className="text-center">
-										Don&apos;t have an account? <Link to="/register">Sign up</Link>
+										Don&apos;t have an account?{" "}
+										<Link to="/register">Sign up</Link>
 									</FieldDescription>
 								</Field>
 							</FieldGroup>
@@ -115,5 +120,5 @@ function RouteComponent() {
 				</Card>
 			</div>
 		</div>
-	)
+	);
 }
