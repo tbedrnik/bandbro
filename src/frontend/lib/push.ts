@@ -4,5 +4,5 @@ export async function registerForPushNotifications({
 	applicationServerKey: string;
 }) {
 	const pm = new PushManager();
-	const subscription = await pm.subscribe({ applicationServerKey });
+	await pm.subscribe({ applicationServerKey });
 }
