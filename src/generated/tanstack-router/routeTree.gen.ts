@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './../../frontend/routes/__root'
+import { Route as DesignRouteImport } from './../../frontend/routes/design'
 import { Route as ProtectedLayoutRouteImport } from './../../frontend/routes/_protected/layout'
 import { Route as AuthLayoutRouteImport } from './../../frontend/routes/_auth/layout'
 import { Route as ProtectedIndexRouteImport } from './../../frontend/routes/_protected/index'
@@ -18,6 +19,11 @@ import { Route as ProtectedSongsSearchRouteImport } from './../../frontend/route
 import { Route as ProtectedSongsSlugRouteImport } from './../../frontend/routes/_protected/songs.$slug'
 import { Route as ProtectedSongSlugRouteImport } from './../../frontend/routes/_protected/song.$slug'
 
+const DesignRoute = DesignRouteImport.update({
+  id: '/design',
+  path: '/design',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProtectedLayoutRoute = ProtectedLayoutRouteImport.update({
   id: '/_protected',
   getParentRoute: () => rootRouteImport,
@@ -58,6 +64,7 @@ const ProtectedSongSlugRoute = ProtectedSongSlugRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/design': typeof DesignRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/': typeof ProtectedIndexRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/songs/search': typeof ProtectedSongsSearchRoute
 }
 export interface FileRoutesByTo {
+  '/design': typeof DesignRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/': typeof ProtectedIndexRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_auth': typeof AuthLayoutRouteWithChildren
   '/_protected': typeof ProtectedLayoutRouteWithChildren
+  '/design': typeof DesignRoute
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
   '/_protected/': typeof ProtectedIndexRoute
@@ -87,6 +96,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/design'
     | '/login'
     | '/register'
     | '/'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
     | '/songs/search'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/design'
     | '/login'
     | '/register'
     | '/'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_auth'
     | '/_protected'
+    | '/design'
     | '/_auth/login'
     | '/_auth/register'
     | '/_protected/'
@@ -116,10 +128,18 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthLayoutRoute: typeof AuthLayoutRouteWithChildren
   ProtectedLayoutRoute: typeof ProtectedLayoutRouteWithChildren
+  DesignRoute: typeof DesignRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/design': {
+      id: '/design'
+      path: '/design'
+      fullPath: '/design'
+      preLoaderRoute: typeof DesignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_protected': {
       id: '/_protected'
       path: ''
@@ -214,6 +234,7 @@ const ProtectedLayoutRouteWithChildren = ProtectedLayoutRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthLayoutRoute: AuthLayoutRouteWithChildren,
   ProtectedLayoutRoute: ProtectedLayoutRouteWithChildren,
+  DesignRoute: DesignRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
