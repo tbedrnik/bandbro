@@ -1,81 +1,110 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/inter";
+
+/* Display — Space Grotesk (titles, buttons, labels) */
+@import "@fontsource-variable/space-grotesk";
+
+/* Body — IBM Plex Sans (lyrics, interface text) */
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/ibm-plex-sans/700.css";
+
+/* Chords / meta — IBM Plex Mono */
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+@import "@fontsource/ibm-plex-mono/600.css";
+@import "@fontsource/ibm-plex-mono/700.css";
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * BandBro design system — ported from Claude Design "Design System.dc.html".
+ * One warm-amber accent, neutral surfaces, IBM Plex / Space Grotesk pairing.
+ * Light = desktop authoring · Dark = stage / Live mode.
+ */
 :root {
-	--background: oklch(1 0 0);
-	--foreground: oklch(0.141 0.005 285.823);
-	--card: oklch(1 0 0);
-	--card-foreground: oklch(0.141 0.005 285.823);
-	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.141 0.005 285.823);
-	--primary: oklch(0.488 0.243 264.376);
-	--primary-foreground: oklch(0.97 0.014 254.604);
-	--secondary: oklch(0.967 0.001 286.375);
-	--secondary-foreground: oklch(0.21 0.006 285.885);
-	--muted: oklch(0.967 0.001 286.375);
-	--muted-foreground: oklch(0.552 0.016 285.938);
-	--accent: oklch(0.967 0.001 286.375);
-	--accent-foreground: oklch(0.21 0.006 285.885);
-	--destructive: oklch(0.577 0.245 27.325);
-	--border: oklch(0.92 0.004 286.32);
-	--input: oklch(0.92 0.004 286.32);
-	--ring: oklch(0.705 0.015 286.067);
-	--chart-1: oklch(0.809 0.105 251.813);
-	--chart-2: oklch(0.623 0.214 259.815);
-	--chart-3: oklch(0.546 0.245 262.881);
-	--chart-4: oklch(0.488 0.243 264.376);
-	--chart-5: oklch(0.424 0.199 265.638);
+	--background: #ffffff; /* design: --bg */
+	--foreground: #161a1f; /* design: --ink */
+	--card: #f5f7f9; /* design: --surface */
+	--card-foreground: #161a1f;
+	--popover: #ffffff;
+	--popover-foreground: #161a1f;
+	--primary: #c2711a; /* design: --accent (warm amber) */
+	--primary-foreground: #ffffff; /* design: --accent-ink */
+	--secondary: #eef1f5; /* design: --surface-2 */
+	--secondary-foreground: #161a1f;
+	--muted: #eef1f5; /* design: --surface-2 */
+	--muted-foreground: #5b6470; /* design: --muted */
+	--accent: #eef1f5; /* shadcn "accent" = subtle hover surface */
+	--accent-foreground: #161a1f;
+	--destructive: #c0392b;
+	--border: #e6eaef; /* design: --border */
+	--input: #e6eaef;
+	--ring: #c2711a; /* brand focus ring */
+	/* BandBro extras */
+	--surface-2: #eef1f5;
+	--accent-wash: rgba(194, 113, 26, 0.1); /* design: --accent-wash */
+	--ok: #3fae7a; /* offline / online indicator */
+	--chart-1: #c2711a;
+	--chart-2: #d98b3a;
+	--chart-3: #8a6d3b;
+	--chart-4: #5b6470;
+	--chart-5: #3fae7a;
 	--radius: 0.625rem;
-	--sidebar: oklch(0.985 0 0);
-	--sidebar-foreground: oklch(0.141 0.005 285.823);
-	--sidebar-primary: oklch(0.546 0.245 262.881);
-	--sidebar-primary-foreground: oklch(0.97 0.014 254.604);
-	--sidebar-accent: oklch(0.967 0.001 286.375);
-	--sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-	--sidebar-border: oklch(0.92 0.004 286.32);
-	--sidebar-ring: oklch(0.705 0.015 286.067);
+	--sidebar: #f5f7f9;
+	--sidebar-foreground: #161a1f;
+	--sidebar-primary: #c2711a;
+	--sidebar-primary-foreground: #ffffff;
+	--sidebar-accent: #eef1f5;
+	--sidebar-accent-foreground: #161a1f;
+	--sidebar-border: #e6eaef;
+	--sidebar-ring: #c2711a;
 }
 
 .dark {
-	--background: oklch(0.141 0.005 285.823);
-	--foreground: oklch(0.985 0 0);
-	--card: oklch(0.21 0.006 285.885);
-	--card-foreground: oklch(0.985 0 0);
-	--popover: oklch(0.21 0.006 285.885);
-	--popover-foreground: oklch(0.985 0 0);
-	--primary: oklch(0.42 0.18 266);
-	--primary-foreground: oklch(0.97 0.014 254.604);
-	--secondary: oklch(0.274 0.006 286.033);
-	--secondary-foreground: oklch(0.985 0 0);
-	--muted: oklch(0.274 0.006 286.033);
-	--muted-foreground: oklch(0.705 0.015 286.067);
-	--accent: oklch(0.274 0.006 286.033);
-	--accent-foreground: oklch(0.985 0 0);
-	--destructive: oklch(0.704 0.191 22.216);
-	--border: oklch(1 0 0 / 10%);
-	--input: oklch(1 0 0 / 15%);
-	--ring: oklch(0.552 0.016 285.938);
-	--chart-1: oklch(0.809 0.105 251.813);
-	--chart-2: oklch(0.623 0.214 259.815);
-	--chart-3: oklch(0.546 0.245 262.881);
-	--chart-4: oklch(0.488 0.243 264.376);
-	--chart-5: oklch(0.424 0.199 265.638);
-	--sidebar: oklch(0.21 0.006 285.885);
-	--sidebar-foreground: oklch(0.985 0 0);
-	--sidebar-primary: oklch(0.623 0.214 259.815);
-	--sidebar-primary-foreground: oklch(0.97 0.014 254.604);
-	--sidebar-accent: oklch(0.274 0.006 286.033);
-	--sidebar-accent-foreground: oklch(0.985 0 0);
-	--sidebar-border: oklch(1 0 0 / 10%);
-	--sidebar-ring: oklch(0.552 0.016 285.938);
+	--background: #16181c; /* design: --bg (dark) */
+	--foreground: #edeef0; /* design: --ink */
+	--card: #1d2025; /* design: --surface */
+	--card-foreground: #edeef0;
+	--popover: #1d2025;
+	--popover-foreground: #edeef0;
+	--primary: #e8a13a; /* design: --accent (brighter for stage) */
+	--primary-foreground: #16181c; /* design: --accent-ink */
+	--secondary: #23262c; /* design: --surface-2 */
+	--secondary-foreground: #edeef0;
+	--muted: #23262c;
+	--muted-foreground: #8b8f96; /* design: --muted */
+	--accent: #23262c;
+	--accent-foreground: #edeef0;
+	--destructive: #e5484d;
+	--border: #2c3037; /* design: --border */
+	--input: #2c3037;
+	--ring: #e8a13a;
+	/* BandBro extras */
+	--surface-2: #23262c;
+	--accent-wash: rgba(232, 161, 58, 0.16);
+	--ok: #3fae7a;
+	--chart-1: #e8a13a;
+	--chart-2: #c2711a;
+	--chart-3: #b89160;
+	--chart-4: #8b8f96;
+	--chart-5: #3fae7a;
+	--sidebar: #1d2025;
+	--sidebar-foreground: #edeef0;
+	--sidebar-primary: #e8a13a;
+	--sidebar-primary-foreground: #16181c;
+	--sidebar-accent: #23262c;
+	--sidebar-accent-foreground: #edeef0;
+	--sidebar-border: #2c3037;
+	--sidebar-ring: #e8a13a;
 }
 
 @theme inline {
-	--font-sans: "Inter Variable", sans-serif;
+	--font-sans: "IBM Plex Sans", sans-serif;
+	--font-display: "Space Grotesk Variable", "Space Grotesk", sans-serif;
+	--font-mono: "IBM Plex Mono", monospace;
 	--color-sidebar-ring: var(--sidebar-ring);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -107,6 +136,9 @@
 	--color-card: var(--card);
 	--color-foreground: var(--foreground);
 	--color-background: var(--background);
+	--color-surface-2: var(--surface-2);
+	--color-accent-wash: var(--accent-wash);
+	--color-ok: var(--ok);
 	--radius-sm: calc(var(--radius) - 4px);
 	--radius-md: calc(var(--radius) - 2px);
 	--radius-lg: var(--radius);
