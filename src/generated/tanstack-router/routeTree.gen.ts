@@ -14,6 +14,8 @@ import { Route as AuthLayoutRouteImport } from './../../frontend/routes/_auth/la
 import { Route as ProtectedIndexRouteImport } from './../../frontend/routes/_protected/index'
 import { Route as AuthRegisterRouteImport } from './../../frontend/routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './../../frontend/routes/_auth/login'
+import { Route as ProtectedSongsSearchRouteImport } from './../../frontend/routes/_protected/songs.search'
+import { Route as ProtectedSongsSlugRouteImport } from './../../frontend/routes/_protected/songs.$slug'
 import { Route as ProtectedSongSlugRouteImport } from './../../frontend/routes/_protected/song.$slug'
 
 const ProtectedLayoutRoute = ProtectedLayoutRouteImport.update({
@@ -39,6 +41,16 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthLayoutRoute,
 } as any)
+const ProtectedSongsSearchRoute = ProtectedSongsSearchRouteImport.update({
+  id: '/songs/search',
+  path: '/songs/search',
+  getParentRoute: () => ProtectedLayoutRoute,
+} as any)
+const ProtectedSongsSlugRoute = ProtectedSongsSlugRouteImport.update({
+  id: '/songs/$slug',
+  path: '/songs/$slug',
+  getParentRoute: () => ProtectedLayoutRoute,
+} as any)
 const ProtectedSongSlugRoute = ProtectedSongSlugRouteImport.update({
   id: '/song/$slug',
   path: '/song/$slug',
@@ -50,12 +62,16 @@ export interface FileRoutesByFullPath {
   '/register': typeof AuthRegisterRoute
   '/': typeof ProtectedIndexRoute
   '/song/$slug': typeof ProtectedSongSlugRoute
+  '/songs/$slug': typeof ProtectedSongsSlugRoute
+  '/songs/search': typeof ProtectedSongsSearchRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/': typeof ProtectedIndexRoute
   '/song/$slug': typeof ProtectedSongSlugRoute
+  '/songs/$slug': typeof ProtectedSongsSlugRoute
+  '/songs/search': typeof ProtectedSongsSearchRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -65,12 +81,26 @@ export interface FileRoutesById {
   '/_auth/register': typeof AuthRegisterRoute
   '/_protected/': typeof ProtectedIndexRoute
   '/_protected/song/$slug': typeof ProtectedSongSlugRoute
+  '/_protected/songs/$slug': typeof ProtectedSongsSlugRoute
+  '/_protected/songs/search': typeof ProtectedSongsSearchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/login' | '/register' | '/' | '/song/$slug'
+  fullPaths:
+    | '/login'
+    | '/register'
+    | '/'
+    | '/song/$slug'
+    | '/songs/$slug'
+    | '/songs/search'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/register' | '/' | '/song/$slug'
+  to:
+    | '/login'
+    | '/register'
+    | '/'
+    | '/song/$slug'
+    | '/songs/$slug'
+    | '/songs/search'
   id:
     | '__root__'
     | '/_auth'
@@ -79,6 +109,8 @@ export interface FileRouteTypes {
     | '/_auth/register'
     | '/_protected/'
     | '/_protected/song/$slug'
+    | '/_protected/songs/$slug'
+    | '/_protected/songs/search'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -123,6 +155,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthLayoutRoute
     }
+    '/_protected/songs/search': {
+      id: '/_protected/songs/search'
+      path: '/songs/search'
+      fullPath: '/songs/search'
+      preLoaderRoute: typeof ProtectedSongsSearchRouteImport
+      parentRoute: typeof ProtectedLayoutRoute
+    }
+    '/_protected/songs/$slug': {
+      id: '/_protected/songs/$slug'
+      path: '/songs/$slug'
+      fullPath: '/songs/$slug'
+      preLoaderRoute: typeof ProtectedSongsSlugRouteImport
+      parentRoute: typeof ProtectedLayoutRoute
+    }
     '/_protected/song/$slug': {
       id: '/_protected/song/$slug'
       path: '/song/$slug'
@@ -150,11 +196,15 @@ const AuthLayoutRouteWithChildren = AuthLayoutRoute._addFileChildren(
 interface ProtectedLayoutRouteChildren {
   ProtectedIndexRoute: typeof ProtectedIndexRoute
   ProtectedSongSlugRoute: typeof ProtectedSongSlugRoute
+  ProtectedSongsSlugRoute: typeof ProtectedSongsSlugRoute
+  ProtectedSongsSearchRoute: typeof ProtectedSongsSearchRoute
 }
 
 const ProtectedLayoutRouteChildren: ProtectedLayoutRouteChildren = {
   ProtectedIndexRoute: ProtectedIndexRoute,
   ProtectedSongSlugRoute: ProtectedSongSlugRoute,
+  ProtectedSongsSlugRoute: ProtectedSongsSlugRoute,
+  ProtectedSongsSearchRoute: ProtectedSongsSearchRoute,
 }
 
 const ProtectedLayoutRouteWithChildren = ProtectedLayoutRoute._addFileChildren(

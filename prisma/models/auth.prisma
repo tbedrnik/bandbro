@@ -74,9 +74,9 @@ model Organization {
   metadata    String?
   members     Member[]
   invitations Invitation[]
-  songs       Song[]       @ignore
-  charts      Chart[]      @ignore
-  songbooks   Songbook[]   @ignore
+  songs       Song[]
+  charts      Chart[]
+  songbooks   Songbook[]
 
   @@unique([slug])
   @@map("organization")
