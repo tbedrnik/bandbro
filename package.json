@@ -10,7 +10,8 @@
 		"db:create": "bun --bun run prisma migrate dev --create-only",
 		"db:migrate": "bun --bun run prisma migrate deploy",
 		"db:push": "bun --bun run prisma db push",
-		"db:reset": "bun --bun run prisma db reset"
+		"db:reset": "bun --bun run prisma db reset",
+		"db:seed": "bun run prisma/seed.ts"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.0.0",

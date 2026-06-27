@@ -1,31 +1,31 @@
 import { prisma } from "@backend/prisma";
 import type { User } from "better-auth/types";
+import { readableScopeWhere } from "./scope";
 
 export async function songsRead({ slug, user }: { slug: string; user: User }) {
-	return prisma.song.findUniqueOrThrow({
-		where: {
-			slug,
-			OR: [
-				{ organizationId: null },
-				{ organization: { members: { some: { userId: user.id } } } },
-			],
-		},
+	return prisma.song.findFirstOrThrow({
+		where: { slug, ...readableScopeWhere(user.id) },
 		include: {
-			organization: true,
+			organization: {
+				select: { id: true, name: true, slug: true, metadata: true },
+			},
+			forkedFrom: {
+				select: {
+					id: true,
+					name: true,
+					slug: true,
+					organization: { select: { name: true } },
+				},
+			},
 			charts: {
-				where: {
-					OR: [
-						{ organizationId: null },
-						{ organization: { members: { some: { userId: user.id } } } },
-					],
-				},
+				where: readableScopeWhere(user.id),
 				include: {
-					organization: true,
+					organization: { select: { id: true, name: true } },
 				},
+				orderBy: { createdAt: "asc" },
 			},
-			credits: {
-				include: { artist: true },
-			},
+			tags: { include: { tag: true } },
+			credits: { include: { artist: true } },
 		},
 	});
 }
