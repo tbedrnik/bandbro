@@ -39,3 +39,19 @@ ReactDOM.createRoot(root).render(
 		</QueryClientProvider>
 	</React.StrictMode>,
 );
+
+// Link the web app manifest at runtime (kept out of index.html so the bundler
+// doesn't try to resolve the runtime-served path).
+const manifestLink = document.createElement("link");
+manifestLink.rel = "manifest";
+manifestLink.href = "/app/manifest.webmanifest";
+document.head.appendChild(manifestLink);
+
+// Register the service worker for offline app-shell support (CLAUDE.md §D7).
+if ("serviceWorker" in navigator) {
+	window.addEventListener("load", () => {
+		navigator.serviceWorker
+			.register("/app/sw.js", { scope: "/app/" })
+			.catch(() => {});
+	});
+}

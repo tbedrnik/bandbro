@@ -13,6 +13,7 @@ import { Route as DesignRouteImport } from './../../frontend/routes/design'
 import { Route as ProtectedLayoutRouteImport } from './../../frontend/routes/_protected/layout'
 import { Route as AuthLayoutRouteImport } from './../../frontend/routes/_auth/layout'
 import { Route as ProtectedIndexRouteImport } from './../../frontend/routes/_protected/index'
+import { Route as ProtectedSetlistsRouteImport } from './../../frontend/routes/_protected/setlists'
 import { Route as ProtectedPreferencesRouteImport } from './../../frontend/routes/_protected/preferences'
 import { Route as ProtectedLibraryRouteImport } from './../../frontend/routes/_protected/library'
 import { Route as ProtectedBandsRouteImport } from './../../frontend/routes/_protected/bands'
@@ -20,7 +21,10 @@ import { Route as AuthRegisterRouteImport } from './../../frontend/routes/_auth/
 import { Route as AuthLoginRouteImport } from './../../frontend/routes/_auth/login'
 import { Route as ProtectedSongsNewRouteImport } from './../../frontend/routes/_protected/songs.new'
 import { Route as ProtectedSongsSlugRouteImport } from './../../frontend/routes/_protected/songs.$slug'
+import { Route as ProtectedSetlistsIdRouteImport } from './../../frontend/routes/_protected/setlists.$id'
+import { Route as ProtectedLiveIdRouteImport } from './../../frontend/routes/_protected/live.$id'
 import { Route as ProtectedSongsSlugEditRouteImport } from './../../frontend/routes/_protected/songs.$slug.edit'
+import { Route as ProtectedSetlistsIdPrintRouteImport } from './../../frontend/routes/_protected/setlists.$id.print'
 
 const DesignRoute = DesignRouteImport.update({
   id: '/design',
@@ -38,6 +42,11 @@ const AuthLayoutRoute = AuthLayoutRouteImport.update({
 const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => ProtectedLayoutRoute,
+} as any)
+const ProtectedSetlistsRoute = ProtectedSetlistsRouteImport.update({
+  id: '/setlists',
+  path: '/setlists',
   getParentRoute: () => ProtectedLayoutRoute,
 } as any)
 const ProtectedPreferencesRoute = ProtectedPreferencesRouteImport.update({
@@ -75,11 +84,27 @@ const ProtectedSongsSlugRoute = ProtectedSongsSlugRouteImport.update({
   path: '/songs/$slug',
   getParentRoute: () => ProtectedLayoutRoute,
 } as any)
+const ProtectedSetlistsIdRoute = ProtectedSetlistsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ProtectedSetlistsRoute,
+} as any)
+const ProtectedLiveIdRoute = ProtectedLiveIdRouteImport.update({
+  id: '/live/$id',
+  path: '/live/$id',
+  getParentRoute: () => ProtectedLayoutRoute,
+} as any)
 const ProtectedSongsSlugEditRoute = ProtectedSongsSlugEditRouteImport.update({
   id: '/edit',
   path: '/edit',
   getParentRoute: () => ProtectedSongsSlugRoute,
 } as any)
+const ProtectedSetlistsIdPrintRoute =
+  ProtectedSetlistsIdPrintRouteImport.update({
+    id: '/print',
+    path: '/print',
+    getParentRoute: () => ProtectedSetlistsIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/design': typeof DesignRoute
@@ -88,9 +113,13 @@ export interface FileRoutesByFullPath {
   '/bands': typeof ProtectedBandsRoute
   '/library': typeof ProtectedLibraryRoute
   '/preferences': typeof ProtectedPreferencesRoute
+  '/setlists': typeof ProtectedSetlistsRouteWithChildren
   '/': typeof ProtectedIndexRoute
+  '/live/$id': typeof ProtectedLiveIdRoute
+  '/setlists/$id': typeof ProtectedSetlistsIdRouteWithChildren
   '/songs/$slug': typeof ProtectedSongsSlugRouteWithChildren
   '/songs/new': typeof ProtectedSongsNewRoute
+  '/setlists/$id/print': typeof ProtectedSetlistsIdPrintRoute
   '/songs/$slug/edit': typeof ProtectedSongsSlugEditRoute
 }
 export interface FileRoutesByTo {
@@ -100,9 +129,13 @@ export interface FileRoutesByTo {
   '/bands': typeof ProtectedBandsRoute
   '/library': typeof ProtectedLibraryRoute
   '/preferences': typeof ProtectedPreferencesRoute
+  '/setlists': typeof ProtectedSetlistsRouteWithChildren
   '/': typeof ProtectedIndexRoute
+  '/live/$id': typeof ProtectedLiveIdRoute
+  '/setlists/$id': typeof ProtectedSetlistsIdRouteWithChildren
   '/songs/$slug': typeof ProtectedSongsSlugRouteWithChildren
   '/songs/new': typeof ProtectedSongsNewRoute
+  '/setlists/$id/print': typeof ProtectedSetlistsIdPrintRoute
   '/songs/$slug/edit': typeof ProtectedSongsSlugEditRoute
 }
 export interface FileRoutesById {
@@ -115,9 +148,13 @@ export interface FileRoutesById {
   '/_protected/bands': typeof ProtectedBandsRoute
   '/_protected/library': typeof ProtectedLibraryRoute
   '/_protected/preferences': typeof ProtectedPreferencesRoute
+  '/_protected/setlists': typeof ProtectedSetlistsRouteWithChildren
   '/_protected/': typeof ProtectedIndexRoute
+  '/_protected/live/$id': typeof ProtectedLiveIdRoute
+  '/_protected/setlists/$id': typeof ProtectedSetlistsIdRouteWithChildren
   '/_protected/songs/$slug': typeof ProtectedSongsSlugRouteWithChildren
   '/_protected/songs/new': typeof ProtectedSongsNewRoute
+  '/_protected/setlists/$id/print': typeof ProtectedSetlistsIdPrintRoute
   '/_protected/songs/$slug/edit': typeof ProtectedSongsSlugEditRoute
 }
 export interface FileRouteTypes {
@@ -129,9 +166,13 @@ export interface FileRouteTypes {
     | '/bands'
     | '/library'
     | '/preferences'
+    | '/setlists'
     | '/'
+    | '/live/$id'
+    | '/setlists/$id'
     | '/songs/$slug'
     | '/songs/new'
+    | '/setlists/$id/print'
     | '/songs/$slug/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -141,9 +182,13 @@ export interface FileRouteTypes {
     | '/bands'
     | '/library'
     | '/preferences'
+    | '/setlists'
     | '/'
+    | '/live/$id'
+    | '/setlists/$id'
     | '/songs/$slug'
     | '/songs/new'
+    | '/setlists/$id/print'
     | '/songs/$slug/edit'
   id:
     | '__root__'
@@ -155,9 +200,13 @@ export interface FileRouteTypes {
     | '/_protected/bands'
     | '/_protected/library'
     | '/_protected/preferences'
+    | '/_protected/setlists'
     | '/_protected/'
+    | '/_protected/live/$id'
+    | '/_protected/setlists/$id'
     | '/_protected/songs/$slug'
     | '/_protected/songs/new'
+    | '/_protected/setlists/$id/print'
     | '/_protected/songs/$slug/edit'
   fileRoutesById: FileRoutesById
 }
@@ -195,6 +244,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof ProtectedIndexRouteImport
+      parentRoute: typeof ProtectedLayoutRoute
+    }
+    '/_protected/setlists': {
+      id: '/_protected/setlists'
+      path: '/setlists'
+      fullPath: '/setlists'
+      preLoaderRoute: typeof ProtectedSetlistsRouteImport
       parentRoute: typeof ProtectedLayoutRoute
     }
     '/_protected/preferences': {
@@ -246,12 +302,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSongsSlugRouteImport
       parentRoute: typeof ProtectedLayoutRoute
     }
+    '/_protected/setlists/$id': {
+      id: '/_protected/setlists/$id'
+      path: '/$id'
+      fullPath: '/setlists/$id'
+      preLoaderRoute: typeof ProtectedSetlistsIdRouteImport
+      parentRoute: typeof ProtectedSetlistsRoute
+    }
+    '/_protected/live/$id': {
+      id: '/_protected/live/$id'
+      path: '/live/$id'
+      fullPath: '/live/$id'
+      preLoaderRoute: typeof ProtectedLiveIdRouteImport
+      parentRoute: typeof ProtectedLayoutRoute
+    }
     '/_protected/songs/$slug/edit': {
       id: '/_protected/songs/$slug/edit'
       path: '/edit'
       fullPath: '/songs/$slug/edit'
       preLoaderRoute: typeof ProtectedSongsSlugEditRouteImport
       parentRoute: typeof ProtectedSongsSlugRoute
+    }
+    '/_protected/setlists/$id/print': {
+      id: '/_protected/setlists/$id/print'
+      path: '/print'
+      fullPath: '/setlists/$id/print'
+      preLoaderRoute: typeof ProtectedSetlistsIdPrintRouteImport
+      parentRoute: typeof ProtectedSetlistsIdRoute
     }
   }
 }
@@ -270,6 +347,28 @@ const AuthLayoutRouteWithChildren = AuthLayoutRoute._addFileChildren(
   AuthLayoutRouteChildren,
 )
 
+interface ProtectedSetlistsIdRouteChildren {
+  ProtectedSetlistsIdPrintRoute: typeof ProtectedSetlistsIdPrintRoute
+}
+
+const ProtectedSetlistsIdRouteChildren: ProtectedSetlistsIdRouteChildren = {
+  ProtectedSetlistsIdPrintRoute: ProtectedSetlistsIdPrintRoute,
+}
+
+const ProtectedSetlistsIdRouteWithChildren =
+  ProtectedSetlistsIdRoute._addFileChildren(ProtectedSetlistsIdRouteChildren)
+
+interface ProtectedSetlistsRouteChildren {
+  ProtectedSetlistsIdRoute: typeof ProtectedSetlistsIdRouteWithChildren
+}
+
+const ProtectedSetlistsRouteChildren: ProtectedSetlistsRouteChildren = {
+  ProtectedSetlistsIdRoute: ProtectedSetlistsIdRouteWithChildren,
+}
+
+const ProtectedSetlistsRouteWithChildren =
+  ProtectedSetlistsRoute._addFileChildren(ProtectedSetlistsRouteChildren)
+
 interface ProtectedSongsSlugRouteChildren {
   ProtectedSongsSlugEditRoute: typeof ProtectedSongsSlugEditRoute
 }
@@ -285,7 +384,9 @@ interface ProtectedLayoutRouteChildren {
   ProtectedBandsRoute: typeof ProtectedBandsRoute
   ProtectedLibraryRoute: typeof ProtectedLibraryRoute
   ProtectedPreferencesRoute: typeof ProtectedPreferencesRoute
+  ProtectedSetlistsRoute: typeof ProtectedSetlistsRouteWithChildren
   ProtectedIndexRoute: typeof ProtectedIndexRoute
+  ProtectedLiveIdRoute: typeof ProtectedLiveIdRoute
   ProtectedSongsSlugRoute: typeof ProtectedSongsSlugRouteWithChildren
   ProtectedSongsNewRoute: typeof ProtectedSongsNewRoute
 }
@@ -294,7 +395,9 @@ const ProtectedLayoutRouteChildren: ProtectedLayoutRouteChildren = {
   ProtectedBandsRoute: ProtectedBandsRoute,
   ProtectedLibraryRoute: ProtectedLibraryRoute,
   ProtectedPreferencesRoute: ProtectedPreferencesRoute,
+  ProtectedSetlistsRoute: ProtectedSetlistsRouteWithChildren,
   ProtectedIndexRoute: ProtectedIndexRoute,
+  ProtectedLiveIdRoute: ProtectedLiveIdRoute,
   ProtectedSongsSlugRoute: ProtectedSongsSlugRouteWithChildren,
   ProtectedSongsNewRoute: ProtectedSongsNewRoute,
 }
