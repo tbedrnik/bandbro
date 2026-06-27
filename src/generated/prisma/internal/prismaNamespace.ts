@@ -395,8 +395,11 @@ export const ModelName = {
   Chart: 'Chart',
   Artist: 'Artist',
   Credit: 'Credit',
+  Tag: 'Tag',
+  SongTag: 'SongTag',
   Songbook: 'Songbook',
-  SongbookSong: 'SongbookSong'
+  SongbookSong: 'SongbookSong',
+  Suggestion: 'Suggestion'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -412,7 +415,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "account" | "verification" | "organization" | "member" | "invitation" | "song" | "chart" | "artist" | "credit" | "songbook" | "songbookSong"
+    modelProps: "user" | "session" | "account" | "verification" | "organization" | "member" | "invitation" | "song" | "chart" | "artist" | "credit" | "tag" | "songTag" | "songbook" | "songbookSong" | "suggestion"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1230,6 +1233,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Tag: {
+      payload: Prisma.$TagPayload<ExtArgs>
+      fields: Prisma.TagFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TagFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TagFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>
+        }
+        findFirst: {
+          args: Prisma.TagFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TagFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>
+        }
+        findMany: {
+          args: Prisma.TagFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>[]
+        }
+        create: {
+          args: Prisma.TagCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>
+        }
+        createMany: {
+          args: Prisma.TagCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TagCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>[]
+        }
+        delete: {
+          args: Prisma.TagDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>
+        }
+        update: {
+          args: Prisma.TagUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>
+        }
+        deleteMany: {
+          args: Prisma.TagDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TagUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TagUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>[]
+        }
+        upsert: {
+          args: Prisma.TagUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TagPayload>
+        }
+        aggregate: {
+          args: Prisma.TagAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTag>
+        }
+        groupBy: {
+          args: Prisma.TagGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TagGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TagCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TagCountAggregateOutputType> | number
+        }
+      }
+    }
+    SongTag: {
+      payload: Prisma.$SongTagPayload<ExtArgs>
+      fields: Prisma.SongTagFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SongTagFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongTagPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SongTagFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongTagPayload>
+        }
+        findFirst: {
+          args: Prisma.SongTagFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongTagPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SongTagFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongTagPayload>
+        }
+        findMany: {
+          args: Prisma.SongTagFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongTagPayload>[]
+        }
+        create: {
+          args: Prisma.SongTagCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongTagPayload>
+        }
+        createMany: {
+          args: Prisma.SongTagCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SongTagCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongTagPayload>[]
+        }
+        delete: {
+          args: Prisma.SongTagDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongTagPayload>
+        }
+        update: {
+          args: Prisma.SongTagUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongTagPayload>
+        }
+        deleteMany: {
+          args: Prisma.SongTagDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SongTagUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SongTagUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongTagPayload>[]
+        }
+        upsert: {
+          args: Prisma.SongTagUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongTagPayload>
+        }
+        aggregate: {
+          args: Prisma.SongTagAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSongTag>
+        }
+        groupBy: {
+          args: Prisma.SongTagGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SongTagGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SongTagCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SongTagCountAggregateOutputType> | number
+        }
+      }
+    }
     Songbook: {
       payload: Prisma.$SongbookPayload<ExtArgs>
       fields: Prisma.SongbookFieldRefs
@@ -1378,6 +1529,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Suggestion: {
+      payload: Prisma.$SuggestionPayload<ExtArgs>
+      fields: Prisma.SuggestionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SuggestionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SuggestionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SuggestionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SuggestionPayload>
+        }
+        findFirst: {
+          args: Prisma.SuggestionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SuggestionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SuggestionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SuggestionPayload>
+        }
+        findMany: {
+          args: Prisma.SuggestionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SuggestionPayload>[]
+        }
+        create: {
+          args: Prisma.SuggestionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SuggestionPayload>
+        }
+        createMany: {
+          args: Prisma.SuggestionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SuggestionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SuggestionPayload>[]
+        }
+        delete: {
+          args: Prisma.SuggestionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SuggestionPayload>
+        }
+        update: {
+          args: Prisma.SuggestionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SuggestionPayload>
+        }
+        deleteMany: {
+          args: Prisma.SuggestionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SuggestionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SuggestionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SuggestionPayload>[]
+        }
+        upsert: {
+          args: Prisma.SuggestionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SuggestionPayload>
+        }
+        aggregate: {
+          args: Prisma.SuggestionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSuggestion>
+        }
+        groupBy: {
+          args: Prisma.SuggestionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SuggestionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SuggestionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SuggestionCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1420,6 +1645,7 @@ export const UserScalarFieldEnum = {
   email: 'email',
   emailVerified: 'emailVerified',
   image: 'image',
+  defaultChordView: 'defaultChordView',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1516,6 +1742,7 @@ export const SongScalarFieldEnum = {
   name: 'name',
   year: 'year',
   organizationId: 'organizationId',
+  forkedFromId: 'forkedFromId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1529,6 +1756,8 @@ export const ChartScalarFieldEnum = {
   description: 'description',
   key: 'key',
   capo: 'capo',
+  tempo: 'tempo',
+  timeSignature: 'timeSignature',
   songId: 'songId',
   organizationId: 'organizationId',
   forkedFromId: 'forkedFromId',
@@ -1562,6 +1791,25 @@ export const CreditScalarFieldEnum = {
 export type CreditScalarFieldEnum = (typeof CreditScalarFieldEnum)[keyof typeof CreditScalarFieldEnum]
 
 
+export const TagScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TagScalarFieldEnum = (typeof TagScalarFieldEnum)[keyof typeof TagScalarFieldEnum]
+
+
+export const SongTagScalarFieldEnum = {
+  songId: 'songId',
+  tagId: 'tagId'
+} as const
+
+export type SongTagScalarFieldEnum = (typeof SongTagScalarFieldEnum)[keyof typeof SongTagScalarFieldEnum]
+
+
 export const SongbookScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -1583,6 +1831,20 @@ export const SongbookSongScalarFieldEnum = {
 } as const
 
 export type SongbookSongScalarFieldEnum = (typeof SongbookSongScalarFieldEnum)[keyof typeof SongbookSongScalarFieldEnum]
+
+
+export const SuggestionScalarFieldEnum = {
+  id: 'id',
+  chartId: 'chartId',
+  proposedContent: 'proposedContent',
+  message: 'message',
+  proposerId: 'proposerId',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SuggestionScalarFieldEnum = (typeof SuggestionScalarFieldEnum)[keyof typeof SuggestionScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1639,6 +1901,13 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'CreditRole'
  */
 export type EnumCreditRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CreditRole'>
+    
+
+
+/**
+ * Reference to a field of type 'SuggestionStatus'
+ */
+export type EnumSuggestionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SuggestionStatus'>
     
 
 
@@ -1754,8 +2023,11 @@ export type GlobalOmitConfig = {
   chart?: Prisma.ChartOmit
   artist?: Prisma.ArtistOmit
   credit?: Prisma.CreditOmit
+  tag?: Prisma.TagOmit
+  songTag?: Prisma.SongTagOmit
   songbook?: Prisma.SongbookOmit
   songbookSong?: Prisma.SongbookSongOmit
+  suggestion?: Prisma.SuggestionOmit
 }
 
 /* Types for Logging */

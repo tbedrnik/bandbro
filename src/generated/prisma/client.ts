@@ -95,6 +95,16 @@ export type Artist = Prisma.ArtistModel
  */
 export type Credit = Prisma.CreditModel
 /**
+ * Model Tag
+ * 
+ */
+export type Tag = Prisma.TagModel
+/**
+ * Model SongTag
+ * 
+ */
+export type SongTag = Prisma.SongTagModel
+/**
  * Model Songbook
  * 
  */
@@ -104,3 +114,8 @@ export type Songbook = Prisma.SongbookModel
  * 
  */
 export type SongbookSong = Prisma.SongbookSongModel
+/**
+ * Model Suggestion
+ * 
+ */
+export type Suggestion = Prisma.SuggestionModel

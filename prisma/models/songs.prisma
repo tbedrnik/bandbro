@@ -4,12 +4,20 @@ model Song {
 	name String
 	year Int?
 
-	// Ownership - Custom Songs (null for public library songs)
+	// Ownership / scope: null = Curated (public read-only); otherwise the owning
+	// Organization (a band, or a user's personal "one-man-band" org). See CLAUDE.md §D1.
 	organizationId String?
 	organization   Organization?   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
+	// Fork provenance — a fork copies the Song (+ its Chart) into a writable scope
+	// but stays independent of the source. See CLAUDE.md §D3.
+	forkedFromId String?
+	forkedFrom   Song?    @relation("SongForks", fields: [forkedFromId], references: [id], onDelete: SetNull)
+	forks        Song[]   @relation("SongForks")
+
 	credits Credit[]
 	charts  Chart[]
+	tags    SongTag[]
 
 	// Potential future Album relation:
 	// albums Album[]
@@ -17,16 +25,23 @@ model Song {
 	createdAt DateTime @default(now())
 	updatedAt DateTime @updatedAt
 
+	@@index([organizationId])
 	@@map("song")
 }
 
 model Chart {
 	id          String   @id @default(cuid())
-	
+
 	content     String
 	description String?
-	key         String?
-	capo        Int?
+
+	// Denormalized from the ChordPro {directives} in `content` on every write, so the
+	// library can sort/filter without parsing every row. `content` stays the source of
+	// truth. See CLAUDE.md §D4.
+	key           String?
+	capo          Int?
+	tempo         Int?
+	timeSignature String?
 
 	songId      String
 	song        Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
@@ -40,10 +55,13 @@ model Chart {
 	forks       Chart[]  @relation("ChartForks")
 
 	songbooks   SongbookSong[]
+	suggestions Suggestion[]
 
 	createdAt   DateTime @default(now())
 	updatedAt   DateTime @updatedAt
 
+	@@index([songId])
+	@@index([organizationId])
 	@@map("chart")
 }
 
@@ -62,13 +80,13 @@ model Artist {
 // Connects Artists to Songs with a specific role
 model Credit {
 	id String @id @default(cuid())
-	
+
 	songId String
 	song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
-	
+
 	artistId String
 	artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
-	
+
 	role CreditRole @default(ARTIST)
 
 	createdAt DateTime @default(now())
@@ -86,34 +104,89 @@ enum CreditRole {
 	PRODUCER    // Produced the track
 }
 
+// Free-form labels on a song (folk, slow, gospel…) used for Library filtering.
+model Tag {
+	id   String @id @default(cuid())
+	slug String @unique
+	name String
+
+	songs SongTag[]
+
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+
+	@@map("tag")
+}
+
+model SongTag {
+	songId String
+	song   Song   @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+	tagId String
+	tag   Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+	@@id([songId, tagId])
+	@@index([tagId])
+	@@map("song_tag")
+}
+
 model Songbook {
 	id          String   @id @default(cuid())
 	title       String
 	description String?
-	
+
 	organizationId      String
 	organization        Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-	
+
 	songs       SongbookSong[]
-	
+
 	createdAt   DateTime @default(now())
 	updatedAt   DateTime @updatedAt
-	
+
+	@@index([organizationId])
 	@@map("songbook")
 }
 
 model SongbookSong {
 	songbookId String
 	songbook   Songbook @relation(fields: [songbookId], references: [id], onDelete: Cascade)
-	
+
 	chartId    String
 	chart      Chart    @relation(fields: [chartId], references: [id], onDelete: Cascade)
-	
+
 	order      Int      @default(0)
-	
+
 	createdAt   DateTime @default(now())
 	updatedAt   DateTime @updatedAt
-	
+
 	@@id([songbookId, chartId])
 	@@map("songbook_song")
+}
+
+// A proposed edit to a chart the proposer can't write directly (PRD §8 J10 / should-have).
+// The band's writers/admins accept (apply to the chart) or reject. See CLAUDE.md §A6.
+model Suggestion {
+	id              String  @id @default(cuid())
+	chartId         String
+	chart           Chart   @relation(fields: [chartId], references: [id], onDelete: Cascade)
+	proposedContent String
+	message         String?
+
+	proposerId String
+	proposer   User   @relation(fields: [proposerId], references: [id], onDelete: Cascade)
+
+	status SuggestionStatus @default(PENDING)
+
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+
+	@@index([chartId])
+	@@index([proposerId])
+	@@map("suggestion")
+}
+
+enum SuggestionStatus {
+	PENDING
+	ACCEPTED
+	REJECTED
 }

@@ -28,10 +28,12 @@ export type AggregateChart = {
 
 export type ChartAvgAggregateOutputType = {
   capo: number | null
+  tempo: number | null
 }
 
 export type ChartSumAggregateOutputType = {
   capo: number | null
+  tempo: number | null
 }
 
 export type ChartMinAggregateOutputType = {
@@ -40,6 +42,8 @@ export type ChartMinAggregateOutputType = {
   description: string | null
   key: string | null
   capo: number | null
+  tempo: number | null
+  timeSignature: string | null
   songId: string | null
   organizationId: string | null
   forkedFromId: string | null
@@ -53,6 +57,8 @@ export type ChartMaxAggregateOutputType = {
   description: string | null
   key: string | null
   capo: number | null
+  tempo: number | null
+  timeSignature: string | null
   songId: string | null
   organizationId: string | null
   forkedFromId: string | null
@@ -66,6 +72,8 @@ export type ChartCountAggregateOutputType = {
   description: number
   key: number
   capo: number
+  tempo: number
+  timeSignature: number
   songId: number
   organizationId: number
   forkedFromId: number
@@ -77,10 +85,12 @@ export type ChartCountAggregateOutputType = {
 
 export type ChartAvgAggregateInputType = {
   capo?: true
+  tempo?: true
 }
 
 export type ChartSumAggregateInputType = {
   capo?: true
+  tempo?: true
 }
 
 export type ChartMinAggregateInputType = {
@@ -89,6 +99,8 @@ export type ChartMinAggregateInputType = {
   description?: true
   key?: true
   capo?: true
+  tempo?: true
+  timeSignature?: true
   songId?: true
   organizationId?: true
   forkedFromId?: true
@@ -102,6 +114,8 @@ export type ChartMaxAggregateInputType = {
   description?: true
   key?: true
   capo?: true
+  tempo?: true
+  timeSignature?: true
   songId?: true
   organizationId?: true
   forkedFromId?: true
@@ -115,6 +129,8 @@ export type ChartCountAggregateInputType = {
   description?: true
   key?: true
   capo?: true
+  tempo?: true
+  timeSignature?: true
   songId?: true
   organizationId?: true
   forkedFromId?: true
@@ -215,6 +231,8 @@ export type ChartGroupByOutputType = {
   description: string | null
   key: string | null
   capo: number | null
+  tempo: number | null
+  timeSignature: string | null
   songId: string
   organizationId: string | null
   forkedFromId: string | null
@@ -251,6 +269,8 @@ export type ChartWhereInput = {
   description?: Prisma.StringNullableFilter<"Chart"> | string | null
   key?: Prisma.StringNullableFilter<"Chart"> | string | null
   capo?: Prisma.IntNullableFilter<"Chart"> | number | null
+  tempo?: Prisma.IntNullableFilter<"Chart"> | number | null
+  timeSignature?: Prisma.StringNullableFilter<"Chart"> | string | null
   songId?: Prisma.StringFilter<"Chart"> | string
   organizationId?: Prisma.StringNullableFilter<"Chart"> | string | null
   forkedFromId?: Prisma.StringNullableFilter<"Chart"> | string | null
@@ -261,6 +281,7 @@ export type ChartWhereInput = {
   forkedFrom?: Prisma.XOR<Prisma.ChartNullableScalarRelationFilter, Prisma.ChartWhereInput> | null
   forks?: Prisma.ChartListRelationFilter
   songbooks?: Prisma.SongbookSongListRelationFilter
+  suggestions?: Prisma.SuggestionListRelationFilter
 }
 
 export type ChartOrderByWithRelationInput = {
@@ -269,6 +290,8 @@ export type ChartOrderByWithRelationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   key?: Prisma.SortOrderInput | Prisma.SortOrder
   capo?: Prisma.SortOrderInput | Prisma.SortOrder
+  tempo?: Prisma.SortOrderInput | Prisma.SortOrder
+  timeSignature?: Prisma.SortOrderInput | Prisma.SortOrder
   songId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrderInput | Prisma.SortOrder
   forkedFromId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -279,6 +302,7 @@ export type ChartOrderByWithRelationInput = {
   forkedFrom?: Prisma.ChartOrderByWithRelationInput
   forks?: Prisma.ChartOrderByRelationAggregateInput
   songbooks?: Prisma.SongbookSongOrderByRelationAggregateInput
+  suggestions?: Prisma.SuggestionOrderByRelationAggregateInput
 }
 
 export type ChartWhereUniqueInput = Prisma.AtLeast<{
@@ -290,6 +314,8 @@ export type ChartWhereUniqueInput = Prisma.AtLeast<{
   description?: Prisma.StringNullableFilter<"Chart"> | string | null
   key?: Prisma.StringNullableFilter<"Chart"> | string | null
   capo?: Prisma.IntNullableFilter<"Chart"> | number | null
+  tempo?: Prisma.IntNullableFilter<"Chart"> | number | null
+  timeSignature?: Prisma.StringNullableFilter<"Chart"> | string | null
   songId?: Prisma.StringFilter<"Chart"> | string
   organizationId?: Prisma.StringNullableFilter<"Chart"> | string | null
   forkedFromId?: Prisma.StringNullableFilter<"Chart"> | string | null
@@ -300,6 +326,7 @@ export type ChartWhereUniqueInput = Prisma.AtLeast<{
   forkedFrom?: Prisma.XOR<Prisma.ChartNullableScalarRelationFilter, Prisma.ChartWhereInput> | null
   forks?: Prisma.ChartListRelationFilter
   songbooks?: Prisma.SongbookSongListRelationFilter
+  suggestions?: Prisma.SuggestionListRelationFilter
 }, "id">
 
 export type ChartOrderByWithAggregationInput = {
@@ -308,6 +335,8 @@ export type ChartOrderByWithAggregationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   key?: Prisma.SortOrderInput | Prisma.SortOrder
   capo?: Prisma.SortOrderInput | Prisma.SortOrder
+  tempo?: Prisma.SortOrderInput | Prisma.SortOrder
+  timeSignature?: Prisma.SortOrderInput | Prisma.SortOrder
   songId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrderInput | Prisma.SortOrder
   forkedFromId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -329,6 +358,8 @@ export type ChartScalarWhereWithAggregatesInput = {
   description?: Prisma.StringNullableWithAggregatesFilter<"Chart"> | string | null
   key?: Prisma.StringNullableWithAggregatesFilter<"Chart"> | string | null
   capo?: Prisma.IntNullableWithAggregatesFilter<"Chart"> | number | null
+  tempo?: Prisma.IntNullableWithAggregatesFilter<"Chart"> | number | null
+  timeSignature?: Prisma.StringNullableWithAggregatesFilter<"Chart"> | string | null
   songId?: Prisma.StringWithAggregatesFilter<"Chart"> | string
   organizationId?: Prisma.StringNullableWithAggregatesFilter<"Chart"> | string | null
   forkedFromId?: Prisma.StringNullableWithAggregatesFilter<"Chart"> | string | null
@@ -342,6 +373,8 @@ export type ChartCreateInput = {
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   song: Prisma.SongCreateNestedOneWithoutChartsInput
@@ -349,6 +382,7 @@ export type ChartCreateInput = {
   forkedFrom?: Prisma.ChartCreateNestedOneWithoutForksInput
   forks?: Prisma.ChartCreateNestedManyWithoutForkedFromInput
   songbooks?: Prisma.SongbookSongCreateNestedManyWithoutChartInput
+  suggestions?: Prisma.SuggestionCreateNestedManyWithoutChartInput
 }
 
 export type ChartUncheckedCreateInput = {
@@ -357,6 +391,8 @@ export type ChartUncheckedCreateInput = {
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   songId: string
   organizationId?: string | null
   forkedFromId?: string | null
@@ -364,6 +400,7 @@ export type ChartUncheckedCreateInput = {
   updatedAt?: Date | string
   forks?: Prisma.ChartUncheckedCreateNestedManyWithoutForkedFromInput
   songbooks?: Prisma.SongbookSongUncheckedCreateNestedManyWithoutChartInput
+  suggestions?: Prisma.SuggestionUncheckedCreateNestedManyWithoutChartInput
 }
 
 export type ChartUpdateInput = {
@@ -372,6 +409,8 @@ export type ChartUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   song?: Prisma.SongUpdateOneRequiredWithoutChartsNestedInput
@@ -379,6 +418,7 @@ export type ChartUpdateInput = {
   forkedFrom?: Prisma.ChartUpdateOneWithoutForksNestedInput
   forks?: Prisma.ChartUpdateManyWithoutForkedFromNestedInput
   songbooks?: Prisma.SongbookSongUpdateManyWithoutChartNestedInput
+  suggestions?: Prisma.SuggestionUpdateManyWithoutChartNestedInput
 }
 
 export type ChartUncheckedUpdateInput = {
@@ -387,6 +427,8 @@ export type ChartUncheckedUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   songId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   forkedFromId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -394,6 +436,7 @@ export type ChartUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   forks?: Prisma.ChartUncheckedUpdateManyWithoutForkedFromNestedInput
   songbooks?: Prisma.SongbookSongUncheckedUpdateManyWithoutChartNestedInput
+  suggestions?: Prisma.SuggestionUncheckedUpdateManyWithoutChartNestedInput
 }
 
 export type ChartCreateManyInput = {
@@ -402,6 +445,8 @@ export type ChartCreateManyInput = {
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   songId: string
   organizationId?: string | null
   forkedFromId?: string | null
@@ -415,6 +460,8 @@ export type ChartUpdateManyMutationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -425,6 +472,8 @@ export type ChartUncheckedUpdateManyInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   songId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   forkedFromId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -453,6 +502,8 @@ export type ChartCountOrderByAggregateInput = {
   description?: Prisma.SortOrder
   key?: Prisma.SortOrder
   capo?: Prisma.SortOrder
+  tempo?: Prisma.SortOrder
+  timeSignature?: Prisma.SortOrder
   songId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   forkedFromId?: Prisma.SortOrder
@@ -462,6 +513,7 @@ export type ChartCountOrderByAggregateInput = {
 
 export type ChartAvgOrderByAggregateInput = {
   capo?: Prisma.SortOrder
+  tempo?: Prisma.SortOrder
 }
 
 export type ChartMaxOrderByAggregateInput = {
@@ -470,6 +522,8 @@ export type ChartMaxOrderByAggregateInput = {
   description?: Prisma.SortOrder
   key?: Prisma.SortOrder
   capo?: Prisma.SortOrder
+  tempo?: Prisma.SortOrder
+  timeSignature?: Prisma.SortOrder
   songId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   forkedFromId?: Prisma.SortOrder
@@ -483,6 +537,8 @@ export type ChartMinOrderByAggregateInput = {
   description?: Prisma.SortOrder
   key?: Prisma.SortOrder
   capo?: Prisma.SortOrder
+  tempo?: Prisma.SortOrder
+  timeSignature?: Prisma.SortOrder
   songId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   forkedFromId?: Prisma.SortOrder
@@ -492,6 +548,7 @@ export type ChartMinOrderByAggregateInput = {
 
 export type ChartSumOrderByAggregateInput = {
   capo?: Prisma.SortOrder
+  tempo?: Prisma.SortOrder
 }
 
 export type ChartScalarRelationFilter = {
@@ -655,18 +712,35 @@ export type ChartUpdateOneRequiredWithoutSongbooksNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ChartUpdateToOneWithWhereWithoutSongbooksInput, Prisma.ChartUpdateWithoutSongbooksInput>, Prisma.ChartUncheckedUpdateWithoutSongbooksInput>
 }
 
+export type ChartCreateNestedOneWithoutSuggestionsInput = {
+  create?: Prisma.XOR<Prisma.ChartCreateWithoutSuggestionsInput, Prisma.ChartUncheckedCreateWithoutSuggestionsInput>
+  connectOrCreate?: Prisma.ChartCreateOrConnectWithoutSuggestionsInput
+  connect?: Prisma.ChartWhereUniqueInput
+}
+
+export type ChartUpdateOneRequiredWithoutSuggestionsNestedInput = {
+  create?: Prisma.XOR<Prisma.ChartCreateWithoutSuggestionsInput, Prisma.ChartUncheckedCreateWithoutSuggestionsInput>
+  connectOrCreate?: Prisma.ChartCreateOrConnectWithoutSuggestionsInput
+  upsert?: Prisma.ChartUpsertWithoutSuggestionsInput
+  connect?: Prisma.ChartWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ChartUpdateToOneWithWhereWithoutSuggestionsInput, Prisma.ChartUpdateWithoutSuggestionsInput>, Prisma.ChartUncheckedUpdateWithoutSuggestionsInput>
+}
+
 export type ChartCreateWithoutOrganizationInput = {
   id?: string
   content: string
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   song: Prisma.SongCreateNestedOneWithoutChartsInput
   forkedFrom?: Prisma.ChartCreateNestedOneWithoutForksInput
   forks?: Prisma.ChartCreateNestedManyWithoutForkedFromInput
   songbooks?: Prisma.SongbookSongCreateNestedManyWithoutChartInput
+  suggestions?: Prisma.SuggestionCreateNestedManyWithoutChartInput
 }
 
 export type ChartUncheckedCreateWithoutOrganizationInput = {
@@ -675,12 +749,15 @@ export type ChartUncheckedCreateWithoutOrganizationInput = {
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   songId: string
   forkedFromId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   forks?: Prisma.ChartUncheckedCreateNestedManyWithoutForkedFromInput
   songbooks?: Prisma.SongbookSongUncheckedCreateNestedManyWithoutChartInput
+  suggestions?: Prisma.SuggestionUncheckedCreateNestedManyWithoutChartInput
 }
 
 export type ChartCreateOrConnectWithoutOrganizationInput = {
@@ -717,6 +794,8 @@ export type ChartScalarWhereInput = {
   description?: Prisma.StringNullableFilter<"Chart"> | string | null
   key?: Prisma.StringNullableFilter<"Chart"> | string | null
   capo?: Prisma.IntNullableFilter<"Chart"> | number | null
+  tempo?: Prisma.IntNullableFilter<"Chart"> | number | null
+  timeSignature?: Prisma.StringNullableFilter<"Chart"> | string | null
   songId?: Prisma.StringFilter<"Chart"> | string
   organizationId?: Prisma.StringNullableFilter<"Chart"> | string | null
   forkedFromId?: Prisma.StringNullableFilter<"Chart"> | string | null
@@ -730,12 +809,15 @@ export type ChartCreateWithoutSongInput = {
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   organization?: Prisma.OrganizationCreateNestedOneWithoutChartsInput
   forkedFrom?: Prisma.ChartCreateNestedOneWithoutForksInput
   forks?: Prisma.ChartCreateNestedManyWithoutForkedFromInput
   songbooks?: Prisma.SongbookSongCreateNestedManyWithoutChartInput
+  suggestions?: Prisma.SuggestionCreateNestedManyWithoutChartInput
 }
 
 export type ChartUncheckedCreateWithoutSongInput = {
@@ -744,12 +826,15 @@ export type ChartUncheckedCreateWithoutSongInput = {
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   organizationId?: string | null
   forkedFromId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   forks?: Prisma.ChartUncheckedCreateNestedManyWithoutForkedFromInput
   songbooks?: Prisma.SongbookSongUncheckedCreateNestedManyWithoutChartInput
+  suggestions?: Prisma.SuggestionUncheckedCreateNestedManyWithoutChartInput
 }
 
 export type ChartCreateOrConnectWithoutSongInput = {
@@ -783,12 +868,15 @@ export type ChartCreateWithoutForksInput = {
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   song: Prisma.SongCreateNestedOneWithoutChartsInput
   organization?: Prisma.OrganizationCreateNestedOneWithoutChartsInput
   forkedFrom?: Prisma.ChartCreateNestedOneWithoutForksInput
   songbooks?: Prisma.SongbookSongCreateNestedManyWithoutChartInput
+  suggestions?: Prisma.SuggestionCreateNestedManyWithoutChartInput
 }
 
 export type ChartUncheckedCreateWithoutForksInput = {
@@ -797,12 +885,15 @@ export type ChartUncheckedCreateWithoutForksInput = {
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   songId: string
   organizationId?: string | null
   forkedFromId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   songbooks?: Prisma.SongbookSongUncheckedCreateNestedManyWithoutChartInput
+  suggestions?: Prisma.SuggestionUncheckedCreateNestedManyWithoutChartInput
 }
 
 export type ChartCreateOrConnectWithoutForksInput = {
@@ -816,12 +907,15 @@ export type ChartCreateWithoutForkedFromInput = {
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   song: Prisma.SongCreateNestedOneWithoutChartsInput
   organization?: Prisma.OrganizationCreateNestedOneWithoutChartsInput
   forks?: Prisma.ChartCreateNestedManyWithoutForkedFromInput
   songbooks?: Prisma.SongbookSongCreateNestedManyWithoutChartInput
+  suggestions?: Prisma.SuggestionCreateNestedManyWithoutChartInput
 }
 
 export type ChartUncheckedCreateWithoutForkedFromInput = {
@@ -830,12 +924,15 @@ export type ChartUncheckedCreateWithoutForkedFromInput = {
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   songId: string
   organizationId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   forks?: Prisma.ChartUncheckedCreateNestedManyWithoutForkedFromInput
   songbooks?: Prisma.SongbookSongUncheckedCreateNestedManyWithoutChartInput
+  suggestions?: Prisma.SuggestionUncheckedCreateNestedManyWithoutChartInput
 }
 
 export type ChartCreateOrConnectWithoutForkedFromInput = {
@@ -864,12 +961,15 @@ export type ChartUpdateWithoutForksInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   song?: Prisma.SongUpdateOneRequiredWithoutChartsNestedInput
   organization?: Prisma.OrganizationUpdateOneWithoutChartsNestedInput
   forkedFrom?: Prisma.ChartUpdateOneWithoutForksNestedInput
   songbooks?: Prisma.SongbookSongUpdateManyWithoutChartNestedInput
+  suggestions?: Prisma.SuggestionUpdateManyWithoutChartNestedInput
 }
 
 export type ChartUncheckedUpdateWithoutForksInput = {
@@ -878,12 +978,15 @@ export type ChartUncheckedUpdateWithoutForksInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   songId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   forkedFromId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   songbooks?: Prisma.SongbookSongUncheckedUpdateManyWithoutChartNestedInput
+  suggestions?: Prisma.SuggestionUncheckedUpdateManyWithoutChartNestedInput
 }
 
 export type ChartUpsertWithWhereUniqueWithoutForkedFromInput = {
@@ -908,12 +1011,15 @@ export type ChartCreateWithoutSongbooksInput = {
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   song: Prisma.SongCreateNestedOneWithoutChartsInput
   organization?: Prisma.OrganizationCreateNestedOneWithoutChartsInput
   forkedFrom?: Prisma.ChartCreateNestedOneWithoutForksInput
   forks?: Prisma.ChartCreateNestedManyWithoutForkedFromInput
+  suggestions?: Prisma.SuggestionCreateNestedManyWithoutChartInput
 }
 
 export type ChartUncheckedCreateWithoutSongbooksInput = {
@@ -922,12 +1028,15 @@ export type ChartUncheckedCreateWithoutSongbooksInput = {
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   songId: string
   organizationId?: string | null
   forkedFromId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   forks?: Prisma.ChartUncheckedCreateNestedManyWithoutForkedFromInput
+  suggestions?: Prisma.SuggestionUncheckedCreateNestedManyWithoutChartInput
 }
 
 export type ChartCreateOrConnectWithoutSongbooksInput = {
@@ -952,12 +1061,15 @@ export type ChartUpdateWithoutSongbooksInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   song?: Prisma.SongUpdateOneRequiredWithoutChartsNestedInput
   organization?: Prisma.OrganizationUpdateOneWithoutChartsNestedInput
   forkedFrom?: Prisma.ChartUpdateOneWithoutForksNestedInput
   forks?: Prisma.ChartUpdateManyWithoutForkedFromNestedInput
+  suggestions?: Prisma.SuggestionUpdateManyWithoutChartNestedInput
 }
 
 export type ChartUncheckedUpdateWithoutSongbooksInput = {
@@ -966,12 +1078,99 @@ export type ChartUncheckedUpdateWithoutSongbooksInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   songId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   forkedFromId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   forks?: Prisma.ChartUncheckedUpdateManyWithoutForkedFromNestedInput
+  suggestions?: Prisma.SuggestionUncheckedUpdateManyWithoutChartNestedInput
+}
+
+export type ChartCreateWithoutSuggestionsInput = {
+  id?: string
+  content: string
+  description?: string | null
+  key?: string | null
+  capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  song: Prisma.SongCreateNestedOneWithoutChartsInput
+  organization?: Prisma.OrganizationCreateNestedOneWithoutChartsInput
+  forkedFrom?: Prisma.ChartCreateNestedOneWithoutForksInput
+  forks?: Prisma.ChartCreateNestedManyWithoutForkedFromInput
+  songbooks?: Prisma.SongbookSongCreateNestedManyWithoutChartInput
+}
+
+export type ChartUncheckedCreateWithoutSuggestionsInput = {
+  id?: string
+  content: string
+  description?: string | null
+  key?: string | null
+  capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
+  songId: string
+  organizationId?: string | null
+  forkedFromId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  forks?: Prisma.ChartUncheckedCreateNestedManyWithoutForkedFromInput
+  songbooks?: Prisma.SongbookSongUncheckedCreateNestedManyWithoutChartInput
+}
+
+export type ChartCreateOrConnectWithoutSuggestionsInput = {
+  where: Prisma.ChartWhereUniqueInput
+  create: Prisma.XOR<Prisma.ChartCreateWithoutSuggestionsInput, Prisma.ChartUncheckedCreateWithoutSuggestionsInput>
+}
+
+export type ChartUpsertWithoutSuggestionsInput = {
+  update: Prisma.XOR<Prisma.ChartUpdateWithoutSuggestionsInput, Prisma.ChartUncheckedUpdateWithoutSuggestionsInput>
+  create: Prisma.XOR<Prisma.ChartCreateWithoutSuggestionsInput, Prisma.ChartUncheckedCreateWithoutSuggestionsInput>
+  where?: Prisma.ChartWhereInput
+}
+
+export type ChartUpdateToOneWithWhereWithoutSuggestionsInput = {
+  where?: Prisma.ChartWhereInput
+  data: Prisma.XOR<Prisma.ChartUpdateWithoutSuggestionsInput, Prisma.ChartUncheckedUpdateWithoutSuggestionsInput>
+}
+
+export type ChartUpdateWithoutSuggestionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  song?: Prisma.SongUpdateOneRequiredWithoutChartsNestedInput
+  organization?: Prisma.OrganizationUpdateOneWithoutChartsNestedInput
+  forkedFrom?: Prisma.ChartUpdateOneWithoutForksNestedInput
+  forks?: Prisma.ChartUpdateManyWithoutForkedFromNestedInput
+  songbooks?: Prisma.SongbookSongUpdateManyWithoutChartNestedInput
+}
+
+export type ChartUncheckedUpdateWithoutSuggestionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  songId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  forkedFromId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  forks?: Prisma.ChartUncheckedUpdateManyWithoutForkedFromNestedInput
+  songbooks?: Prisma.SongbookSongUncheckedUpdateManyWithoutChartNestedInput
 }
 
 export type ChartCreateManyOrganizationInput = {
@@ -980,6 +1179,8 @@ export type ChartCreateManyOrganizationInput = {
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   songId: string
   forkedFromId?: string | null
   createdAt?: Date | string
@@ -992,12 +1193,15 @@ export type ChartUpdateWithoutOrganizationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   song?: Prisma.SongUpdateOneRequiredWithoutChartsNestedInput
   forkedFrom?: Prisma.ChartUpdateOneWithoutForksNestedInput
   forks?: Prisma.ChartUpdateManyWithoutForkedFromNestedInput
   songbooks?: Prisma.SongbookSongUpdateManyWithoutChartNestedInput
+  suggestions?: Prisma.SuggestionUpdateManyWithoutChartNestedInput
 }
 
 export type ChartUncheckedUpdateWithoutOrganizationInput = {
@@ -1006,12 +1210,15 @@ export type ChartUncheckedUpdateWithoutOrganizationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   songId?: Prisma.StringFieldUpdateOperationsInput | string
   forkedFromId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   forks?: Prisma.ChartUncheckedUpdateManyWithoutForkedFromNestedInput
   songbooks?: Prisma.SongbookSongUncheckedUpdateManyWithoutChartNestedInput
+  suggestions?: Prisma.SuggestionUncheckedUpdateManyWithoutChartNestedInput
 }
 
 export type ChartUncheckedUpdateManyWithoutOrganizationInput = {
@@ -1020,6 +1227,8 @@ export type ChartUncheckedUpdateManyWithoutOrganizationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   songId?: Prisma.StringFieldUpdateOperationsInput | string
   forkedFromId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1032,6 +1241,8 @@ export type ChartCreateManySongInput = {
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   organizationId?: string | null
   forkedFromId?: string | null
   createdAt?: Date | string
@@ -1044,12 +1255,15 @@ export type ChartUpdateWithoutSongInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneWithoutChartsNestedInput
   forkedFrom?: Prisma.ChartUpdateOneWithoutForksNestedInput
   forks?: Prisma.ChartUpdateManyWithoutForkedFromNestedInput
   songbooks?: Prisma.SongbookSongUpdateManyWithoutChartNestedInput
+  suggestions?: Prisma.SuggestionUpdateManyWithoutChartNestedInput
 }
 
 export type ChartUncheckedUpdateWithoutSongInput = {
@@ -1058,12 +1272,15 @@ export type ChartUncheckedUpdateWithoutSongInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   forkedFromId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   forks?: Prisma.ChartUncheckedUpdateManyWithoutForkedFromNestedInput
   songbooks?: Prisma.SongbookSongUncheckedUpdateManyWithoutChartNestedInput
+  suggestions?: Prisma.SuggestionUncheckedUpdateManyWithoutChartNestedInput
 }
 
 export type ChartUncheckedUpdateManyWithoutSongInput = {
@@ -1072,6 +1289,8 @@ export type ChartUncheckedUpdateManyWithoutSongInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   forkedFromId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1084,6 +1303,8 @@ export type ChartCreateManyForkedFromInput = {
   description?: string | null
   key?: string | null
   capo?: number | null
+  tempo?: number | null
+  timeSignature?: string | null
   songId: string
   organizationId?: string | null
   createdAt?: Date | string
@@ -1096,12 +1317,15 @@ export type ChartUpdateWithoutForkedFromInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   song?: Prisma.SongUpdateOneRequiredWithoutChartsNestedInput
   organization?: Prisma.OrganizationUpdateOneWithoutChartsNestedInput
   forks?: Prisma.ChartUpdateManyWithoutForkedFromNestedInput
   songbooks?: Prisma.SongbookSongUpdateManyWithoutChartNestedInput
+  suggestions?: Prisma.SuggestionUpdateManyWithoutChartNestedInput
 }
 
 export type ChartUncheckedUpdateWithoutForkedFromInput = {
@@ -1110,12 +1334,15 @@ export type ChartUncheckedUpdateWithoutForkedFromInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   songId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   forks?: Prisma.ChartUncheckedUpdateManyWithoutForkedFromNestedInput
   songbooks?: Prisma.SongbookSongUncheckedUpdateManyWithoutChartNestedInput
+  suggestions?: Prisma.SuggestionUncheckedUpdateManyWithoutChartNestedInput
 }
 
 export type ChartUncheckedUpdateManyWithoutForkedFromInput = {
@@ -1124,6 +1351,8 @@ export type ChartUncheckedUpdateManyWithoutForkedFromInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tempo?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  timeSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   songId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1138,11 +1367,13 @@ export type ChartUncheckedUpdateManyWithoutForkedFromInput = {
 export type ChartCountOutputType = {
   forks: number
   songbooks: number
+  suggestions: number
 }
 
 export type ChartCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   forks?: boolean | ChartCountOutputTypeCountForksArgs
   songbooks?: boolean | ChartCountOutputTypeCountSongbooksArgs
+  suggestions?: boolean | ChartCountOutputTypeCountSuggestionsArgs
 }
 
 /**
@@ -1169,6 +1400,13 @@ export type ChartCountOutputTypeCountSongbooksArgs<ExtArgs extends runtime.Types
   where?: Prisma.SongbookSongWhereInput
 }
 
+/**
+ * ChartCountOutputType without action
+ */
+export type ChartCountOutputTypeCountSuggestionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SuggestionWhereInput
+}
+
 
 export type ChartSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1176,6 +1414,8 @@ export type ChartSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   description?: boolean
   key?: boolean
   capo?: boolean
+  tempo?: boolean
+  timeSignature?: boolean
   songId?: boolean
   organizationId?: boolean
   forkedFromId?: boolean
@@ -1186,6 +1426,7 @@ export type ChartSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   forkedFrom?: boolean | Prisma.Chart$forkedFromArgs<ExtArgs>
   forks?: boolean | Prisma.Chart$forksArgs<ExtArgs>
   songbooks?: boolean | Prisma.Chart$songbooksArgs<ExtArgs>
+  suggestions?: boolean | Prisma.Chart$suggestionsArgs<ExtArgs>
   _count?: boolean | Prisma.ChartCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["chart"]>
 
@@ -1195,6 +1436,8 @@ export type ChartSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   description?: boolean
   key?: boolean
   capo?: boolean
+  tempo?: boolean
+  timeSignature?: boolean
   songId?: boolean
   organizationId?: boolean
   forkedFromId?: boolean
@@ -1211,6 +1454,8 @@ export type ChartSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   description?: boolean
   key?: boolean
   capo?: boolean
+  tempo?: boolean
+  timeSignature?: boolean
   songId?: boolean
   organizationId?: boolean
   forkedFromId?: boolean
@@ -1227,6 +1472,8 @@ export type ChartSelectScalar = {
   description?: boolean
   key?: boolean
   capo?: boolean
+  tempo?: boolean
+  timeSignature?: boolean
   songId?: boolean
   organizationId?: boolean
   forkedFromId?: boolean
@@ -1234,13 +1481,14 @@ export type ChartSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ChartOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "content" | "description" | "key" | "capo" | "songId" | "organizationId" | "forkedFromId" | "createdAt" | "updatedAt", ExtArgs["result"]["chart"]>
+export type ChartOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "content" | "description" | "key" | "capo" | "tempo" | "timeSignature" | "songId" | "organizationId" | "forkedFromId" | "createdAt" | "updatedAt", ExtArgs["result"]["chart"]>
 export type ChartInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   song?: boolean | Prisma.SongDefaultArgs<ExtArgs>
   organization?: boolean | Prisma.Chart$organizationArgs<ExtArgs>
   forkedFrom?: boolean | Prisma.Chart$forkedFromArgs<ExtArgs>
   forks?: boolean | Prisma.Chart$forksArgs<ExtArgs>
   songbooks?: boolean | Prisma.Chart$songbooksArgs<ExtArgs>
+  suggestions?: boolean | Prisma.Chart$suggestionsArgs<ExtArgs>
   _count?: boolean | Prisma.ChartCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ChartIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1262,6 +1510,7 @@ export type $ChartPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     forkedFrom: Prisma.$ChartPayload<ExtArgs> | null
     forks: Prisma.$ChartPayload<ExtArgs>[]
     songbooks: Prisma.$SongbookSongPayload<ExtArgs>[]
+    suggestions: Prisma.$SuggestionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1269,6 +1518,8 @@ export type $ChartPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     description: string | null
     key: string | null
     capo: number | null
+    tempo: number | null
+    timeSignature: string | null
     songId: string
     organizationId: string | null
     forkedFromId: string | null
@@ -1673,6 +1924,7 @@ export interface Prisma__ChartClient<T, Null = never, ExtArgs extends runtime.Ty
   forkedFrom<T extends Prisma.Chart$forkedFromArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Chart$forkedFromArgs<ExtArgs>>): Prisma.Prisma__ChartClient<runtime.Types.Result.GetResult<Prisma.$ChartPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   forks<T extends Prisma.Chart$forksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Chart$forksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChartPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   songbooks<T extends Prisma.Chart$songbooksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Chart$songbooksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SongbookSongPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  suggestions<T extends Prisma.Chart$suggestionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Chart$suggestionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SuggestionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1707,6 +1959,8 @@ export interface ChartFieldRefs {
   readonly description: Prisma.FieldRef<"Chart", 'String'>
   readonly key: Prisma.FieldRef<"Chart", 'String'>
   readonly capo: Prisma.FieldRef<"Chart", 'Int'>
+  readonly tempo: Prisma.FieldRef<"Chart", 'Int'>
+  readonly timeSignature: Prisma.FieldRef<"Chart", 'String'>
   readonly songId: Prisma.FieldRef<"Chart", 'String'>
   readonly organizationId: Prisma.FieldRef<"Chart", 'String'>
   readonly forkedFromId: Prisma.FieldRef<"Chart", 'String'>
@@ -2189,6 +2443,30 @@ export type Chart$songbooksArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.SongbookSongScalarFieldEnum | Prisma.SongbookSongScalarFieldEnum[]
+}
+
+/**
+ * Chart.suggestions
+ */
+export type Chart$suggestionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Suggestion
+   */
+  select?: Prisma.SuggestionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Suggestion
+   */
+  omit?: Prisma.SuggestionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SuggestionInclude<ExtArgs> | null
+  where?: Prisma.SuggestionWhereInput
+  orderBy?: Prisma.SuggestionOrderByWithRelationInput | Prisma.SuggestionOrderByWithRelationInput[]
+  cursor?: Prisma.SuggestionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SuggestionScalarFieldEnum | Prisma.SuggestionScalarFieldEnum[]
 }
 
 /**

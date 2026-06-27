@@ -62,8 +62,11 @@ export const ModelName = {
   Chart: 'Chart',
   Artist: 'Artist',
   Credit: 'Credit',
+  Tag: 'Tag',
+  SongTag: 'SongTag',
   Songbook: 'Songbook',
-  SongbookSong: 'SongbookSong'
+  SongbookSong: 'SongbookSong',
+  Suggestion: 'Suggestion'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -85,6 +88,7 @@ export const UserScalarFieldEnum = {
   email: 'email',
   emailVerified: 'emailVerified',
   image: 'image',
+  defaultChordView: 'defaultChordView',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -181,6 +185,7 @@ export const SongScalarFieldEnum = {
   name: 'name',
   year: 'year',
   organizationId: 'organizationId',
+  forkedFromId: 'forkedFromId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -194,6 +199,8 @@ export const ChartScalarFieldEnum = {
   description: 'description',
   key: 'key',
   capo: 'capo',
+  tempo: 'tempo',
+  timeSignature: 'timeSignature',
   songId: 'songId',
   organizationId: 'organizationId',
   forkedFromId: 'forkedFromId',
@@ -227,6 +234,25 @@ export const CreditScalarFieldEnum = {
 export type CreditScalarFieldEnum = (typeof CreditScalarFieldEnum)[keyof typeof CreditScalarFieldEnum]
 
 
+export const TagScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TagScalarFieldEnum = (typeof TagScalarFieldEnum)[keyof typeof TagScalarFieldEnum]
+
+
+export const SongTagScalarFieldEnum = {
+  songId: 'songId',
+  tagId: 'tagId'
+} as const
+
+export type SongTagScalarFieldEnum = (typeof SongTagScalarFieldEnum)[keyof typeof SongTagScalarFieldEnum]
+
+
 export const SongbookScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -248,6 +274,20 @@ export const SongbookSongScalarFieldEnum = {
 } as const
 
 export type SongbookSongScalarFieldEnum = (typeof SongbookSongScalarFieldEnum)[keyof typeof SongbookSongScalarFieldEnum]
+
+
+export const SuggestionScalarFieldEnum = {
+  id: 'id',
+  chartId: 'chartId',
+  proposedContent: 'proposedContent',
+  message: 'message',
+  proposerId: 'proposerId',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SuggestionScalarFieldEnum = (typeof SuggestionScalarFieldEnum)[keyof typeof SuggestionScalarFieldEnum]
 
 
 export const SortOrder = {

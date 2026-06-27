@@ -18,3 +18,12 @@ export const CreditRole = {
 } as const
 
 export type CreditRole = (typeof CreditRole)[keyof typeof CreditRole]
+
+
+export const SuggestionStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  REJECTED: 'REJECTED'
+} as const
+
+export type SuggestionStatus = (typeof SuggestionStatus)[keyof typeof SuggestionStatus]

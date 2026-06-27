@@ -215,6 +215,23 @@ export type IntWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedIntFilter<$PrismaModel>
 }
 
+export type EnumSuggestionStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.SuggestionStatus | Prisma.EnumSuggestionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.SuggestionStatus[]
+  notIn?: $Enums.SuggestionStatus[]
+  not?: Prisma.NestedEnumSuggestionStatusFilter<$PrismaModel> | $Enums.SuggestionStatus
+}
+
+export type EnumSuggestionStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SuggestionStatus | Prisma.EnumSuggestionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.SuggestionStatus[]
+  notIn?: $Enums.SuggestionStatus[]
+  not?: Prisma.NestedEnumSuggestionStatusWithAggregatesFilter<$PrismaModel> | $Enums.SuggestionStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSuggestionStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSuggestionStatusFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[]
@@ -431,6 +448,23 @@ export type NestedFloatFilter<$PrismaModel = never> = {
   gt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   gte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   not?: Prisma.NestedFloatFilter<$PrismaModel> | number
+}
+
+export type NestedEnumSuggestionStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.SuggestionStatus | Prisma.EnumSuggestionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.SuggestionStatus[]
+  notIn?: $Enums.SuggestionStatus[]
+  not?: Prisma.NestedEnumSuggestionStatusFilter<$PrismaModel> | $Enums.SuggestionStatus
+}
+
+export type NestedEnumSuggestionStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SuggestionStatus | Prisma.EnumSuggestionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.SuggestionStatus[]
+  notIn?: $Enums.SuggestionStatus[]
+  not?: Prisma.NestedEnumSuggestionStatusWithAggregatesFilter<$PrismaModel> | $Enums.SuggestionStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSuggestionStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSuggestionStatusFilter<$PrismaModel>
 }
 
 
