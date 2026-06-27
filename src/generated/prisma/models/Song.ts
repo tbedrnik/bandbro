@@ -232,6 +232,7 @@ export type SongWhereInput = {
   organizationId?: Prisma.StringNullableFilter<"Song"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Song"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Song"> | Date | string
+  organization?: Prisma.XOR<Prisma.OrganizationNullableScalarRelationFilter, Prisma.OrganizationWhereInput> | null
   credits?: Prisma.CreditListRelationFilter
   charts?: Prisma.ChartListRelationFilter
 }
@@ -244,6 +245,7 @@ export type SongOrderByWithRelationInput = {
   organizationId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  organization?: Prisma.OrganizationOrderByWithRelationInput
   credits?: Prisma.CreditOrderByRelationAggregateInput
   charts?: Prisma.ChartOrderByRelationAggregateInput
 }
@@ -259,6 +261,7 @@ export type SongWhereUniqueInput = Prisma.AtLeast<{
   organizationId?: Prisma.StringNullableFilter<"Song"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Song"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Song"> | Date | string
+  organization?: Prisma.XOR<Prisma.OrganizationNullableScalarRelationFilter, Prisma.OrganizationWhereInput> | null
   credits?: Prisma.CreditListRelationFilter
   charts?: Prisma.ChartListRelationFilter
 }, "id" | "slug">
@@ -298,6 +301,7 @@ export type SongCreateInput = {
   year?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  organization?: Prisma.OrganizationCreateNestedOneWithoutSongsInput
   credits?: Prisma.CreditCreateNestedManyWithoutSongInput
   charts?: Prisma.ChartCreateNestedManyWithoutSongInput
 }
@@ -321,6 +325,7 @@ export type SongUpdateInput = {
   year?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneWithoutSongsNestedInput
   credits?: Prisma.CreditUpdateManyWithoutSongNestedInput
   charts?: Prisma.ChartUpdateManyWithoutSongNestedInput
 }
@@ -366,6 +371,16 @@ export type SongUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type SongListRelationFilter = {
+  every?: Prisma.SongWhereInput
+  some?: Prisma.SongWhereInput
+  none?: Prisma.SongWhereInput
+}
+
+export type SongOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
 export type SongCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   slug?: Prisma.SortOrder
@@ -409,6 +424,48 @@ export type SongScalarRelationFilter = {
   isNot?: Prisma.SongWhereInput
 }
 
+export type SongCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.SongCreateWithoutOrganizationInput, Prisma.SongUncheckedCreateWithoutOrganizationInput> | Prisma.SongCreateWithoutOrganizationInput[] | Prisma.SongUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.SongCreateOrConnectWithoutOrganizationInput | Prisma.SongCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.SongCreateManyOrganizationInputEnvelope
+  connect?: Prisma.SongWhereUniqueInput | Prisma.SongWhereUniqueInput[]
+}
+
+export type SongUncheckedCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.SongCreateWithoutOrganizationInput, Prisma.SongUncheckedCreateWithoutOrganizationInput> | Prisma.SongCreateWithoutOrganizationInput[] | Prisma.SongUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.SongCreateOrConnectWithoutOrganizationInput | Prisma.SongCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.SongCreateManyOrganizationInputEnvelope
+  connect?: Prisma.SongWhereUniqueInput | Prisma.SongWhereUniqueInput[]
+}
+
+export type SongUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.SongCreateWithoutOrganizationInput, Prisma.SongUncheckedCreateWithoutOrganizationInput> | Prisma.SongCreateWithoutOrganizationInput[] | Prisma.SongUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.SongCreateOrConnectWithoutOrganizationInput | Prisma.SongCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.SongUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.SongUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.SongCreateManyOrganizationInputEnvelope
+  set?: Prisma.SongWhereUniqueInput | Prisma.SongWhereUniqueInput[]
+  disconnect?: Prisma.SongWhereUniqueInput | Prisma.SongWhereUniqueInput[]
+  delete?: Prisma.SongWhereUniqueInput | Prisma.SongWhereUniqueInput[]
+  connect?: Prisma.SongWhereUniqueInput | Prisma.SongWhereUniqueInput[]
+  update?: Prisma.SongUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.SongUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.SongUpdateManyWithWhereWithoutOrganizationInput | Prisma.SongUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.SongScalarWhereInput | Prisma.SongScalarWhereInput[]
+}
+
+export type SongUncheckedUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.SongCreateWithoutOrganizationInput, Prisma.SongUncheckedCreateWithoutOrganizationInput> | Prisma.SongCreateWithoutOrganizationInput[] | Prisma.SongUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.SongCreateOrConnectWithoutOrganizationInput | Prisma.SongCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.SongUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.SongUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.SongCreateManyOrganizationInputEnvelope
+  set?: Prisma.SongWhereUniqueInput | Prisma.SongWhereUniqueInput[]
+  disconnect?: Prisma.SongWhereUniqueInput | Prisma.SongWhereUniqueInput[]
+  delete?: Prisma.SongWhereUniqueInput | Prisma.SongWhereUniqueInput[]
+  connect?: Prisma.SongWhereUniqueInput | Prisma.SongWhereUniqueInput[]
+  update?: Prisma.SongUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.SongUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.SongUpdateManyWithWhereWithoutOrganizationInput | Prisma.SongUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.SongScalarWhereInput | Prisma.SongScalarWhereInput[]
+}
+
 export type NullableIntFieldUpdateOperationsInput = {
   set?: number | null
   increment?: number
@@ -445,6 +502,66 @@ export type SongUpdateOneRequiredWithoutCreditsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.SongUpdateToOneWithWhereWithoutCreditsInput, Prisma.SongUpdateWithoutCreditsInput>, Prisma.SongUncheckedUpdateWithoutCreditsInput>
 }
 
+export type SongCreateWithoutOrganizationInput = {
+  id?: string
+  slug: string
+  name: string
+  year?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  credits?: Prisma.CreditCreateNestedManyWithoutSongInput
+  charts?: Prisma.ChartCreateNestedManyWithoutSongInput
+}
+
+export type SongUncheckedCreateWithoutOrganizationInput = {
+  id?: string
+  slug: string
+  name: string
+  year?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  credits?: Prisma.CreditUncheckedCreateNestedManyWithoutSongInput
+  charts?: Prisma.ChartUncheckedCreateNestedManyWithoutSongInput
+}
+
+export type SongCreateOrConnectWithoutOrganizationInput = {
+  where: Prisma.SongWhereUniqueInput
+  create: Prisma.XOR<Prisma.SongCreateWithoutOrganizationInput, Prisma.SongUncheckedCreateWithoutOrganizationInput>
+}
+
+export type SongCreateManyOrganizationInputEnvelope = {
+  data: Prisma.SongCreateManyOrganizationInput | Prisma.SongCreateManyOrganizationInput[]
+}
+
+export type SongUpsertWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.SongWhereUniqueInput
+  update: Prisma.XOR<Prisma.SongUpdateWithoutOrganizationInput, Prisma.SongUncheckedUpdateWithoutOrganizationInput>
+  create: Prisma.XOR<Prisma.SongCreateWithoutOrganizationInput, Prisma.SongUncheckedCreateWithoutOrganizationInput>
+}
+
+export type SongUpdateWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.SongWhereUniqueInput
+  data: Prisma.XOR<Prisma.SongUpdateWithoutOrganizationInput, Prisma.SongUncheckedUpdateWithoutOrganizationInput>
+}
+
+export type SongUpdateManyWithWhereWithoutOrganizationInput = {
+  where: Prisma.SongScalarWhereInput
+  data: Prisma.XOR<Prisma.SongUpdateManyMutationInput, Prisma.SongUncheckedUpdateManyWithoutOrganizationInput>
+}
+
+export type SongScalarWhereInput = {
+  AND?: Prisma.SongScalarWhereInput | Prisma.SongScalarWhereInput[]
+  OR?: Prisma.SongScalarWhereInput[]
+  NOT?: Prisma.SongScalarWhereInput | Prisma.SongScalarWhereInput[]
+  id?: Prisma.StringFilter<"Song"> | string
+  slug?: Prisma.StringFilter<"Song"> | string
+  name?: Prisma.StringFilter<"Song"> | string
+  year?: Prisma.IntNullableFilter<"Song"> | number | null
+  organizationId?: Prisma.StringNullableFilter<"Song"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"Song"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Song"> | Date | string
+}
+
 export type SongCreateWithoutChartsInput = {
   id?: string
   slug: string
@@ -452,6 +569,7 @@ export type SongCreateWithoutChartsInput = {
   year?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  organization?: Prisma.OrganizationCreateNestedOneWithoutSongsInput
   credits?: Prisma.CreditCreateNestedManyWithoutSongInput
 }
 
@@ -489,6 +607,7 @@ export type SongUpdateWithoutChartsInput = {
   year?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneWithoutSongsNestedInput
   credits?: Prisma.CreditUpdateManyWithoutSongNestedInput
 }
 
@@ -510,6 +629,7 @@ export type SongCreateWithoutCreditsInput = {
   year?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  organization?: Prisma.OrganizationCreateNestedOneWithoutSongsInput
   charts?: Prisma.ChartCreateNestedManyWithoutSongInput
 }
 
@@ -547,6 +667,7 @@ export type SongUpdateWithoutCreditsInput = {
   year?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneWithoutSongsNestedInput
   charts?: Prisma.ChartUpdateManyWithoutSongNestedInput
 }
 
@@ -559,6 +680,46 @@ export type SongUncheckedUpdateWithoutCreditsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   charts?: Prisma.ChartUncheckedUpdateManyWithoutSongNestedInput
+}
+
+export type SongCreateManyOrganizationInput = {
+  id?: string
+  slug: string
+  name: string
+  year?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type SongUpdateWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  credits?: Prisma.CreditUpdateManyWithoutSongNestedInput
+  charts?: Prisma.ChartUpdateManyWithoutSongNestedInput
+}
+
+export type SongUncheckedUpdateWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  credits?: Prisma.CreditUncheckedUpdateManyWithoutSongNestedInput
+  charts?: Prisma.ChartUncheckedUpdateManyWithoutSongNestedInput
+}
+
+export type SongUncheckedUpdateManyWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -609,6 +770,7 @@ export type SongSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  organization?: boolean | Prisma.Song$organizationArgs<ExtArgs>
   credits?: boolean | Prisma.Song$creditsArgs<ExtArgs>
   charts?: boolean | Prisma.Song$chartsArgs<ExtArgs>
   _count?: boolean | Prisma.SongCountOutputTypeDefaultArgs<ExtArgs>
@@ -622,6 +784,7 @@ export type SongSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  organization?: boolean | Prisma.Song$organizationArgs<ExtArgs>
 }, ExtArgs["result"]["song"]>
 
 export type SongSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -632,6 +795,7 @@ export type SongSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  organization?: boolean | Prisma.Song$organizationArgs<ExtArgs>
 }, ExtArgs["result"]["song"]>
 
 export type SongSelectScalar = {
@@ -646,12 +810,17 @@ export type SongSelectScalar = {
 
 export type SongOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "slug" | "name" | "year" | "organizationId" | "createdAt" | "updatedAt", ExtArgs["result"]["song"]>
 export type SongInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.Song$organizationArgs<ExtArgs>
   credits?: boolean | Prisma.Song$creditsArgs<ExtArgs>
   charts?: boolean | Prisma.Song$chartsArgs<ExtArgs>
   _count?: boolean | Prisma.SongCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type SongIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type SongIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type SongIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.Song$organizationArgs<ExtArgs>
+}
+export type SongIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.Song$organizationArgs<ExtArgs>
+}
 
 export type $SongPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Song"
@@ -1062,6 +1231,7 @@ readonly fields: SongFieldRefs;
  */
 export interface Prisma__SongClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  organization<T extends Prisma.Song$organizationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Song$organizationArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   credits<T extends Prisma.Song$creditsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Song$creditsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CreditPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   charts<T extends Prisma.Song$chartsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Song$chartsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChartPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1347,6 +1517,10 @@ export type SongCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * The data used to create many Songs.
    */
   data: Prisma.SongCreateManyInput | Prisma.SongCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SongIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1417,6 +1591,10 @@ export type SongUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * Limit how many Songs to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SongIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1483,6 +1661,25 @@ export type SongDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Limit how many Songs to delete.
    */
   limit?: number
+}
+
+/**
+ * Song.organization
+ */
+export type Song$organizationArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Organization
+   */
+  select?: Prisma.OrganizationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Organization
+   */
+  omit?: Prisma.OrganizationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OrganizationInclude<ExtArgs> | null
+  where?: Prisma.OrganizationWhereInput
 }
 
 /**

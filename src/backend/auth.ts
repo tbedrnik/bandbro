@@ -34,4 +34,16 @@ export const authMiddleware = new Elysia({ name: "better-auth" })
 				};
 			},
 		},
+		authOptional: {
+			async resolve({ request: { headers } }) {
+				const session = await auth.api.getSession({
+					headers,
+				});
+
+				return {
+					user: session?.user,
+					session: session?.session,
+				};
+			},
+		},
 	});
