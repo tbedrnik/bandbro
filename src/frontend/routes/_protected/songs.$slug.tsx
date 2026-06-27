@@ -1,5 +1,4 @@
 import { api } from "@frontend/api";
-import { auth } from "@frontend/auth";
 import { CapoToggle } from "@frontend/components/CapoToggle";
 import { MetaChip, Tag } from "@frontend/components/MetaChip";
 import { SongSheet } from "@frontend/components/SongSheet";

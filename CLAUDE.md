@@ -4,6 +4,19 @@
 > This file is the working map of the project — what exists, how it's wired, the decisions still
 > open, and the task breakdown to get from scaffolding to v1.
 
+> **Status (v1 build complete).** The Phase-1 + Phase-2 plan in §7 is implemented: schema +
+> migration + seed, the shared transpose/capo engine (tested), the full API surface, and all
+> screens (Library, Song View, ChordPro editor, Capo views, Live mode, Setlists, Band management,
+> Preferences, Home) plus offline PWA and PDF export. Decisions D1–D9 are all **decided** (D3 was
+> adjusted — see below). Remaining/next: richer drag-reorder, member role-editing UI, suggestion
+> review UI, and the polish items in §7/G. Build & verify locally with `bun test`, `bunx biome check`,
+> and `bun build ./src/frontend/index.html`.
+>
+> **Prisma in a sandboxed/offline env:** the Prisma CLI downloads its schema-engine from
+> `binaries.prisma.sh`, which some sandboxes block for Node's fetch. If `prisma generate`/`migrate`
+> fails with ECONNRESET, download the binary once with `curl` and point the CLI at it:
+> `PRISMA_SCHEMA_ENGINE_BINARY=/path/to/schema-engine` (+ `NODE_EXTRA_CA_CERTS` for the proxy CA).
+
 **Read alongside:**
 - [`docs/BandBro-PRD.md`](docs/BandBro-PRD.md) — product scope, personas, fork model, roles, MoSCoW, phasing.
 - [`docs/BandBro-Design-Briefs.md`](docs/BandBro-Design-Briefs.md) — per-screen design briefs.
@@ -145,15 +158,14 @@ The Preferences screen shows a single account-level "Default chord view" (as-fin
 per-band override can be added later if needed (PRD §12 Q3). → Task: add column + expose via better-auth
 `additionalFields` / an update endpoint.
 
-### D3 — Fork granularity, slug uniqueness, provenance *(needs decision — has a bug today)*
-`Song.slug` is **globally `@unique`**, which breaks the moment two scopes hold a song with the same title
-(forking Curated → band, or two bands with "House of the Rising Sun"). Decide the fork unit:
-- **(R) Fork copies Song + its Chart into the target scope.** Add `Song.forkedFromId` (+ keep
-  `Chart.forkedFromId`) for the "forked from Curated" provenance shown on the Song View. Change slug
-  uniqueness to **`@@unique([organizationId, slug])`** (and handle the `null`-org curated case).
-- Alternative: keep one global Song, fork only Charts (Song becomes shared metadata). Simpler rows but
-  muddies "add a fully custom song" and per-scope titles/tags. Not recommended.
-→ Task: pick one, write the migration, update `songsCreate`/fork/read accordingly.
+### D3 — Fork granularity, slug uniqueness, provenance *(DECIDED — implemented)*
+**Fork copies the Song + its chosen Chart into the target scope** (`songsFork`), keeping
+`Song.forkedFromId` + `Chart.forkedFromId` for the "forked from Curated" provenance shown on the Song
+View. On slug uniqueness I kept `Song.slug` **globally unique** but generate it with a **collision
+suffix** (`uniqueSongSlug` → `house-of-the-rising-sun-2`). This avoids changing the global
+`/app/songs/$slug` URL scheme to be scope-aware (the alternative, `@@unique([organizationId, slug])`,
+forces scope into every song URL). Trade-off: forked titles can carry a numeric suffix in their slug —
+acceptable for v1; revisit if/when songs need scope-qualified URLs.
 
 ### D4 — ChordPro is the source of truth; metadata is denormalized on write *(R)*
 The `{title}{artist}{key}{capo}{tempo}{tags}` directives live in the chart `content`. Keep `content`

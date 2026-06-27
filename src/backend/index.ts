@@ -28,6 +28,7 @@ const server = Bun.serve({
 		"/api/*": api.fetch,
 		"/app/sw.js": serveSw,
 		"/app/manifest.webmanifest": serveManifest,
+		"/app": frontend, // bare path (PWA start_url) + the SPA basepath
 		"/app/*": frontend, // matches with basepath in frontend
 		"/": landing,
 	},
