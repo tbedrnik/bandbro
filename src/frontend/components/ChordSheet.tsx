@@ -1,11 +1,8 @@
 import { cn } from "@frontend/lib/utils";
+import type { ChordBlock, ChordLine, ChordSegment } from "@shared/chordpro";
 
-/** One chord positioned above the syllable it falls on. */
-export type ChordSegment = { chord: string; text: string };
-/** A line is a run of chord/lyric segments. */
-export type ChordLine = ChordSegment[];
-/** A labelled section (Verse, Chorus, …) of chord lines. */
-export type ChordBlock = { label?: string; lines: ChordLine[] };
+// Re-exported for components that import the block types alongside <ChordSheet>.
+export type { ChordBlock, ChordLine, ChordSegment };
 
 type Props = {
 	blocks: ChordBlock[];
@@ -32,8 +29,14 @@ export function ChordSheet({
 	return (
 		<div className={cn("font-sans", className)}>
 			{blocks.map((block, blockIndex) => (
-				// biome-ignore lint/suspicious/noArrayIndexKey: positional sections
-				<section key={blockIndex} className="mb-[34px] last:mb-0">
+				<section
+					// biome-ignore lint/suspicious/noArrayIndexKey: positional sections
+					key={blockIndex}
+					className={cn(
+						"mb-[34px] last:mb-0",
+						block.kind === "chorus" && "border-l-2 border-l-primary/40 pl-4",
+					)}
+				>
 					{block.label && (
 						<div className="mb-3 font-display text-xs font-semibold uppercase tracking-[0.12em] text-primary">
 							{block.label}
