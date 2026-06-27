@@ -1,0 +1,297 @@
+# BandBro — Architecture & Build Plan
+
+> A shared songbook for bands and players: discover → fork → organize → share → perform (online or off).
+> This file is the working map of the project — what exists, how it's wired, the decisions still
+> open, and the task breakdown to get from scaffolding to v1.
+
+**Read alongside:**
+- [`docs/BandBro-PRD.md`](docs/BandBro-PRD.md) — product scope, personas, fork model, roles, MoSCoW, phasing.
+- [`docs/BandBro-Design-Briefs.md`](docs/BandBro-Design-Briefs.md) — per-screen design briefs.
+- The nine designed screens (Claude Design exports): Home, Login, Library, Song View, ChordPro Editor,
+  Live Mode, Playlist, Band Management, Preferences, plus the Design System sheet.
+
+---
+
+## 1. Tech stack
+
+| Layer | Choice | Notes |
+|---|---|---|
+| Runtime | **Bun** | dev/build/test; `Bun.serve` is the HTTP server (`src/backend/index.ts`). |
+| API | **Elysia** | `src/backend/api.ts`; service-per-file under `src/backend/services/`. |
+| Type-safe client | **Eden Treaty** + `eden-tanstack-react-query` | End-to-end types from `Api` type → frontend. |
+| Auth | **better-auth** + `organization` plugin | Email/password; orgs = bands. `src/backend/auth.ts`. |
+| DB | **SQLite** via **Prisma 7** (`libsql` adapter) | Schema split across `prisma/models/*.prisma`. |
+| Frontend | **React 19** + **TanStack Router** (file-based) + **TanStack Query** | SPA mounted at `/app`. |
+| Editor | **CodeMirror** + `@chordbook/codemirror-lang-chordpro` | ChordPro source editing. |
+| ChordPro | **chordsheetjs** | Parse + transpose engine. |
+| UI | **shadcn** (base-nova) + **Tailwind v4** + Tabler icons | Tokens in `src/frontend/index.css`. |
+| Lint/format | **Biome** | `biome.json` (tabs, double quotes). |
+| Deploy | **Railway** (RAILPACK) | `railway.json`. |
+
+**Three entry surfaces** (`src/backend/index.ts`): `/` → marketing landing (`src/landing`), `/app/*` → the
+React SPA (`src/frontend`), `/api/*` → Elysia. The SPA uses `/app` as router basepath.
+
+---
+
+## 2. Repo layout
+
+```
+src/
+  backend/
+    index.ts            Bun.serve — routes / → landing, /app → SPA, /api → Elysia
+    api.ts              Elysia app + route definitions + response schemas (exports `Api` type)
+    auth.ts             better-auth config + `auth`/`authOptional` Elysia macros
+    prisma.ts           Prisma client singleton
+    services/           one file per operation (songs*, songbooks*) — pure functions, take {user,…}
+  frontend/
+    routes/             TanStack file-based routes (_auth/*, _protected/*, design.tsx)
+    components/         ChordSheet, CapoToggle, TransposeStepper, RoleBadge, OfflinePill, MetaChip,
+                        SongEditor, SongPreview, + ui/ (shadcn primitives)
+    contexts/           SessionContext, UserContext
+    lib/                utils (cn), push (stub)
+    api.ts / auth.ts    Eden client + better-auth React client
+    index.css           Design tokens (see §6)
+  shared/               isomorphic code (currently addNumbers demo) — transpose engine goes here
+  generated/            Prisma client + TanStack route tree (do not hand-edit)
+  landing/              marketing page
+prisma/
+  schema.prisma         generator + datasource only
+  models/auth.prisma    better-auth models (User, Session, Account, Verification, Organization, Member, Invitation)
+  models/songs.prisma    domain models (Song, Chart, Artist, Credit, Songbook, SongbookSong)
+  migrations/
+```
+
+### Commands
+
+```bash
+bun run dev          # dev server + tsr route watcher (NODE_ENV=development)
+bun run prod         # production server
+bun test             # tests
+bun run db:create    # create a migration (--create-only)
+bun run db:migrate   # apply migrations (deploy)
+bun run db:push      # push schema without migration (prototyping)
+bun run db:generate  # regenerate Prisma client
+bun run auth:generate  # regenerate prisma/models/auth.prisma from better-auth config
+```
+
+---
+
+## 3. Domain model — concepts → schema
+
+The PRD's mental model (§5) and how it maps onto the current Prisma schema:
+
+| Concept (PRD) | Schema today | Status |
+|---|---|---|
+| **User** | `User` (better-auth) | ✅ |
+| **Band (workspace)** | `Organization` + `Member` + `Invitation` (org plugin) | ✅ structure; roles need config (§5, D6) |
+| **Personal scope** ("one-man-band") | — | ❌ **not modeled** (D1) |
+| **Curated/public scope** | `Song.organizationId = null` / `Chart.organizationId = null` | ✅ convention exists |
+| **Song** (title, artist, key, tempo, capo, tags + ChordPro) | `Song` (name, year) + `Chart` (content, key, capo) + `Credit`→`Artist` | ⚠️ partial — no tempo/time-sig/tags (D4) |
+| **Chart** (an arrangement) | `Chart` (content, key, capo, forkedFromId) | ✅ |
+| **Fork** | `Chart.forkedFrom` self-relation | ⚠️ granularity + slug uniqueness unresolved (D3) |
+| **Playlist / Setlist** | `Songbook` + `SongbookSong` (order) | ✅ structure; services are stubs |
+| **Role** (Admin/Writer/Reader) | `Member.role: String` (better-auth default `owner`/`admin`/`member`) | ❌ needs Admin/Writer/Reader mapping (D6) |
+| **Member view preference** (capo/concert default) | — | ❌ **not modeled** (D2) |
+| **Suggestion** (propose edit to non-writable song) | — | ❌ not modeled (should-have) |
+
+### Scope model (the load-bearing convention)
+
+A song/chart's **scope** is derived from `organizationId`:
+- `null` → **Curated** (read-only seeded library).
+- a **personal** org id → **Personal** (one user).
+- a **band** org id → **Band** (shared, role-gated).
+
+`songsList`/`songsRead` already filter on `organizationId IS NULL OR member-of(org)`. Write paths
+(`songsUpdate`, `songsDelete`, fork target) must additionally enforce the caller's **role** in that org.
+
+---
+
+## 4. Current state — scaffolded vs. stubbed
+
+**Built / ported:**
+- Auth wiring (email+password, org plugin), `auth`/`authOptional` macros, protected route layout.
+- `songsList`, `songsRead` (scope-filtered), `songsCreate` (name + single chart only — ignores credits/metadata).
+- Design system in code: tokens, fonts, and ported components — `ChordSheet`, `CapoToggle`,
+  `TransposeStepper`, `RoleBadge`, `OfflinePill`, `MetaChip`, `SongEditor` (CodeMirror), `SongPreview`
+  (chordsheetjs). Showcased at the `/app/design` route.
+- Prisma schema for Song/Chart/Artist/Credit/Songbook/SongbookSong + better-auth models; 3 migrations.
+
+**Stubbed / missing:**
+- `songsUpdate`, `songsDelete` → empty functions.
+- **All** songbook services (`songbooksList/Read/Create/Update/Delete`) → empty.
+- No fork endpoint, no search/filter params, no PDF export, no preferences endpoint.
+- Frontend routes are placeholders: `_protected/index` = "Hello {name}", `songs.$slug` / `songs.search`
+  = raw data dumps, `song.$slug` = a hardcoded ChordPro editor demo. None of the nine designs are built.
+- `lib/push.ts` is a non-functional stub; no service worker, manifest, or offline cache.
+- Personal scope, member preferences, roles-as-Admin/Writer/Reader, tags, suggestions: not modeled.
+
+---
+
+## 5. Architecture decisions
+
+Decisions that shape the data model and must be settled before/while building. **(R)** = recommendation;
+several map to PRD §12 open questions.
+
+### D1 — Personal scope = a personal Organization *(R: decided-by-default)*
+The schema dropped per-row `userId` ownership in favor of `organizationId`. Cleanest path, and exactly
+what PRD §4 implies ("a solo player is a workspace of one"): **auto-create a hidden personal Organization
+on user signup** and treat it as the Personal scope. Reuses all org/membership/fork machinery; no second
+ownership axis. → Task: signup hook + a flag (`Organization.metadata` or a `personal` boolean) to hide
+personal orgs from the band switcher and forbid inviting members.
+
+### D2 — Default chord view stored on User *(R)*
+The Preferences screen shows a single account-level "Default chord view" (as-fingered / concert). Store
+`defaultChordView` on **User** (global) rather than per-`Member`; per-song toggle stays client-side, and a
+per-band override can be added later if needed (PRD §12 Q3). → Task: add column + expose via better-auth
+`additionalFields` / an update endpoint.
+
+### D3 — Fork granularity, slug uniqueness, provenance *(needs decision — has a bug today)*
+`Song.slug` is **globally `@unique`**, which breaks the moment two scopes hold a song with the same title
+(forking Curated → band, or two bands with "House of the Rising Sun"). Decide the fork unit:
+- **(R) Fork copies Song + its Chart into the target scope.** Add `Song.forkedFromId` (+ keep
+  `Chart.forkedFromId`) for the "forked from Curated" provenance shown on the Song View. Change slug
+  uniqueness to **`@@unique([organizationId, slug])`** (and handle the `null`-org curated case).
+- Alternative: keep one global Song, fork only Charts (Song becomes shared metadata). Simpler rows but
+  muddies "add a fully custom song" and per-scope titles/tags. Not recommended.
+→ Task: pick one, write the migration, update `songsCreate`/fork/read accordingly.
+
+### D4 — ChordPro is the source of truth; metadata is denormalized on write *(R)*
+The `{title}{artist}{key}{capo}{tempo}{tags}` directives live in the chart `content`. Keep `content`
+authoritative, but **parse on save** into denormalized columns (`key`, `capo`, `tempo`, `timeSignature`,
+and tags) so Library can sort/filter without parsing every row. Add the missing columns; add a `Tag` model
++ `SongTag` join (tags describe the song, not the arrangement). chordsheetjs already exposes these on parse.
+
+### D5 — Transpose & capo are pure client-side, in `src/shared` *(R)*
+Transpose (key shift) and the capo→concert translation are the **same operation**: shift every chord by N
+semitones. The designs ship a tiny, dependency-free engine (`shiftRoot`/`transposeChord`, sharp-spelling,
+slash-chord aware). Port it to `src/shared/transpose.ts` (or use chordsheetjs' `.transpose()`), use it for
+both controls, and derive the **concert view = transpose by `+capo`**. No API involved. One canonical
+engine → identical results in Song View, Live mode, and PDF export.
+
+### D6 — Roles via better-auth access control *(needs config)*
+Map the org plugin to the PRD's three roles. Define an access-control instance with **Admin / Writer /
+Reader** (Admin = manage band+members+songs; Writer = CRUD songs + build playlists; Reader = read/
+transpose/perform/offline/PDF) and enforce it in write services. PRD §12 Q1/Q6: confirm whether any Writer
+can delete or Admin-only. → Task: `betterAuth` `ac`/`roles` config + a `requireRole(orgId, level)` guard
+used by `songsUpdate`/`songsDelete`/fork/songbook writes.
+
+### D7 — Offline PWA: service worker + per-playlist cache, read-only in v1 *(R)*
+Live mode must run with no signal. Plan: add a **web app manifest** + **service worker** (precache the app
+shell; runtime-cache a playlist's song payloads on "Download for offline" into the **Cache API / IndexedDB**).
+v1 is **read-only offline** (no edit-queue/sync — PRD §12 Q5). Scope = per-playlist download (matches the
+Playlist screen's "Download for offline" control). Wire SW registration into the Bun build. Note:
+`lib/push.ts` (web push) is unrelated to offline and not a v1 must-have — leave it parked.
+
+### D8 — PDF export: client-side print route *(R)*
+The Playlist screen exports an ordered, one-song-per-page chord-sheet PDF with a render-mode choice
+(as-fingered / concert / both; capo'd songs print twice under "both"). **(R)** render a dedicated
+print-styled route (`@media print`, page-break-per-song) and use the browser's print-to-PDF, reusing the
+`ChordSheet` component and the §D5 transpose engine — no server rendering, no extra heavyweight dep. If
+pixel-exact server PDFs are later required, revisit with a headless-Chromium or `@react-pdf` step. PRD §12
+Q4: confirm header content + default render mode.
+
+### D9 — Backend conventions (already established — keep)
+One **service function per operation** in `src/backend/services/`, taking a plain args object
+(`{ user, session, … }`); `api.ts` wires HTTP + declares **explicit `t.Object` response schemas** (these
+drive Eden's client types — keep them tight). Frontend never imports services — only the Eden `api` proxy.
+
+---
+
+## 6. Design system (for building the screens)
+
+Tokens already in `src/frontend/index.css`; mirror the Claude Design exports exactly.
+
+- **Accent (warm amber):** light `#c2711a`, dark `#e8a13a` (`--primary`). One accent only.
+- **Surfaces:** light bg `#ffffff` / surface `#f5f7f9` / surface-2 `#eef1f5`; dark bg `#16181c` /
+  `#1d2025` / `#23262c`. Ink/muted/border tokens per theme.
+- **`--ok` `#3fae7a`** for the online/offline indicator dot.
+- **Fonts:** Space Grotesk (`font-display` — titles, buttons, labels), IBM Plex Sans (`font-sans` — lyrics,
+  body), IBM Plex Mono (`font-mono` — **chords**, meta, key/capo chips).
+- **Light = desktop authoring; Dark = stage / Live mode.** Theme toggle is global.
+- **The chord sheet is the hero** everywhere — chords (mono, accent) sit above lyrics; clean alignment,
+  generous line-height. `ChordSheet` is the atomic component reused by Song View, editor preview, Live
+  mode, and PDF.
+- **The capo/concert toggle (`CapoToggle`) is one recognizable control** appearing identically on Song
+  View, Live mode, and Preferences.
+
+---
+
+## 7. Task breakdown
+
+Grouped by area, then sequenced into the PRD's phases at the end. Foundation tasks (DB, engine, roles)
+unblock most screens — do them first.
+
+### A. Data model & migrations
+- [ ] **A1.** Personal scope: signup hook to auto-create a personal `Organization`; mark/hide personal orgs (D1).
+- [ ] **A2.** Roles: configure better-auth access control with Admin/Writer/Reader; seed `owner`→Admin mapping (D6).
+- [ ] **A3.** Add `User.defaultChordView` (`asfingered` | `concert`) (D2).
+- [ ] **A4.** Song metadata: add `tempo`, `timeSignature` to `Chart`; add `Tag` + `SongTag` join (D4).
+- [ ] **A5.** Fork model: add `Song.forkedFromId`; change slug uniqueness to `@@unique([organizationId, slug])`; migration + backfill (D3).
+- [ ] **A6.** *(should-have)* `Suggestion` model (chartId, proposedContent, proposerId, status, timestamps).
+- [ ] **A7.** Seed script for the Curated library (the ~7 traditional songs shown in the Library design).
+
+### B. Shared engine & utilities
+- [ ] **B1.** Port the transpose engine to `src/shared/transpose.ts` (chord shift, sharp-spelling, slash chords) (D5).
+- [ ] **B2.** ChordPro metadata parser: `content` → `{title,artist,key,capo,tempo,timeSig,tags,sections}` for denormalization + preview (D4).
+- [ ] **B3.** "Two views from one chart" helper: given `(content, capo, transposeSteps, view)` → rendered blocks for `ChordSheet`.
+
+### C. APIs (Elysia services)
+- [ ] **C1.** `songsCreate` v2: accept full metadata + credits/artists (find-or-create Artist) + scope selector; derive slug per-scope.
+- [ ] **C2.** Implement `songsUpdate` + `songsDelete` with `requireRole` write guards (D6).
+- [ ] **C3.** `songsList` filters: `scope/orgId`, `q` (title/artist), `artist`, `key`, `tag` (powers Library search).
+- [ ] **C4.** **Fork** endpoint `POST /songs/:slug/fork` → copies Song+Chart into a writable target org, sets provenance (D3).
+- [ ] **C5.** Songbooks (playlists): implement list/read/create/update/delete + add/remove song + reorder (`order`).
+- [ ] **C6.** Preferences endpoint (or better-auth `additionalFields`) to read/update `defaultChordView`.
+- [ ] **C7.** *(should-have)* Suggestions: create / list / accept (apply to chart) / reject.
+- [ ] **C8.** Bands/members/invitations: wire better-auth org client calls (create band, invite by email/link, change role, switch active org) — mostly config + UI, little custom API.
+
+### D. PWA / offline (D7)
+- [ ] **D1.** Web app manifest + icons; register a service worker in the Bun build.
+- [ ] **D2.** App-shell precache; offline fallback for `/app`.
+- [ ] **D3.** "Download for offline" → cache a playlist's resolved song payloads (Cache API/IndexedDB); progress UI; "Available offline" state.
+- [ ] **D4.** Offline detection → `OfflinePill`; ensure Live mode reads cached data with no network.
+
+### E. PDF export (D8)
+- [ ] **E1.** Print-styled route rendering a playlist in order (one song/page, page-break, capo/key header).
+- [ ] **E2.** Render-mode option: as-fingered / concert / both (capo'd song prints twice); reuse `ChordSheet` + transpose engine.
+
+### F. Screens (each = TanStack route + components + the APIs above)
+
+| # | Screen | Route(s) | Key pieces / reused components | Depends on |
+|---|---|---|---|---|
+| F1 | **Song View** (build first) | `/app/songs/$slug` | `ChordSheet`, `CapoToggle`, `TransposeStepper`, fork/edit/suggest actions, "forked from" provenance, "Open in Live mode" | B1–B3, C2/C4 |
+| F2 | **ChordPro Editor** | `/app/songs/$slug/edit`, `/app/songs/new` | `SongEditor` (left) + `SongPreview`/`ChordSheet` (right), metadata fields, **Save-to scope selector** | B2, C1/C2 |
+| F3 | **Capo behavior** | (on F1 + F4) | `CapoToggle` wired to B3; show active capo value; default from `defaultChordView` | B1/B3, C6 |
+| F4 | **Live mode** (mobile/tablet-first) | `/app/live/$playlistId` | Big chord sheet, auto-scroll w/ speed, prev/next + swipe, transpose + capo toggle, `OfflinePill` | B3, C5, D-* |
+| F5 | **Library / Browse** | `/app` or `/app/library` | Scope switcher (Curated · bands · Personal), search + filters, results list w/ Open/Fork | C3/C4 |
+| F6 | **Playlist / Setlist** | `/app/setlists`, `/app/setlists/$id` | Ordered drag-reorder list, add-song search, **Download offline** + **Export PDF**, clone | C5, D-*, E-* |
+| F7 | **Band Management** | `/app/bands`, `/app/bands/$id` | Member list + `RoleBadge`, invite (link/email) + role assign, band switcher | A2, C8 |
+| F8 | **Preferences** | `/app/preferences` | `CapoToggle` as default-view setting + worked example, theme toggle, account + memberships | A3, C6 |
+| F9 | **Home / Dashboard** | `/app` (or `/app/home`) | "Up next" gig + setlist, jump-back-in, recent songs, your bands; Live-mode CTA | C3/C5, C8 |
+| F10 | **Auth** | `/app/login`, `/app/register` | better-auth email/password; style to design (Login.dc.html) | — |
+| F11 | **App shell / nav** | `_protected/layout` | Top bar (BandBro logo, section, theme toggle), active-org context, route guards | A1/A2 |
+
+### G. Cross-cutting
+- [ ] **G1.** Active-organization (scope) context provider in the frontend, synced to `session.activeOrganizationId`.
+- [ ] **G2.** Role-aware UI (hide Edit/Delete/Manage for Readers; show "Suggest" instead).
+- [ ] **G3.** Replace placeholder routes/data-dumps; remove the demo `EXAMPLE`/`addNumbers` once real flows exist.
+- [ ] **G4.** Tests for the transpose engine (B1) and capo translation (golden cases from PRD §7 worked example).
+
+### Phasing (PRD §13)
+- **Phase 1 — Songbook:** A1–A5, A7, B*, C1–C4, C6, F1–F3, F5, F7, F8, F10, F11, G1–G2.
+- **Phase 2 — Organize & perform:** C5, D*, E*, F4, F6, F9.
+- **Phase 3 — Collaborate:** A6, C7 (suggestions); per-member notes.
+- **Phase 4 — Broaden:** public scope, community library, rights/licensing (out of v1).
+
+---
+
+## 8. Open product questions (PRD §12) blocking specific tasks
+
+1. **Role set** Admin/Writer/Reader confirmed? → D6 / A2.
+2. **Capo authoring convention** = played shapes + `{capo}` (recommended canonical). → B-/D4.
+3. **Instrument preference granularity** simple capo/no-capo (assumed) vs full instrument list. → A3.
+4. **PDF layout** header content + default render mode + whose view. → E*.
+5. **Offline scope** per-playlist (assumed) vs "all band songs"; read-only (assumed). → D*.
+6. **Delete policy** any Writer vs Admin-only. → D6 / C2.
+
+Resolve these as you reach the dependent tasks; defaults above are the recommended answers.
