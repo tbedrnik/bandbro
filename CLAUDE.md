@@ -194,13 +194,22 @@ v1 is **read-only offline** (no edit-queue/sync — PRD §12 Q5). Scope = per-pl
 Playlist screen's "Download for offline" control). Wire SW registration into the Bun build. Note:
 `lib/push.ts` (web push) is unrelated to offline and not a v1 must-have — leave it parked.
 
-### D8 — PDF export: client-side print route *(R)*
+### D8 — PDF export: server-side via the `chordpro` CLI *(DECIDED — implemented)*
 The Playlist screen exports an ordered, one-song-per-page chord-sheet PDF with a render-mode choice
-(as-fingered / concert / both; capo'd songs print twice under "both"). **(R)** render a dedicated
-print-styled route (`@media print`, page-break-per-song) and use the browser's print-to-PDF, reusing the
-`ChordSheet` component and the §D5 transpose engine — no server rendering, no extra heavyweight dep. If
-pixel-exact server PDFs are later required, revisit with a headless-Chromium or `@react-pdf` step. PRD §12
-Q4: confirm header content + default render mode.
+(as-fingered / concert / both; capo'd songs print twice under "both"). This is rendered **server-side by
+the reference `chordpro` CLI** (`GET /api/songbooks/:id/pdf?mode=…`, `songbooksPdf` service):
+- We build one ChordPro document for the whole setlist — songs joined by `{new_song}` so the CLI paginates
+  one song per page and auto-generates a cover + table of contents.
+- For **concert** view we rewrite the source (transpose every `[chord]`/`{key}` by the capo amount and drop
+  `{capo}`) with the shared §D5 engine, so the PDF matches the on-screen views. **both** emits a capo'd song
+  twice (as-fingered, then a `(concert)` copy). See `src/shared/chordproPdf.ts` (unit-tested).
+- ChordPro 6 renders Unicode out of the box (Czech diacritics confirmed), so no font config is needed.
+  An optional `CHORDPRO_CONFIG` env points the CLI at a JSON config for custom layout/fonts.
+- **Deploy:** the `chordpro` binary must be on the server. The `Dockerfile` installs it
+  (`cpanm App::Music::ChordPro`) on top of `oven/bun`; `railway.json` uses the `DOCKERFILE` builder. The
+  endpoint returns **501** if the binary is missing, so the app still boots without it.
+- A dependency-free fallback remains: the print route `/app/setlists/$id/print` renders the same content
+  with `@media print` for the browser's print-to-PDF (no longer the primary path, kept for offline/no-CLI).
 
 ### D9 — Backend conventions (already established — keep)
 One **service function per operation** in `src/backend/services/`, taking a plain args object

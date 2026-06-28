@@ -2,6 +2,12 @@ import { api } from "@frontend/api";
 import { MetaChip } from "@frontend/components/MetaChip";
 import { OfflinePill } from "@frontend/components/OfflinePill";
 import { Button } from "@frontend/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@frontend/components/ui/dropdown-menu";
 import { Input } from "@frontend/components/ui/input";
 import { downloadSetlist, isDownloaded } from "@frontend/lib/offline";
 import {
@@ -95,14 +101,38 @@ function SetlistDetail() {
 							<IconDownload className="size-4" /> Download for offline
 						</Button>
 					)}
-					<Button
-						variant="outline"
-						render={
-							<Link to="/setlists/$id/print" params={{ id }} target="_blank" />
-						}
-					>
-						<IconFileTypePdf className="size-4" /> Export PDF
-					</Button>
+					<DropdownMenu>
+						<DropdownMenuTrigger
+							render={
+								<Button variant="outline" disabled={!setlist.songs.length}>
+									<IconFileTypePdf className="size-4" /> Export PDF
+								</Button>
+							}
+						/>
+						<DropdownMenuContent>
+							{(
+								[
+									["both", "As-fingered + concert"],
+									["fingered", "As-fingered only"],
+									["concert", "Concert pitch only"],
+								] as const
+							).map(([mode, label]) => (
+								<DropdownMenuItem
+									key={mode}
+									render={
+										// Server-rendered PDF (chordpro CLI). Same-origin link sends the
+										// session cookie; `download` saves it straight to disk.
+										<a
+											href={`/api/songbooks/${id}/pdf?mode=${mode}`}
+											download
+										/>
+									}
+								>
+									{label}
+								</DropdownMenuItem>
+							))}
+						</DropdownMenuContent>
+					</DropdownMenu>
 					<Button
 						render={<Link to="/live/$id" params={{ id }} />}
 						disabled={!setlist.songs.length}

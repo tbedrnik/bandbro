@@ -1,0 +1,87 @@
+/**
+ * Helpers for producing the ChordPro source we hand to the `chordpro` CLI for
+ * server-side PDF rendering (see src/backend/services/songbooksPdf.ts).
+ *
+ * The CLI renders chords exactly as written, so to get the "concert pitch" view we
+ * rewrite the source: transpose every [chord] (and the {key}) by the capo amount and
+ * drop the {capo} directive. This reuses the same transpose engine as the on-screen
+ * views, so the PDF matches what players see.
+ */
+
+import { transposeChord, transposeKey } from "./transpose";
+
+/** Transpose every inline [chord] and the {key} directive in ChordPro text by `steps`. */
+export function transposeChordproText(content: string, steps: number): string {
+	if (steps === 0) return content;
+	return (
+		content
+			// Inline chords: [C] [Am] [D/F#]. Annotations like [*text] are left alone.
+			.replace(
+				/\[([^\]*][^\]]*)\]/g,
+				(_m, chord) => `[${transposeChord(chord, steps)}]`,
+			)
+			// {key: X} / {k: X}
+			.replace(/\{(key|k)\s*:\s*([^}]+)\}/gi, (_m, dir, key) => {
+				return `{${dir}: ${transposeKey(key.trim(), steps)}}`;
+			})
+	);
+}
+
+/** Remove the {capo} directive (used once chords are already in concert pitch). */
+export function stripCapoDirective(content: string): string {
+	return content
+		.replace(/^\s*\{capo\s*:[^}]*\}\s*$/gim, "")
+		.replace(/\n{3,}/g, "\n\n");
+}
+
+/**
+ * The concert-pitch ChordPro for a chart: transpose up by `capo`, drop {capo}.
+ * Returns the content unchanged when there's no capo.
+ */
+export function concertChordpro(content: string, capo: number): string {
+	if (!capo) return content;
+	return stripCapoDirective(transposeChordproText(content, capo));
+}
+
+export type PdfMode = "fingered" | "concert" | "both";
+export type PdfSongEntry = { name: string; content: string; capo: number };
+
+/** Ensure a ChordPro section declares a title, and tag the title for "both" mode. */
+function withTitle(content: string, name: string, suffix = ""): string {
+	return /\{(title|t)\s*:/i.test(content)
+		? content.replace(
+				/\{(title|t)\s*:\s*([^}]*)\}/i,
+				(_m, d, t) => `{${d}: ${t.trim()}${suffix}}`,
+			)
+		: `{title: ${name}${suffix}}\n${content}`;
+}
+
+/**
+ * Build one ChordPro document for a whole setlist. Songs are separated by {new_song}
+ * so the `chordpro` CLI paginates one song per page and builds a table of contents.
+ * For "both", a capo'd song appears twice — as-fingered, then concert.
+ */
+export function buildSetlistChordpro(
+	songs: PdfSongEntry[],
+	mode: PdfMode,
+): string {
+	const sections: string[] = [];
+	for (const s of songs) {
+		if (mode === "fingered" || mode === "both") {
+			sections.push(withTitle(s.content, s.name));
+		}
+		if (
+			(mode === "concert" || mode === "both") &&
+			(mode !== "both" || s.capo > 0)
+		) {
+			sections.push(
+				withTitle(
+					concertChordpro(s.content, s.capo),
+					s.name,
+					mode === "both" ? " (concert)" : "",
+				),
+			);
+		}
+	}
+	return sections.join("\n\n{new_song}\n\n");
+}

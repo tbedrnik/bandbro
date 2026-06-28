@@ -6,6 +6,7 @@ import { HttpError } from "./services/scope";
 import { songbooksCreate } from "./services/songbooksCreate";
 import { songbooksDelete } from "./services/songbooksDelete";
 import { songbooksList } from "./services/songbooksList";
+import { songbooksPdf } from "./services/songbooksPdf";
 import { songbooksRead } from "./services/songbooksRead";
 import { songbooksUpdate } from "./services/songbooksUpdate";
 import { songsCreate } from "./services/songsCreate";
@@ -184,6 +185,32 @@ export const api = new Elysia({ prefix: "/api" })
 					songbooksDelete({ id: params.id, userId: user.id }),
 				{
 					auth: true,
+				},
+			)
+			.get(
+				"/:id/pdf",
+				async ({ params, user, query, set }) => {
+					const { pdf, filename } = await songbooksPdf({
+						id: params.id,
+						userId: user.id,
+						mode: query.mode,
+					});
+					set.headers["content-type"] = "application/pdf";
+					set.headers["content-disposition"] =
+						`attachment; filename="${filename}"`;
+					return new Response(pdf as unknown as BlobPart);
+				},
+				{
+					auth: true,
+					query: t.Object({
+						mode: t.Optional(
+							t.Union([
+								t.Literal("fingered"),
+								t.Literal("concert"),
+								t.Literal("both"),
+							]),
+						),
+					}),
 				},
 			),
 	)
