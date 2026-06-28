@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_protected/")({
 function HomePage() {
 	const user = useUser();
 	const { bands, personal } = useScopes();
-	const { data: songs } = useQuery(api.songs.get.queryOptions({ query: {} }));
+	const { data: songs } = useQuery(api.songs.get.queryOptions({}));
 	const recent = songs?.slice(0, 6) ?? [];
 
 	return (

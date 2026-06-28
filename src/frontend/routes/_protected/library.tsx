@@ -34,9 +34,7 @@ function LibraryPage() {
 	const active: Scope = scopes.find((s) => s.param === scopeParam) ?? scopes[0];
 
 	const { data: songs, isPending } = useQuery(
-		api.songs.get.queryOptions({
-			query: { scope: scopeParam, ...(q ? { q } : {}) },
-		}),
+		api.songs.get.queryOptions({ scope: scopeParam, ...(q ? { q } : {}) }),
 	);
 
 	const writableScopes = [...bands, ...(personal ? [personal] : [])];
@@ -169,7 +167,7 @@ function ForkButton({
 	const queryClient = useQueryClient();
 	const fork = useMutation({
 		...api.songs({ slug }).fork.post.mutationOptions(),
-		onSuccess: (created: { slug: string }) => {
+		onSuccess: (created) => {
 			queryClient.invalidateQueries({ queryKey: ["songs"] });
 			navigate({ to: "/songs/$slug", params: { slug: created.slug } });
 		},

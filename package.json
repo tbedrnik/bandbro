@@ -3,6 +3,7 @@
 	"version": "1.0.50",
 	"scripts": {
 		"test": "bun test",
+		"typecheck": "tsc --noEmit",
 		"dev": "NODE_ENV=development bun run --watch src/backend/index.ts",
 		"prod": "NODE_ENV=production bun run src/backend/index.ts",
 		"auth:generate": "bunx @better-auth/cli@latest generate --config src/backend/auth.ts --output prisma/models/auth.prisma",
@@ -50,7 +51,8 @@
 		"@tanstack/router-cli": "^1.145.2",
 		"@types/react-dom": "^19.2.3",
 		"bun-types": "latest",
-		"prisma": "^7.2.0"
+		"prisma": "^7.2.0",
+		"typescript": "^5.7.0"
 	},
 	"module": "src/backend/index.js"
 }

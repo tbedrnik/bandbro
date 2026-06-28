@@ -47,7 +47,7 @@ function SongViewPage() {
 
 	const fork = useMutation({
 		...api.songs({ slug }).fork.post.mutationOptions(),
-		onSuccess: (created: { slug: string }) => {
+		onSuccess: (created) => {
 			queryClient.invalidateQueries({ queryKey: ["songs"] });
 			navigate({ to: "/songs/$slug", params: { slug: created.slug } });
 		},

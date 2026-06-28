@@ -31,8 +31,14 @@ export const writer = ac.newRole({
 	songbook: ["read", "create", "update", "delete"],
 });
 
+// Admin gets every permission. Written out as mutable literal arrays because
+// `newRole` rejects the readonly tuples in `defaultStatements` when spread.
 export const admin = ac.newRole({
-	...defaultStatements,
+	organization: ["update", "delete"],
+	member: ["create", "update", "delete"],
+	invitation: ["create", "cancel"],
+	team: ["create", "update", "delete"],
+	ac: ["create", "read", "update", "delete"],
 	song: ["read", "create", "update", "delete"],
 	songbook: ["read", "create", "update", "delete"],
 });

@@ -26,7 +26,7 @@ function SetlistsIndex() {
 	const { bands, personal } = useScopes();
 	const queryClient = useQueryClient();
 	const { data: setlists, isPending } = useQuery(
-		api.songbooks.get.queryOptions({ query: {} }),
+		api.songbooks.get.queryOptions({}),
 	);
 	const writableScopes = [...bands, ...(personal ? [personal] : [])];
 

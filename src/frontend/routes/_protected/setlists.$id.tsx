@@ -38,7 +38,7 @@ function SetlistDetail() {
 	});
 
 	const { data: searchResults } = useQuery({
-		...api.songs.get.queryOptions({ query: q ? { q } : {} }),
+		...api.songs.get.queryOptions(q ? { q } : {}),
 		enabled: adding,
 	});
 

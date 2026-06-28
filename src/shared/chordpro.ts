@@ -97,14 +97,10 @@ export function parseChordpro(content: string): ParsedSong {
 	const blocks: ChordBlock[] = [];
 
 	let current: ChordBlock | null = null;
-	let lastChorus: ChordBlock | null = null;
 	let inExplicitSection = false;
 
 	const flush = () => {
-		if (current?.lines.length) {
-			blocks.push(current);
-			if (current.kind === "chorus") lastChorus = current;
-		}
+		if (current?.lines.length) blocks.push(current);
 		current = null;
 	};
 
@@ -149,9 +145,12 @@ export function parseChordpro(content: string): ParsedSong {
 						.map((t) => t.trim())
 						.filter(Boolean);
 					break;
-				case "chorus":
-					if (lastChorus) blocks.push({ ...lastChorus });
+				case "chorus": {
+					// {chorus} repeats the most recent chorus block.
+					const prevChorus = blocks.findLast((b) => b.kind === "chorus");
+					if (prevChorus) blocks.push({ ...prevChorus });
 					break;
+				}
 				default:
 					if (name in SECTION_START) {
 						flush();

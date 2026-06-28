@@ -59,7 +59,7 @@ export function ChordProEditorScreen(props: Props) {
 
 	const create = useMutation({
 		...api.songs.post.mutationOptions(),
-		onSuccess: (song: { slug: string }) => {
+		onSuccess: (song) => {
 			invalidate();
 			navigate({ to: "/songs/$slug", params: { slug: song.slug } });
 		},

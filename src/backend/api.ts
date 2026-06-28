@@ -29,10 +29,14 @@ const creditSchema = t.Object({
 export const api = new Elysia({ prefix: "/api" })
 	.use(serverTiming())
 	.use(authMiddleware)
+	// Map domain errors to HTTP status codes. We only set the status (no JSON body):
+	// returning a body here would widen every route's success type with the error
+	// shape in the Eden-derived client types. The status still reaches the client via
+	// the Eden `error` channel; the human-readable reason is logged server-side.
 	.onError(({ error, set }) => {
 		if (error instanceof HttpError) {
 			set.status = error.status;
-			return { message: error.message };
+			return;
 		}
 		// Prisma "not found" (find*OrThrow) → 404
 		if (
@@ -40,7 +44,7 @@ export const api = new Elysia({ prefix: "/api" })
 			error.name === "PrismaClientKnownRequestError"
 		) {
 			set.status = 404;
-			return { message: "Not found." };
+			return;
 		}
 	})
 	.group("/songs", (group) =>
