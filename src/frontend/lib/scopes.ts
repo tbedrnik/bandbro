@@ -1,4 +1,5 @@
 import { auth } from "@frontend/auth";
+import { useStore } from "@nanostores/react";
 
 /** A place a song can live and be browsed from. */
 export type Scope = {
@@ -42,7 +43,7 @@ export function orgToScope(org: OrgLite): Scope {
  * better-auth's organization list. See CLAUDE.md §G1.
  */
 export function useScopes() {
-	const { data: orgs, isPending } = auth.useListOrganizations();
+	const { data: orgs, isPending } = useStore(auth.useListOrganizations);
 	const list = (orgs ?? []) as OrgLite[];
 	const personal = list.find(isPersonal);
 	const bands = list.filter((o) => !isPersonal(o));
