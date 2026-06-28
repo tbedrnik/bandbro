@@ -24,7 +24,7 @@ import { Route as ProtectedSongsSlugRouteImport } from './../../frontend/routes/
 import { Route as ProtectedSetlistsIdRouteImport } from './../../frontend/routes/_protected/setlists.$id'
 import { Route as ProtectedLiveIdRouteImport } from './../../frontend/routes/_protected/live.$id'
 import { Route as ProtectedSongsSlugEditRouteImport } from './../../frontend/routes/_protected/songs.$slug_.edit'
-import { Route as ProtectedSetlistsIdPrintRouteImport } from './../../frontend/routes/_protected/setlists.$id.print'
+import { Route as ProtectedSetlistsIdPrintRouteImport } from './../../frontend/routes/_protected/setlists.$id_.print'
 
 const DesignRoute = DesignRouteImport.update({
   id: '/design',
@@ -101,9 +101,9 @@ const ProtectedSongsSlugEditRoute = ProtectedSongsSlugEditRouteImport.update({
 } as any)
 const ProtectedSetlistsIdPrintRoute =
   ProtectedSetlistsIdPrintRouteImport.update({
-    id: '/print',
-    path: '/print',
-    getParentRoute: () => ProtectedSetlistsIdRoute,
+    id: '/$id_/print',
+    path: '/$id/print',
+    getParentRoute: () => ProtectedSetlistsRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -116,7 +116,7 @@ export interface FileRoutesByFullPath {
   '/preferences': typeof ProtectedPreferencesRoute
   '/setlists': typeof ProtectedSetlistsRouteWithChildren
   '/live/$id': typeof ProtectedLiveIdRoute
-  '/setlists/$id': typeof ProtectedSetlistsIdRouteWithChildren
+  '/setlists/$id': typeof ProtectedSetlistsIdRoute
   '/songs/$slug': typeof ProtectedSongsSlugRoute
   '/songs/new': typeof ProtectedSongsNewRoute
   '/setlists/$id/print': typeof ProtectedSetlistsIdPrintRoute
@@ -132,7 +132,7 @@ export interface FileRoutesByTo {
   '/preferences': typeof ProtectedPreferencesRoute
   '/setlists': typeof ProtectedSetlistsRouteWithChildren
   '/live/$id': typeof ProtectedLiveIdRoute
-  '/setlists/$id': typeof ProtectedSetlistsIdRouteWithChildren
+  '/setlists/$id': typeof ProtectedSetlistsIdRoute
   '/songs/$slug': typeof ProtectedSongsSlugRoute
   '/songs/new': typeof ProtectedSongsNewRoute
   '/setlists/$id/print': typeof ProtectedSetlistsIdPrintRoute
@@ -151,10 +151,10 @@ export interface FileRoutesById {
   '/_protected/setlists': typeof ProtectedSetlistsRouteWithChildren
   '/_protected/': typeof ProtectedIndexRoute
   '/_protected/live/$id': typeof ProtectedLiveIdRoute
-  '/_protected/setlists/$id': typeof ProtectedSetlistsIdRouteWithChildren
+  '/_protected/setlists/$id': typeof ProtectedSetlistsIdRoute
   '/_protected/songs/$slug': typeof ProtectedSongsSlugRoute
   '/_protected/songs/new': typeof ProtectedSongsNewRoute
-  '/_protected/setlists/$id/print': typeof ProtectedSetlistsIdPrintRoute
+  '/_protected/setlists/$id_/print': typeof ProtectedSetlistsIdPrintRoute
   '/_protected/songs/$slug_/edit': typeof ProtectedSongsSlugEditRoute
 }
 export interface FileRouteTypes {
@@ -206,7 +206,7 @@ export interface FileRouteTypes {
     | '/_protected/setlists/$id'
     | '/_protected/songs/$slug'
     | '/_protected/songs/new'
-    | '/_protected/setlists/$id/print'
+    | '/_protected/setlists/$id_/print'
     | '/_protected/songs/$slug_/edit'
   fileRoutesById: FileRoutesById
 }
@@ -323,12 +323,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSongsSlugEditRouteImport
       parentRoute: typeof ProtectedLayoutRoute
     }
-    '/_protected/setlists/$id/print': {
-      id: '/_protected/setlists/$id/print'
-      path: '/print'
+    '/_protected/setlists/$id_/print': {
+      id: '/_protected/setlists/$id_/print'
+      path: '/$id/print'
       fullPath: '/setlists/$id/print'
       preLoaderRoute: typeof ProtectedSetlistsIdPrintRouteImport
-      parentRoute: typeof ProtectedSetlistsIdRoute
+      parentRoute: typeof ProtectedSetlistsRoute
     }
   }
 }
@@ -347,23 +347,14 @@ const AuthLayoutRouteWithChildren = AuthLayoutRoute._addFileChildren(
   AuthLayoutRouteChildren,
 )
 
-interface ProtectedSetlistsIdRouteChildren {
+interface ProtectedSetlistsRouteChildren {
+  ProtectedSetlistsIdRoute: typeof ProtectedSetlistsIdRoute
   ProtectedSetlistsIdPrintRoute: typeof ProtectedSetlistsIdPrintRoute
 }
 
-const ProtectedSetlistsIdRouteChildren: ProtectedSetlistsIdRouteChildren = {
-  ProtectedSetlistsIdPrintRoute: ProtectedSetlistsIdPrintRoute,
-}
-
-const ProtectedSetlistsIdRouteWithChildren =
-  ProtectedSetlistsIdRoute._addFileChildren(ProtectedSetlistsIdRouteChildren)
-
-interface ProtectedSetlistsRouteChildren {
-  ProtectedSetlistsIdRoute: typeof ProtectedSetlistsIdRouteWithChildren
-}
-
 const ProtectedSetlistsRouteChildren: ProtectedSetlistsRouteChildren = {
-  ProtectedSetlistsIdRoute: ProtectedSetlistsIdRouteWithChildren,
+  ProtectedSetlistsIdRoute: ProtectedSetlistsIdRoute,
+  ProtectedSetlistsIdPrintRoute: ProtectedSetlistsIdPrintRoute,
 }
 
 const ProtectedSetlistsRouteWithChildren =

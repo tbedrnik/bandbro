@@ -30,13 +30,14 @@ function ProtectedLayout() {
 		return <Navigate to="/login" />;
 	}
 
-	// Live mode is full-bleed (its own chrome); everything else gets the nav.
-	const isLive = pathname.startsWith("/live");
+	// Live mode and the print/PDF view are full-bleed (no app chrome); everything
+	// else gets the nav.
+	const fullBleed = pathname.startsWith("/live") || pathname.endsWith("/print");
 	const section = Object.entries(SECTIONS).find(([p]) =>
 		pathname.startsWith(p),
 	)?.[1];
 
-	if (isLive) return <Outlet />;
+	if (fullBleed) return <Outlet />;
 
 	return (
 		<div className="min-h-dvh bg-background text-foreground">
