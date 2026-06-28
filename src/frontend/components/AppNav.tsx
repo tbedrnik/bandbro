@@ -23,13 +23,10 @@ export function AppNav({ section }: { section?: string }) {
 
 	return (
 		<header className="sticky top-0 z-20 flex h-14 items-center gap-6 border-b border-border bg-background/90 px-6 backdrop-blur">
+			{/* Logo + links form one stable left cluster so the nav never shifts as
+			    you navigate. The current section moves to the right, by the toggle. */}
 			<Wordmark />
-			{section && (
-				<span className="font-display text-sm text-muted-foreground">
-					{section}
-				</span>
-			)}
-			<nav className="ml-4 flex items-center gap-5">
+			<nav className="flex items-center gap-5">
 				<Link
 					to="/"
 					className={link}
@@ -59,18 +56,25 @@ export function AppNav({ section }: { section?: string }) {
 					Bands
 				</Link>
 			</nav>
-			<button
-				type="button"
-				onClick={toggle}
-				className="ml-auto inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 font-display text-[13px] font-medium transition-colors hover:bg-muted"
-			>
-				{theme === "dark" ? (
-					<IconMoon className="size-4 text-primary" />
-				) : (
-					<IconSun className="size-4 text-primary" />
+			<div className="ml-auto flex items-center gap-4">
+				{section && (
+					<span className="font-display text-sm text-muted-foreground">
+						{section}
+					</span>
 				)}
-				{theme === "dark" ? "Dark" : "Light"}
-			</button>
+				<button
+					type="button"
+					onClick={toggle}
+					className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 font-display text-[13px] font-medium transition-colors hover:bg-muted"
+				>
+					{theme === "dark" ? (
+						<IconMoon className="size-4 text-primary" />
+					) : (
+						<IconSun className="size-4 text-primary" />
+					)}
+					{theme === "dark" ? "Dark" : "Light"}
+				</button>
+			</div>
 		</header>
 	);
 }

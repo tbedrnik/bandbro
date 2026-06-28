@@ -6,8 +6,9 @@
  * Run: bun run db:seed
  */
 
-import { parseChordproMeta } from "../src/shared/chordpro";
 import { prisma } from "../src/backend/prisma";
+import { parseChordproMeta } from "../src/shared/chordpro";
+import { slugify } from "../src/shared/slug";
 
 type Seed = { name: string; artist: string; tags: string[]; content: string };
 
@@ -123,13 +124,6 @@ I [Dm]saw my [Gm]baby [A7]there
 {end_of_verse}`,
 	},
 ];
-
-function slugify(s: string): string {
-	return s
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-+|-+$/g, "");
-}
 
 async function tagId(name: string): Promise<string> {
 	const slug = slugify(name);

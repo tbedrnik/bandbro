@@ -4,6 +4,7 @@ import { MetaChip } from "@frontend/components/MetaChip";
 import { Button } from "@frontend/components/ui/button";
 import { useUser } from "@frontend/contexts/UserContext";
 import { useScopes } from "@frontend/lib/scopes";
+import { slugify } from "@shared/slug";
 import { IconMusic, IconPlus } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -121,7 +122,7 @@ function HomePage() {
 								if (!name) return;
 								await auth.organization.create({
 									name,
-									slug: `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now().toString(36)}`,
+									slug: `${slugify(name)}-${Date.now().toString(36)}`,
 								});
 								location.reload();
 							}}

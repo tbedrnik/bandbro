@@ -1,5 +1,6 @@
 import { canWrite, isAdmin } from "@backend/permissions";
 import { prisma } from "@backend/prisma";
+import { slugify } from "../../shared/slug";
 
 /** Thrown by guards; mapped to HTTP status by the route's error handling. */
 export class HttpError extends Error {
@@ -64,12 +65,7 @@ export async function requireAdmin(
 
 /** Unique, URL-safe slug derived from `name`, suffixed on collision. */
 export async function uniqueSongSlug(name: string): Promise<string> {
-	const base =
-		name
-			.toLowerCase()
-			.replace(/[^a-z0-9]+/g, "-")
-			.replace(/^-+|-+$/g, "")
-			.slice(0, 60) || "song";
+	const base = slugify(name).slice(0, 60) || "song";
 	let slug = base;
 	let n = 1;
 	while (
@@ -83,10 +79,7 @@ export async function uniqueSongSlug(name: string): Promise<string> {
 
 /** Find-or-create an Artist by name, returning its id. */
 export async function findOrCreateArtist(name: string): Promise<string> {
-	const slug = name
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-+|-+$/g, "");
+	const slug = slugify(name);
 	const existing = await prisma.artist.findUnique({
 		where: { slug },
 		select: { id: true },
@@ -100,10 +93,7 @@ export async function findOrCreateArtist(name: string): Promise<string> {
 export async function findOrCreateTags(names: string[]): Promise<string[]> {
 	const ids: string[] = [];
 	for (const name of names) {
-		const slug = name
-			.toLowerCase()
-			.replace(/[^a-z0-9]+/g, "-")
-			.replace(/^-+|-+$/g, "");
+		const slug = slugify(name);
 		if (!slug) continue;
 		const existing = await prisma.tag.findUnique({
 			where: { slug },
