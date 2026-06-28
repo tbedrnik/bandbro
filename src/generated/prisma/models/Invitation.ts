@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.js"
-import type * as Prisma from "../internal/prismaNamespace.js"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model Invitation
@@ -179,7 +179,7 @@ export type InvitationGroupByOutputType = {
   _max: InvitationMaxAggregateOutputType | null
 }
 
-type GetInvitationGroupByPayload<T extends InvitationGroupByArgs> = Prisma.PrismaPromise<
+export type GetInvitationGroupByPayload<T extends InvitationGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<InvitationGroupByOutputType, T['by']> &
       {
@@ -1363,6 +1363,11 @@ export type InvitationFindManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Skip the first `n` Invitations.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Invitations.
+   */
   distinct?: Prisma.InvitationScalarFieldEnum | Prisma.InvitationScalarFieldEnum[]
 }
 

@@ -36,7 +36,7 @@
 | DB | **SQLite** via **Prisma 7** (`libsql` adapter) | Schema split across `prisma/models/*.prisma`. |
 | Frontend | **React 19** + **TanStack Router** (file-based) + **TanStack Query** | SPA mounted at `/app`. |
 | Editor | **CodeMirror** + `@chordbook/codemirror-lang-chordpro` | ChordPro source editing. |
-| ChordPro | **chordsheetjs** | Parse + transpose engine. |
+| ChordPro | **custom parser** (`src/shared/chordpro.ts`) | Parse + transpose engine; no runtime ChordPro lib dependency. |
 | UI | **shadcn** (base-nova) + **Tailwind v4** + Tabler icons | Tokens in `src/frontend/index.css`. |
 | Lint/format | **Biome** | `biome.json` (tabs, double quotes). |
 | Deploy | **Railway** (RAILPACK) | `railway.json`. |
@@ -125,8 +125,8 @@ A song/chart's **scope** is derived from `organizationId`:
 - Auth wiring (email+password, org plugin), `auth`/`authOptional` macros, protected route layout.
 - `songsList`, `songsRead` (scope-filtered), `songsCreate` (name + single chart only — ignores credits/metadata).
 - Design system in code: tokens, fonts, and ported components — `ChordSheet`, `CapoToggle`,
-  `TransposeStepper`, `RoleBadge`, `OfflinePill`, `MetaChip`, `SongEditor` (CodeMirror), `SongPreview`
-  (chordsheetjs). Showcased at the `/app/design` route.
+  `TransposeStepper`, `RoleBadge`, `OfflinePill`, `MetaChip`, `SongEditor` (CodeMirror), `SongSheet`
+  (renders the shared engine's blocks). Showcased at the `/app/design` route.
 - Prisma schema for Song/Chart/Artist/Credit/Songbook/SongbookSong + better-auth models; 3 migrations.
 
 **Stubbed / missing:**
@@ -171,12 +171,12 @@ acceptable for v1; revisit if/when songs need scope-qualified URLs.
 The `{title}{artist}{key}{capo}{tempo}{tags}` directives live in the chart `content`. Keep `content`
 authoritative, but **parse on save** into denormalized columns (`key`, `capo`, `tempo`, `timeSignature`,
 and tags) so Library can sort/filter without parsing every row. Add the missing columns; add a `Tag` model
-+ `SongTag` join (tags describe the song, not the arrangement). chordsheetjs already exposes these on parse.
++ `SongTag` join (tags describe the song, not the arrangement). The shared ChordPro parser extracts these on parse.
 
 ### D5 — Transpose & capo are pure client-side, in `src/shared` *(R)*
 Transpose (key shift) and the capo→concert translation are the **same operation**: shift every chord by N
 semitones. The designs ship a tiny, dependency-free engine (`shiftRoot`/`transposeChord`, sharp-spelling,
-slash-chord aware). Port it to `src/shared/transpose.ts` (or use chordsheetjs' `.transpose()`), use it for
+slash-chord aware). Port it to `src/shared/transpose.ts`, use it for
 both controls, and derive the **concert view = transpose by `+capo`**. No API involved. One canonical
 engine → identical results in Song View, Live mode, and PDF export.
 

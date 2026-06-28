@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.js"
-import type * as Prisma from "../internal/prismaNamespace.js"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model Verification
@@ -165,7 +165,7 @@ export type VerificationGroupByOutputType = {
   _max: VerificationMaxAggregateOutputType | null
 }
 
-type GetVerificationGroupByPayload<T extends VerificationGroupByArgs> = Prisma.PrismaPromise<
+export type GetVerificationGroupByPayload<T extends VerificationGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<VerificationGroupByOutputType, T['by']> &
       {
@@ -982,6 +982,11 @@ export type VerificationFindManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * Skip the first `n` Verifications.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Verifications.
+   */
   distinct?: Prisma.VerificationScalarFieldEnum | Prisma.VerificationScalarFieldEnum[]
 }
 

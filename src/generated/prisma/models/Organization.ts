@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.js"
-import type * as Prisma from "../internal/prismaNamespace.js"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model Organization
@@ -165,7 +165,7 @@ export type OrganizationGroupByOutputType = {
   _max: OrganizationMaxAggregateOutputType | null
 }
 
-type GetOrganizationGroupByPayload<T extends OrganizationGroupByArgs> = Prisma.PrismaPromise<
+export type GetOrganizationGroupByPayload<T extends OrganizationGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<OrganizationGroupByOutputType, T['by']> &
       {
@@ -1553,6 +1553,11 @@ export type OrganizationFindManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * Skip the first `n` Organizations.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Organizations.
+   */
   distinct?: Prisma.OrganizationScalarFieldEnum | Prisma.OrganizationScalarFieldEnum[]
 }
 

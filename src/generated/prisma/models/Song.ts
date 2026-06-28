@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.js"
-import type * as Prisma from "../internal/prismaNamespace.js"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model Song
@@ -213,7 +213,7 @@ export type SongGroupByOutputType = {
   _max: SongMaxAggregateOutputType | null
 }
 
-type GetSongGroupByPayload<T extends SongGroupByArgs> = Prisma.PrismaPromise<
+export type GetSongGroupByPayload<T extends SongGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<SongGroupByOutputType, T['by']> &
       {
@@ -1905,6 +1905,11 @@ export type SongFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * Skip the first `n` Songs.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Songs.
+   */
   distinct?: Prisma.SongScalarFieldEnum | Prisma.SongScalarFieldEnum[]
 }
 

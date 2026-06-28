@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.js"
-import type * as Prisma from "../internal/prismaNamespace.js"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model Credit
@@ -165,7 +165,7 @@ export type CreditGroupByOutputType = {
   _max: CreditMaxAggregateOutputType | null
 }
 
-type GetCreditGroupByPayload<T extends CreditGroupByArgs> = Prisma.PrismaPromise<
+export type GetCreditGroupByPayload<T extends CreditGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<CreditGroupByOutputType, T['by']> &
       {
@@ -1292,6 +1292,11 @@ export type CreditFindManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Skip the first `n` Credits.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Credits.
+   */
   distinct?: Prisma.CreditScalarFieldEnum | Prisma.CreditScalarFieldEnum[]
 }
 

@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.js"
-import type * as Prisma from "../internal/prismaNamespace.js"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model Chart
@@ -245,7 +245,7 @@ export type ChartGroupByOutputType = {
   _max: ChartMaxAggregateOutputType | null
 }
 
-type GetChartGroupByPayload<T extends ChartGroupByArgs> = Prisma.PrismaPromise<
+export type GetChartGroupByPayload<T extends ChartGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<ChartGroupByOutputType, T['by']> &
       {
@@ -2162,6 +2162,11 @@ export type ChartFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Skip the first `n` Charts.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Charts.
+   */
   distinct?: Prisma.ChartScalarFieldEnum | Prisma.ChartScalarFieldEnum[]
 }
 

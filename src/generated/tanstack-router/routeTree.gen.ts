@@ -107,6 +107,7 @@ const ProtectedSetlistsIdPrintRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof ProtectedIndexRoute
   '/design': typeof DesignRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
@@ -114,7 +115,6 @@ export interface FileRoutesByFullPath {
   '/library': typeof ProtectedLibraryRoute
   '/preferences': typeof ProtectedPreferencesRoute
   '/setlists': typeof ProtectedSetlistsRouteWithChildren
-  '/': typeof ProtectedIndexRoute
   '/live/$id': typeof ProtectedLiveIdRoute
   '/setlists/$id': typeof ProtectedSetlistsIdRouteWithChildren
   '/songs/$slug': typeof ProtectedSongsSlugRouteWithChildren
@@ -123,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/songs/$slug/edit': typeof ProtectedSongsSlugEditRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof ProtectedIndexRoute
   '/design': typeof DesignRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
@@ -130,7 +131,6 @@ export interface FileRoutesByTo {
   '/library': typeof ProtectedLibraryRoute
   '/preferences': typeof ProtectedPreferencesRoute
   '/setlists': typeof ProtectedSetlistsRouteWithChildren
-  '/': typeof ProtectedIndexRoute
   '/live/$id': typeof ProtectedLiveIdRoute
   '/setlists/$id': typeof ProtectedSetlistsIdRouteWithChildren
   '/songs/$slug': typeof ProtectedSongsSlugRouteWithChildren
@@ -160,6 +160,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/design'
     | '/login'
     | '/register'
@@ -167,7 +168,6 @@ export interface FileRouteTypes {
     | '/library'
     | '/preferences'
     | '/setlists'
-    | '/'
     | '/live/$id'
     | '/setlists/$id'
     | '/songs/$slug'
@@ -176,6 +176,7 @@ export interface FileRouteTypes {
     | '/songs/$slug/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/design'
     | '/login'
     | '/register'
@@ -183,7 +184,6 @@ export interface FileRouteTypes {
     | '/library'
     | '/preferences'
     | '/setlists'
-    | '/'
     | '/live/$id'
     | '/setlists/$id'
     | '/songs/$slug'
@@ -228,14 +228,14 @@ declare module '@tanstack/react-router' {
     '/_protected': {
       id: '/_protected'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof ProtectedLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth': {
       id: '/_auth'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }

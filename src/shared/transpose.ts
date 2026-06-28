@@ -50,7 +50,7 @@ function shiftRoot(token: string, steps: number): string {
 
 /** Transpose a full chord, handling slash chords like "C/G" and "D/F#". */
 export function transposeChord(chord: string, steps: number): string {
-	if (!chord || !chord.trim()) return chord;
+	if (!chord?.trim()) return chord;
 	if (steps === 0) return chord;
 	return chord
 		.split("/")
@@ -95,4 +95,4 @@ export function transposeKey(
 	return transposeChord(key, steps);
 }
 
-export { SHARP, NOTE_INDEX };
+export { NOTE_INDEX, SHARP };

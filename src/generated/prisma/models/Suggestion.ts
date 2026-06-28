@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.js"
-import type * as Prisma from "../internal/prismaNamespace.js"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model Suggestion
@@ -179,7 +179,7 @@ export type SuggestionGroupByOutputType = {
   _max: SuggestionMaxAggregateOutputType | null
 }
 
-type GetSuggestionGroupByPayload<T extends SuggestionGroupByArgs> = Prisma.PrismaPromise<
+export type GetSuggestionGroupByPayload<T extends SuggestionGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<SuggestionGroupByOutputType, T['by']> &
       {
@@ -1367,6 +1367,11 @@ export type SuggestionFindManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Skip the first `n` Suggestions.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Suggestions.
+   */
   distinct?: Prisma.SuggestionScalarFieldEnum | Prisma.SuggestionScalarFieldEnum[]
 }
 
