@@ -54,7 +54,7 @@ export function ChordProEditorScreen(props: Props) {
 	const slug = props.mode === "new" ? "__none__" : props.slug;
 
 	const invalidate = () => {
-		queryClient.invalidateQueries({ queryKey: ["songs"] });
+		queryClient.invalidateQueries(api.songs.get.queryFilter());
 	};
 
 	const create = useMutation({

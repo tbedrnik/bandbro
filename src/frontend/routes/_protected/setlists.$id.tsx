@@ -34,7 +34,8 @@ function SetlistDetail() {
 
 	const update = useMutation({
 		...api.songbooks({ id }).put.mutationOptions(),
-		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["songbooks"] }),
+		onSuccess: () =>
+			queryClient.invalidateQueries(api.songbooks.get.queryFilter()),
 	});
 
 	const { data: searchResults } = useQuery({

@@ -3,7 +3,7 @@ import { ChordProEditorScreen } from "@frontend/components/ChordProEditorScreen"
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_protected/songs/$slug/edit")({
+export const Route = createFileRoute("/_protected/songs/$slug_/edit")({
 	validateSearch: (search: Record<string, unknown>): { suggest?: boolean } => ({
 		suggest: search.suggest === true || search.suggest === "true",
 	}),

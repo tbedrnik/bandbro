@@ -168,7 +168,7 @@ function ForkButton({
 	const fork = useMutation({
 		...api.songs({ slug }).fork.post.mutationOptions(),
 		onSuccess: (created) => {
-			queryClient.invalidateQueries({ queryKey: ["songs"] });
+			queryClient.invalidateQueries(api.songs.get.queryFilter());
 			navigate({ to: "/songs/$slug", params: { slug: created.slug } });
 		},
 	});

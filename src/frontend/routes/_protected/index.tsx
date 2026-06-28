@@ -1,6 +1,7 @@
 import { api } from "@frontend/api";
 import { auth } from "@frontend/auth";
 import { MetaChip } from "@frontend/components/MetaChip";
+import { NamePromptDialog } from "@frontend/components/NamePromptDialog";
 import { Button } from "@frontend/components/ui/button";
 import { useUser } from "@frontend/contexts/UserContext";
 import { useScopes } from "@frontend/lib/scopes";
@@ -8,6 +9,7 @@ import { slugify } from "@shared/slug";
 import { IconMusic, IconPlus } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_protected/")({
 	component: HomePage,
@@ -18,6 +20,21 @@ function HomePage() {
 	const { bands, personal } = useScopes();
 	const { data: songs } = useQuery(api.songs.get.queryOptions({}));
 	const recent = songs?.slice(0, 6) ?? [];
+	const [bandDialogOpen, setBandDialogOpen] = useState(false);
+	const [creatingBand, setCreatingBand] = useState(false);
+
+	const createBand = async (name: string) => {
+		setCreatingBand(true);
+		try {
+			await auth.organization.create({
+				name,
+				slug: `${slugify(name)}-${Date.now().toString(36)}`,
+			});
+			location.reload();
+		} finally {
+			setCreatingBand(false);
+		}
+	};
 
 	return (
 		<div className="mx-auto max-w-6xl px-6 py-10">
@@ -117,21 +134,25 @@ function HomePage() {
 						<Button
 							variant="outline"
 							className="mt-1 justify-start"
-							onClick={async () => {
-								const name = prompt("New band name");
-								if (!name) return;
-								await auth.organization.create({
-									name,
-									slug: `${slugify(name)}-${Date.now().toString(36)}`,
-								});
-								location.reload();
-							}}
+							onClick={() => setBandDialogOpen(true)}
 						>
 							<IconPlus className="size-4" /> Create a band
 						</Button>
 					</div>
 				</aside>
 			</div>
+
+			<NamePromptDialog
+				open={bandDialogOpen}
+				onOpenChange={setBandDialogOpen}
+				title="Create a band"
+				description="A shared workspace for your bandmates — you'll be its admin."
+				label="Band name"
+				placeholder="The Anchor Sessions"
+				submitLabel="Create band"
+				pending={creatingBand}
+				onSubmit={createBand}
+			/>
 		</div>
 	);
 }

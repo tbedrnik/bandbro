@@ -1,4 +1,5 @@
 import { api } from "@frontend/api";
+import { NamePromptDialog } from "@frontend/components/NamePromptDialog";
 import { Button } from "@frontend/components/ui/button";
 import { useScopes } from "@frontend/lib/scopes";
 import { IconPlaylist, IconPlus } from "@tabler/icons-react";
@@ -9,6 +10,7 @@ import {
 	Outlet,
 	useMatchRoute,
 } from "@tanstack/react-router";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_protected/setlists")({
 	component: SetlistsLayout,
@@ -30,15 +32,19 @@ function SetlistsIndex() {
 	);
 	const writableScopes = [...bands, ...(personal ? [personal] : [])];
 
+	const [dialogOpen, setDialogOpen] = useState(false);
+
 	const create = useMutation({
 		...api.songbooks.post.mutationOptions(),
-		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["songbooks"] }),
+		onSuccess: () => {
+			queryClient.invalidateQueries(api.songbooks.get.queryFilter());
+			setDialogOpen(false);
+		},
 	});
 
-	const onCreate = () => {
-		const title = prompt("Setlist name (e.g. Friday gig @ The Anchor)");
+	const onCreate = (title: string) => {
 		const target = writableScopes[0]?.id;
-		if (!title || !target) return;
+		if (!target) return;
 		create.mutate({ title, organizationId: target });
 	};
 
@@ -46,7 +52,7 @@ function SetlistsIndex() {
 		<div className="mx-auto max-w-4xl px-6 py-8">
 			<div className="flex items-center justify-between">
 				<h1 className="font-display text-3xl font-bold">Setlists</h1>
-				<Button onClick={onCreate} disabled={create.isPending}>
+				<Button onClick={() => setDialogOpen(true)} disabled={create.isPending}>
 					<IconPlus className="size-4" /> New setlist
 				</Button>
 			</div>
@@ -77,6 +83,18 @@ function SetlistsIndex() {
 					))
 				)}
 			</div>
+
+			<NamePromptDialog
+				open={dialogOpen}
+				onOpenChange={setDialogOpen}
+				title="New setlist"
+				description="Name it for the gig or rehearsal — you can add songs next."
+				label="Setlist name"
+				placeholder="Friday gig @ The Anchor"
+				submitLabel="Create setlist"
+				pending={create.isPending}
+				onSubmit={onCreate}
+			/>
 		</div>
 	);
 }
