@@ -2,22 +2,29 @@
 #
 # Bun runs the app; the Perl `chordpro` CLI renders setlist PDFs server-side
 # (src/backend/services/songbooksPdf.ts). The PDF endpoint degrades gracefully
-# (HTTP 501) if `chordpro` is absent, so the image still boots without it — but
-# installing it here is what makes Export PDF work in production.
+# (HTTP 501) if `chordpro` is absent, so the image still boots without it.
+#
+# We base on Ubuntu because it ships a prebuilt `chordpro` package (universe) —
+# `apt-get install chordpro` pulls all the Perl deps with no source compile. (Debian,
+# the oven/bun base, has no such package, which is why building ChordPro from CPAN
+# there is slow and brittle.) Bun is copied from the official image, so there's no
+# bun.sh download at build time.
 
-FROM oven/bun:1-debian
+FROM oven/bun:1 AS bun
 
-# --- ChordPro CLI (server-side PDF export) ---
-# App::Music::ChordPro is pure-Perl for PDF output (PDF::API2); it bundles a few
-# XS deps that compile from source, hence build-essential. --notest keeps the
-# build tractable. ChordPro 6 renders Unicode (incl. Czech diacritics) by default.
+FROM ubuntu:rolling
+ENV DEBIAN_FRONTEND=noninteractive
+
+# chordpro: prebuilt PDF renderer (Unicode/diacritics out of the box).
+# libstdc++6 + ca-certificates: needed by the Bun binary and outbound TLS.
 RUN apt-get update \
-	&& apt-get install -y --no-install-recommends perl cpanminus build-essential \
-	&& cpanm --notest --no-man-pages App::Music::ChordPro \
-	&& chordpro --version \
-	&& apt-get purge -y build-essential \
-	&& apt-get autoremove -y \
-	&& rm -rf /var/lib/apt/lists/* /root/.cpanm
+	&& apt-get install -y --no-install-recommends \
+		chordpro ca-certificates libstdc++6 \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& chordpro --version
+
+# Bun binary from the official image (matches the lockfile's runtime).
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 
 WORKDIR /app
 

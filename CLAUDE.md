@@ -205,9 +205,11 @@ the reference `chordpro` CLI** (`GET /api/songbooks/:id/pdf?mode=…`, `songbook
   twice (as-fingered, then a `(concert)` copy). See `src/shared/chordproPdf.ts` (unit-tested).
 - ChordPro 6 renders Unicode out of the box (Czech diacritics confirmed), so no font config is needed.
   An optional `CHORDPRO_CONFIG` env points the CLI at a JSON config for custom layout/fonts.
-- **Deploy:** the `chordpro` binary must be on the server. The `Dockerfile` installs it
-  (`cpanm App::Music::ChordPro`) on top of `oven/bun`; `railway.json` uses the `DOCKERFILE` builder. The
-  endpoint returns **501** if the binary is missing, so the app still boots without it.
+- **Deploy:** the `chordpro` binary must be on the server. The `Dockerfile` is Ubuntu-based and installs
+  the prebuilt `chordpro` apt package (Debian/`oven/bun` has no such package, so a CPAN build there is
+  brittle — this avoids it), then copies the Bun binary from `oven/bun`. `railway.json` uses the
+  `DOCKERFILE` builder. The endpoint returns **501** if the binary is missing, so the app still boots
+  without it.
 - A dependency-free fallback remains: the print route `/app/setlists/$id/print` renders the same content
   with `@media print` for the browser's print-to-PDF (no longer the primary path, kept for offline/no-CLI).
 
