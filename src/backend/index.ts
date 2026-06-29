@@ -24,6 +24,12 @@ function serveManifest() {
 }
 
 const server = Bun.serve({
+	// Bind to all interfaces and the platform-provided port. Without an explicit
+	// hostname, Bun.serve binds to localhost (127.0.0.1) once $PORT is set, which
+	// makes the container unreachable from a PaaS router (Railway/Fly/etc.) — the
+	// process runs but looks like it "never started".
+	hostname: "0.0.0.0",
+	port: Number(process.env.PORT) || 3000,
 	routes: {
 		"/api/*": api.fetch,
 		"/app/sw.js": serveSw,
@@ -35,7 +41,7 @@ const server = Bun.serve({
 	development: isDev,
 });
 
-console.log(`🐲 Bun is running at ${server.hostname}:${server.port}`);
+console.log(`🐲 Bun is running at http://${server.hostname}:${server.port}`);
 
 // Run @tanstack/router-cli watch if in development
 if (isDev) {
