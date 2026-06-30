@@ -218,6 +218,31 @@ One **service function per operation** in `src/backend/services/`, taking a plai
 (`{ user, session, … }`); `api.ts` wires HTTP + declares **explicit `t.Object` response schemas** (these
 drive Eden's client types — keep them tight). Frontend never imports services — only the Eden `api` proxy.
 
+### D10 — Fan experience: public QR share + read-only live view *(implemented)*
+The band shares a 5-character **session code** from the stage; fans open a public, no-auth Live view on
+their own phones that auto-follows the current song. Implements the "Fan experience" Claude Design handoff.
+- **Model.** `LiveSession` (`code` unique, `songbookId`, denormalized `organizationId`, `currentSongIndex`)
+  in `prisma/models/songs.prisma`; the relation lives on `Songbook` so deleting a band cascades its sessions.
+- **API (`services/liveSessions.ts`, group `/live`).** `POST /live` (auth, member-only) creates/reuses the
+  active session for a setlist; `POST /live/:code/current` (auth) pushes the band's current index; **`GET
+  /live/:code` is public/no-auth** and returns the resolved read-only setlist (chart `content` + meta) plus
+  the current index — fans poll it (~4s). "Watching" is a lightweight **in-memory heartbeat** (per-`clientId`,
+  15s window; single-instance, resets on restart) — no DB writes on the hot read path.
+- **Frontend.** Public routes `s.index.tsx` (join-by-code landing) + `s.$code.tsx` (the fan live view, the
+  immersive "Now Playing" direction 1c — full-screen lyrics + a subtle accent glow, with all controls in an
+  expandable bottom drawer) sit **outside `_protected`/`_auth`** so they need no session. The drawer is the
+  shadcn `Drawer` (`components/ui/drawer.tsx`, built on `vaul`) used as a **persistent, non-modal snap drawer**
+  (peek → full). They render the warm paper/dark palette by overriding the theme CSS vars on the view root and
+  on the drawer's portalled content (`lib/fanTheme.ts`), reusing the shared `ChordSheet`/`SongSheet` (extended
+  with `hideChords` + `align`) and transpose engine — identical chord sheets to the band's Live mode. View
+  prefs (chords/size/theme/transpose) are **per-device**, never broadcast.
+- **Band entry points.** `ShareSheet` (always-dark, band-facing) + `ShareWithFansModal` are wired into Live
+  mode ("Share with the room") and the setlist view (`showPrint`). `lib/useFanSession.ts` lazily creates the
+  session on first share and syncs `currentSongIndex` as the band advances. QR via `qrcode-generator`.
+- **URLs.** The design names `bandbro.live/s/<code>`; this single-app build serves the fan view at
+  `/app/s/<code>` and encodes the **real reachable origin** in the QR/copy-link (`lib/fanSession.ts`) so codes
+  actually scan. A production reverse-proxy can map `bandbro.live` → this app with no code change.
+
 ---
 
 ## 6. Design system (for building the screens)

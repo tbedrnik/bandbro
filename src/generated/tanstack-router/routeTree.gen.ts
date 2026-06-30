@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './../../frontend/routes/__root'
 import { Route as DesignRouteImport } from './../../frontend/routes/design'
 import { Route as ProtectedLayoutRouteImport } from './../../frontend/routes/_protected/layout'
 import { Route as AuthLayoutRouteImport } from './../../frontend/routes/_auth/layout'
+import { Route as SIndexRouteImport } from './../../frontend/routes/s.index'
 import { Route as ProtectedIndexRouteImport } from './../../frontend/routes/_protected/index'
+import { Route as SCodeRouteImport } from './../../frontend/routes/s.$code'
 import { Route as ProtectedSetlistsRouteImport } from './../../frontend/routes/_protected/setlists'
 import { Route as ProtectedPreferencesRouteImport } from './../../frontend/routes/_protected/preferences'
 import { Route as ProtectedLibraryRouteImport } from './../../frontend/routes/_protected/library'
@@ -39,10 +41,20 @@ const AuthLayoutRoute = AuthLayoutRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SIndexRoute = SIndexRouteImport.update({
+  id: '/s/',
+  path: '/s/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProtectedLayoutRoute,
+} as any)
+const SCodeRoute = SCodeRouteImport.update({
+  id: '/s/$code',
+  path: '/s/$code',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ProtectedSetlistsRoute = ProtectedSetlistsRouteImport.update({
   id: '/setlists',
@@ -115,6 +127,8 @@ export interface FileRoutesByFullPath {
   '/library': typeof ProtectedLibraryRoute
   '/preferences': typeof ProtectedPreferencesRoute
   '/setlists': typeof ProtectedSetlistsRouteWithChildren
+  '/s/$code': typeof SCodeRoute
+  '/s/': typeof SIndexRoute
   '/live/$id': typeof ProtectedLiveIdRoute
   '/setlists/$id': typeof ProtectedSetlistsIdRoute
   '/songs/$slug': typeof ProtectedSongsSlugRoute
@@ -131,6 +145,8 @@ export interface FileRoutesByTo {
   '/library': typeof ProtectedLibraryRoute
   '/preferences': typeof ProtectedPreferencesRoute
   '/setlists': typeof ProtectedSetlistsRouteWithChildren
+  '/s/$code': typeof SCodeRoute
+  '/s': typeof SIndexRoute
   '/live/$id': typeof ProtectedLiveIdRoute
   '/setlists/$id': typeof ProtectedSetlistsIdRoute
   '/songs/$slug': typeof ProtectedSongsSlugRoute
@@ -149,7 +165,9 @@ export interface FileRoutesById {
   '/_protected/library': typeof ProtectedLibraryRoute
   '/_protected/preferences': typeof ProtectedPreferencesRoute
   '/_protected/setlists': typeof ProtectedSetlistsRouteWithChildren
+  '/s/$code': typeof SCodeRoute
   '/_protected/': typeof ProtectedIndexRoute
+  '/s/': typeof SIndexRoute
   '/_protected/live/$id': typeof ProtectedLiveIdRoute
   '/_protected/setlists/$id': typeof ProtectedSetlistsIdRoute
   '/_protected/songs/$slug': typeof ProtectedSongsSlugRoute
@@ -168,6 +186,8 @@ export interface FileRouteTypes {
     | '/library'
     | '/preferences'
     | '/setlists'
+    | '/s/$code'
+    | '/s/'
     | '/live/$id'
     | '/setlists/$id'
     | '/songs/$slug'
@@ -184,6 +204,8 @@ export interface FileRouteTypes {
     | '/library'
     | '/preferences'
     | '/setlists'
+    | '/s/$code'
+    | '/s'
     | '/live/$id'
     | '/setlists/$id'
     | '/songs/$slug'
@@ -201,7 +223,9 @@ export interface FileRouteTypes {
     | '/_protected/library'
     | '/_protected/preferences'
     | '/_protected/setlists'
+    | '/s/$code'
     | '/_protected/'
+    | '/s/'
     | '/_protected/live/$id'
     | '/_protected/setlists/$id'
     | '/_protected/songs/$slug'
@@ -214,6 +238,8 @@ export interface RootRouteChildren {
   AuthLayoutRoute: typeof AuthLayoutRouteWithChildren
   ProtectedLayoutRoute: typeof ProtectedLayoutRouteWithChildren
   DesignRoute: typeof DesignRoute
+  SCodeRoute: typeof SCodeRoute
+  SIndexRoute: typeof SIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -239,12 +265,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/s/': {
+      id: '/s/'
+      path: '/s'
+      fullPath: '/s/'
+      preLoaderRoute: typeof SIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_protected/': {
       id: '/_protected/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof ProtectedIndexRouteImport
       parentRoute: typeof ProtectedLayoutRoute
+    }
+    '/s/$code': {
+      id: '/s/$code'
+      path: '/s/$code'
+      fullPath: '/s/$code'
+      preLoaderRoute: typeof SCodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_protected/setlists': {
       id: '/_protected/setlists'
@@ -392,6 +432,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthLayoutRoute: AuthLayoutRouteWithChildren,
   ProtectedLayoutRoute: ProtectedLayoutRouteWithChildren,
   DesignRoute: DesignRoute,
+  SCodeRoute: SCodeRoute,
+  SIndexRoute: SIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

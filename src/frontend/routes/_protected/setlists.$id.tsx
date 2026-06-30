@@ -1,6 +1,7 @@
 import { api } from "@frontend/api";
 import { MetaChip } from "@frontend/components/MetaChip";
 import { OfflinePill } from "@frontend/components/OfflinePill";
+import { ShareWithFansModal } from "@frontend/components/ShareWithFansModal";
 import { Button } from "@frontend/components/ui/button";
 import {
 	DropdownMenu,
@@ -10,6 +11,7 @@ import {
 } from "@frontend/components/ui/dropdown-menu";
 import { Input } from "@frontend/components/ui/input";
 import { downloadSetlist, isDownloaded } from "@frontend/lib/offline";
+import { useFanSession } from "@frontend/lib/useFanSession";
 import {
 	IconArrowDown,
 	IconArrowUp,
@@ -17,6 +19,7 @@ import {
 	IconFileTypePdf,
 	IconPlayerPlay,
 	IconPlus,
+	IconShare3,
 	IconX,
 } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,6 +36,8 @@ function SetlistDetail() {
 	const [adding, setAdding] = useState(false);
 	const [q, setQ] = useState("");
 	const [downloaded, setDownloaded] = useState(() => isDownloaded(id));
+	const [shareOpen, setShareOpen] = useState(false);
+	const fan = useFanSession(id);
 
 	const { data: setlist, isPending } = useQuery(
 		api.songbooks({ id }).get.queryOptions({}),
@@ -134,6 +139,16 @@ function SetlistDetail() {
 						</DropdownMenuContent>
 					</DropdownMenu>
 					<Button
+						variant="outline"
+						disabled={!setlist.songs.length}
+						onClick={() => {
+							fan.ensure();
+							setShareOpen(true);
+						}}
+					>
+						<IconShare3 className="size-4" /> Share with fans
+					</Button>
+					<Button
 						render={<Link to="/live/$id" params={{ id }} />}
 						disabled={!setlist.songs.length}
 					>
@@ -141,6 +156,17 @@ function SetlistDetail() {
 					</Button>
 				</div>
 			</div>
+
+			<ShareWithFansModal
+				open={shareOpen}
+				onClose={() => setShareOpen(false)}
+				title={`Share “${setlist.title}”`}
+				code={fan.code}
+				heading="Fans follow this set, live"
+				blurb="Print the QR for the door or merch table, or share the link. Fans scan to open a read-only Live Mode that follows the set automatically — or enter the code at bandbro.live. Lyrics by default, chords on tap."
+				watching={fan.watching}
+				showPrint
+			/>
 
 			{/* Songs */}
 			<div className="mt-6 overflow-hidden rounded-xl border border-border">

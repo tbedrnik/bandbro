@@ -453,14 +453,6 @@ export type SongbookSongUncheckedUpdateManyWithoutSongbookNestedInput = {
   deleteMany?: Prisma.SongbookSongScalarWhereInput | Prisma.SongbookSongScalarWhereInput[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type SongbookSongCreateWithoutChartInput = {
   order?: number
   createdAt?: Date | string

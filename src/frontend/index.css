@@ -169,6 +169,52 @@
 	scrollbar-width: none;
 }
 
+/* Public fan view + landing (fan-experience handoff): hidden scrollbars and the
+   join-code caret / "now playing" flash / live-dot animations. */
+.fan-scroll::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}
+.fan-scroll {
+	scrollbar-width: none;
+}
+@keyframes fan-blink {
+	0%,
+	49% {
+		opacity: 1;
+	}
+	50%,
+	100% {
+		opacity: 0;
+	}
+}
+@keyframes fan-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.3;
+	}
+}
+@keyframes fan-flash {
+	0% {
+		opacity: 0;
+		transform: translate(-50%, -8px);
+	}
+	12% {
+		opacity: 1;
+		transform: translate(-50%, 0);
+	}
+	80% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+		transform: translate(-50%, -8px);
+	}
+}
+
 /* PDF export: clean page breaks, white background, no app chrome. */
 @media print {
 	.break-after-page {

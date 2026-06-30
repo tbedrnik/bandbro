@@ -112,6 +112,11 @@ export type SongTag = Prisma.SongTagModel
  */
 export type Songbook = Prisma.SongbookModel
 /**
+ * Model LiveSession
+ * 
+ */
+export type LiveSession = Prisma.LiveSessionModel
+/**
  * Model SongbookSong
  * 
  */

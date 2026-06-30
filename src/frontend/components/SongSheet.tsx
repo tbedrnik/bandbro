@@ -15,6 +15,8 @@ export function SongSheet({
 	transpose = 0,
 	lyricSize,
 	chordSize,
+	hideChords,
+	align,
 	className,
 }: {
 	content: string;
@@ -23,6 +25,8 @@ export function SongSheet({
 	transpose?: number;
 	lyricSize?: number;
 	chordSize?: number;
+	hideChords?: boolean;
+	align?: "left" | "center";
 	className?: string;
 }) {
 	const { blocks } = useMemo(
@@ -34,6 +38,8 @@ export function SongSheet({
 			blocks={blocks}
 			lyricSize={lyricSize}
 			chordSize={chordSize}
+			hideChords={hideChords}
+			align={align}
 			className={className}
 		/>
 	);

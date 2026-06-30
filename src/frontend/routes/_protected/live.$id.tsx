@@ -1,8 +1,10 @@
 import { api } from "@frontend/api";
 import { CapoToggle } from "@frontend/components/CapoToggle";
+import { ShareWithFansModal } from "@frontend/components/ShareWithFansModal";
 import { SongSheet } from "@frontend/components/SongSheet";
 import { useUser } from "@frontend/contexts/UserContext";
 import { getOfflineSetlist, useOnline } from "@frontend/lib/offline";
+import { useFanSession } from "@frontend/lib/useFanSession";
 import type { ChordView } from "@shared/transpose";
 import { transposeKey } from "@shared/transpose";
 import {
@@ -12,6 +14,7 @@ import {
 	IconPlayerPause,
 	IconPlayerPlay,
 	IconPlus,
+	IconShare3,
 	IconX,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
@@ -45,10 +48,20 @@ function LiveMode() {
 	const [transpose, setTranspose] = useState(0);
 	const [scrolling, setScrolling] = useState(false);
 	const [speed, setSpeed] = useState(2);
+	const [shareOpen, setShareOpen] = useState(false);
 	const scrollRef = useRef<HTMLDivElement>(null);
+
+	const fan = useFanSession(id);
 
 	const songs = setlist?.songs ?? [];
 	const entry = songs[index];
+
+	// Once the band has opened "Share with fans", keep the live session's current-song
+	// index in sync so fans auto-follow the set.
+	const { syncCurrent } = fan;
+	useEffect(() => {
+		syncCurrent(index);
+	}, [index, syncCurrent]);
 
 	// Auto-scroll loop.
 	useEffect(() => {
@@ -112,15 +125,35 @@ function LiveMode() {
 				<span className="truncate font-display text-sm text-muted-foreground">
 					{setlist.title} · {index + 1}/{songs.length}
 				</span>
+				<button
+					type="button"
+					onClick={() => {
+						fan.ensure();
+						setShareOpen(true);
+					}}
+					className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 font-display text-[13px] font-semibold text-primary-foreground"
+				>
+					<IconShare3 className="size-4" /> Share with fans
+				</button>
 				<Link
 					to="/setlists/$id"
 					params={{ id }}
-					className="ml-auto grid size-8 place-items-center rounded-lg hover:bg-muted"
+					className="grid size-8 place-items-center rounded-lg hover:bg-muted"
 					aria-label="Exit live mode"
 				>
 					<IconX className="size-5" />
 				</Link>
 			</div>
+
+			<ShareWithFansModal
+				open={shareOpen}
+				onClose={() => setShareOpen(false)}
+				title="Share with the room"
+				code={fan.code}
+				nowPlaying={song.name}
+				position={`${index + 1} / ${songs.length}`}
+				watching={fan.watching}
+			/>
 
 			{/* Song header */}
 			<div className="flex items-baseline gap-3 px-6 pt-4">

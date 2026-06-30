@@ -139,12 +139,38 @@ model Songbook {
 	organization        Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
 	songs       SongbookSong[]
+	liveSessions LiveSession[]
 
 	createdAt   DateTime @default(now())
 	updatedAt   DateTime @updatedAt
 
 	@@index([organizationId])
 	@@map("songbook")
+}
+
+// A public, read-only "fan" session for a setlist (CLAUDE.md fan-experience handoff).
+// The band shares a 5-character `code`; fans open bandbro.live/s/<code> (no auth) and
+// auto-follow whichever song the band is on. The band's client is the source of truth
+// for `currentSongIndex`; fan clients poll this read-only. `organizationId` is denormalized
+// from the songbook for the membership guard on writes; the relation lives on Songbook so
+// deleting the band cascades the songbook → its sessions.
+model LiveSession {
+	id   String @id @default(cuid())
+	code String @unique
+
+	songbookId String
+	songbook   Songbook @relation(fields: [songbookId], references: [id], onDelete: Cascade)
+
+	organizationId String
+
+	currentSongIndex Int     @default(0)
+	active           Boolean @default(true)
+
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+
+	@@index([songbookId])
+	@@map("live_session")
 }
 
 model SongbookSong {

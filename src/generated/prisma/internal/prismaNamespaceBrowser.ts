@@ -65,6 +65,7 @@ export const ModelName = {
   Tag: 'Tag',
   SongTag: 'SongTag',
   Songbook: 'Songbook',
+  LiveSession: 'LiveSession',
   SongbookSong: 'SongbookSong',
   Suggestion: 'Suggestion'
 } as const
@@ -263,6 +264,20 @@ export const SongbookScalarFieldEnum = {
 } as const
 
 export type SongbookScalarFieldEnum = (typeof SongbookScalarFieldEnum)[keyof typeof SongbookScalarFieldEnum]
+
+
+export const LiveSessionScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  songbookId: 'songbookId',
+  organizationId: 'organizationId',
+  currentSongIndex: 'currentSongIndex',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LiveSessionScalarFieldEnum = (typeof LiveSessionScalarFieldEnum)[keyof typeof LiveSessionScalarFieldEnum]
 
 
 export const SongbookSongScalarFieldEnum = {

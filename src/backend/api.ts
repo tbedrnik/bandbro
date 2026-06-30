@@ -2,6 +2,11 @@ import { serverTiming } from "@elysiajs/server-timing";
 import { Elysia, t } from "elysia";
 import { CreditRole } from "../generated/prisma/enums";
 import { authMiddleware } from "./auth";
+import {
+	liveSessionCreate,
+	liveSessionPublicRead,
+	liveSessionSetCurrent,
+} from "./services/liveSessions";
 import { HttpError } from "./services/scope";
 import { songbooksCreate } from "./services/songbooksCreate";
 import { songbooksDelete } from "./services/songbooksDelete";
@@ -211,6 +216,46 @@ export const api = new Elysia({ prefix: "/api" })
 							]),
 						),
 					}),
+				},
+			),
+	)
+	.group("/live", (group) =>
+		group
+			// Public, no-auth read — fans poll this to follow the band. `clientId` (a random
+			// per-device id) feeds the in-memory "watching" count; it's optional.
+			.get(
+				"/:code",
+				({ params, query }) =>
+					liveSessionPublicRead({
+						code: params.code,
+						clientId: query.clientId,
+					}),
+				{
+					query: t.Object({ clientId: t.Optional(t.String()) }),
+				},
+			)
+			// Band creates (or reuses) the share session for a setlist.
+			.post(
+				"/",
+				({ user, body }) =>
+					liveSessionCreate({ userId: user.id, songbookId: body.songbookId }),
+				{
+					auth: true,
+					body: t.Object({ songbookId: t.String() }),
+				},
+			)
+			// Band advances the set — fans follow on their next poll.
+			.post(
+				"/:code/current",
+				({ params, user, body }) =>
+					liveSessionSetCurrent({
+						userId: user.id,
+						code: params.code,
+						currentSongIndex: body.currentSongIndex,
+					}),
+				{
+					auth: true,
+					body: t.Object({ currentSongIndex: t.Integer({ minimum: 0 }) }),
 				},
 			),
 	)

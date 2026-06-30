@@ -398,6 +398,7 @@ export const ModelName = {
   Tag: 'Tag',
   SongTag: 'SongTag',
   Songbook: 'Songbook',
+  LiveSession: 'LiveSession',
   SongbookSong: 'SongbookSong',
   Suggestion: 'Suggestion'
 } as const
@@ -415,7 +416,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "account" | "verification" | "organization" | "member" | "invitation" | "song" | "chart" | "artist" | "credit" | "tag" | "songTag" | "songbook" | "songbookSong" | "suggestion"
+    modelProps: "user" | "session" | "account" | "verification" | "organization" | "member" | "invitation" | "song" | "chart" | "artist" | "credit" | "tag" | "songTag" | "songbook" | "liveSession" | "songbookSong" | "suggestion"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1455,6 +1456,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    LiveSession: {
+      payload: Prisma.$LiveSessionPayload<ExtArgs>
+      fields: Prisma.LiveSessionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LiveSessionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LiveSessionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LiveSessionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LiveSessionPayload>
+        }
+        findFirst: {
+          args: Prisma.LiveSessionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LiveSessionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LiveSessionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LiveSessionPayload>
+        }
+        findMany: {
+          args: Prisma.LiveSessionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LiveSessionPayload>[]
+        }
+        create: {
+          args: Prisma.LiveSessionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LiveSessionPayload>
+        }
+        createMany: {
+          args: Prisma.LiveSessionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LiveSessionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LiveSessionPayload>[]
+        }
+        delete: {
+          args: Prisma.LiveSessionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LiveSessionPayload>
+        }
+        update: {
+          args: Prisma.LiveSessionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LiveSessionPayload>
+        }
+        deleteMany: {
+          args: Prisma.LiveSessionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LiveSessionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LiveSessionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LiveSessionPayload>[]
+        }
+        upsert: {
+          args: Prisma.LiveSessionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LiveSessionPayload>
+        }
+        aggregate: {
+          args: Prisma.LiveSessionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLiveSession>
+        }
+        groupBy: {
+          args: Prisma.LiveSessionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LiveSessionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LiveSessionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LiveSessionCountAggregateOutputType> | number
+        }
+      }
+    }
     SongbookSong: {
       payload: Prisma.$SongbookSongPayload<ExtArgs>
       fields: Prisma.SongbookSongFieldRefs
@@ -1822,6 +1897,20 @@ export const SongbookScalarFieldEnum = {
 export type SongbookScalarFieldEnum = (typeof SongbookScalarFieldEnum)[keyof typeof SongbookScalarFieldEnum]
 
 
+export const LiveSessionScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  songbookId: 'songbookId',
+  organizationId: 'organizationId',
+  currentSongIndex: 'currentSongIndex',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LiveSessionScalarFieldEnum = (typeof LiveSessionScalarFieldEnum)[keyof typeof LiveSessionScalarFieldEnum]
+
+
 export const SongbookSongScalarFieldEnum = {
   songbookId: 'songbookId',
   chartId: 'chartId',
@@ -2041,6 +2130,7 @@ export type GlobalOmitConfig = {
   tag?: Prisma.TagOmit
   songTag?: Prisma.SongTagOmit
   songbook?: Prisma.SongbookOmit
+  liveSession?: Prisma.LiveSessionOmit
   songbookSong?: Prisma.SongbookSongOmit
   suggestion?: Prisma.SuggestionOmit
 }
