@@ -34,3 +34,26 @@ export function useTheme() {
 
 	return { theme, toggle, setTheme } as const;
 }
+
+const deriveTheme = () =>
+	document.documentElement.classList.contains("dark")
+		? ("dark" as const)
+		: ("light" as const);
+
+export function useDerivedTheme() {
+	const [theme, setTheme] = useState(deriveTheme);
+
+	useEffect(() => {
+		const mo = new MutationObserver(() => {
+			setTheme(deriveTheme);
+		});
+
+		mo.observe(document.documentElement, { attributeFilter: ["class"] });
+
+		return () => {
+			mo.disconnect();
+		};
+	}, []);
+
+	return theme;
+}
