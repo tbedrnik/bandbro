@@ -59,7 +59,10 @@ async function resolveSuggestion(
 	if (status === "ACCEPTED") {
 		await prisma.chart.update({
 			where: { id: suggestion.chart.id },
-			data: { content: suggestion.proposedContent },
+			data: {
+				content: suggestion.proposedContent,
+				// Missing meta fields, should use `songsUpdate` service
+			},
 		});
 	}
 	return prisma.suggestion.update({ where: { id }, data: { status } });

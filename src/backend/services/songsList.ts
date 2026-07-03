@@ -1,5 +1,6 @@
 import { prisma } from "@backend/prisma";
 import type { User } from "better-auth/types";
+import type { Prisma } from "../../generated/prisma/client";
 import { readableScopeWhere } from "./scope";
 
 export type SongsListQuery = {
@@ -22,14 +23,14 @@ export async function songsList({
 	user?: User;
 	query?: SongsListQuery;
 }) {
-	const scopeFilter =
+	const scopeFilter: Prisma.SongWhereInput =
 		query.scope === "curated"
 			? { organizationId: null }
 			: query.scope
 				? { organizationId: query.scope }
 				: readableScopeWhere(user?.id);
 
-	const and: Record<string, unknown>[] = [scopeFilter];
+	const and: Prisma.SongWhereInput[] = [scopeFilter];
 	if (query.q) {
 		and.push({
 			OR: [
