@@ -208,16 +208,18 @@ export const api = new Elysia({ prefix: "/api" })
 			)
 			.get(
 				"/:id/pdf",
-				async ({ params, user, query, set }) => {
+				async ({ params, user, query }) => {
 					const { pdf, filename } = await songbooksPdf({
 						id: params.id,
 						userId: user.id,
 						mode: query.mode,
 					});
-					set.headers["content-type"] = "application/pdf";
-					set.headers["content-disposition"] =
-						`attachment; filename="${filename}"`;
-					return new Response(pdf as unknown as BlobPart);
+					return new Response(pdf as unknown as BlobPart, {
+						headers: {
+							"content-type": "application/pdf",
+							"content-disposition": `attachment; filename="${filename}"`,
+						},
+					});
 				},
 				{
 					auth: true,

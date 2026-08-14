@@ -37,6 +37,7 @@
 | Frontend | **React 19** + **TanStack Router** (file-based) + **TanStack Query** | SPA mounted at `/app`. |
 | Editor | **CodeMirror** + `@chordbook/codemirror-lang-chordpro` | ChordPro source editing. |
 | ChordPro | **custom parser** (`src/shared/chordpro.ts`) | Parse + transpose engine; no runtime ChordPro lib dependency. |
+| PDF export | **`chordpro` CLI** (server-side) | Setlist PDFs, rendered from a generated ChordPro doc + config (§D8). |
 | UI | **shadcn** (base-nova) + **Tailwind v4** + Tabler icons | Tokens in `src/frontend/index.css`. |
 | Lint/format | **Biome** | `biome.json` (tabs, double quotes). |
 | Deploy | **Railway** (RAILPACK) | `railway.json`. |
@@ -224,12 +225,34 @@ The Playlist screen exports an ordered, one-song-per-page chord-sheet PDF with a
 (as-fingered / concert / both; capo'd songs print twice under "both"). This is rendered **server-side by
 the reference `chordpro` CLI** (`GET /api/songbooks/:id/pdf?mode=…`, `songbooksPdf` service):
 - We build one ChordPro document for the whole setlist — songs joined by `{new_song}` so the CLI paginates
-  one song per page and auto-generates a cover + table of contents.
+  one song per page and auto-generates a table of contents.
 - For **concert** view we rewrite the source (transpose every `[chord]`/`{key}` by the capo amount and drop
   `{capo}`) with the shared §D5 engine, so the PDF matches the on-screen views. **both** emits a capo'd song
   twice (as-fingered, then a `(concert)` copy). See `src/shared/chordproPdf.ts` (unit-tested).
+- **Layout** lives in `src/shared/chordproConfig.ts`, written to a temp JSON and passed as `--config`. It
+  overrides four
+  unhelpful CLI defaults: `papersize: a4`; `labels.width: 0` + `labels.comment: comment_italic` so section
+  names ("Verse 1", "Riff") sit *above* their section as an italic comment instead of in a left margin that
+  eats ~65pt of line width; `songbook.dual-pages: false`, since stock chordpro is duplex and starts every
+  song on a right-hand page — which put a **blank filler page between most songs**; and
+  `diagrams.show: false` (+ `kbdiagrams`), dropping the chord-shape strip along the bottom of each song,
+  which also hands ~60pt of every page back to the chart.
+- **Two columns on demand.** A song that doesn't fit one page is set in two columns (`{columns: 2}`, injected
+  after its `{title}` so it's scoped to that song) rather than spilling over the page break.
+  `needsTwoColumns` (in `chordproPdf.ts`) decides from an estimate of the rendered height — the CLI has no
+  fit-to-page option, so we model its line heights (`LINE_HEIGHT` in `chordproConfig.ts`) over the parsed
+  blocks. `PAGE_BODY_HEIGHT` is calibrated against the real CLI: a 720pt body fits an A4 page, 734pt doesn't.
+  Two columns are used **only when they actually land the song on one page** and **only when no tab staff is
+  wider than half the page** — chordpro reflows lyrics but renders verbatim (tab) lines as written, so a wide
+  staff would be clipped at the column edge. Both guards are unit-tested.
+- **Tables of contents.** Two, both at the front: *Table of Contents* (setlist order) then *Contents by
+  Title*; the stock third table (by artist) is dropped. They stay at the front because the CLI can only emit
+  them there — **don't** try to lift the by-title pages to the back afterwards (we did, with `pdf-lib`, and
+  reverted): a table's rows are link annotations pointing at page objects, so copying only those pages into
+  another document leaves every link dangling. A single-song setlist gets no table at all (the CLI omits it).
 - ChordPro 6 renders Unicode out of the box (Czech diacritics confirmed), so no font config is needed.
-  An optional `CHORDPRO_CONFIG` env points the CLI at a JSON config for custom layout/fonts.
+  An optional `CHORDPRO_CONFIG` env points the CLI at a JSON config for custom layout/fonts; it is passed
+  *after* ours, so a deployment can override any of the above.
 - **Deploy:** the `chordpro` binary must be on the server. The `Dockerfile` is Ubuntu-based and installs
   the prebuilt `chordpro` apt package (Debian/`oven/bun` has no such package, so a CPAN build there is
   brittle — this avoids it), then copies the Bun binary from `oven/bun`. `railway.json` uses the
