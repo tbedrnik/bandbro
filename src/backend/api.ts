@@ -17,6 +17,7 @@ import { songbooksUpdate } from "./services/songbooksUpdate";
 import { songsCreate } from "./services/songsCreate";
 import { songsDelete } from "./services/songsDelete";
 import { songsFork } from "./services/songsFork";
+import { songsImport } from "./services/songsImport";
 import { songsList } from "./services/songsList";
 import { songsRead } from "./services/songsRead";
 import { songsUpdate } from "./services/songsUpdate";
@@ -89,6 +90,19 @@ export const api = new Elysia({ prefix: "/api" })
 							content: t.String(),
 							description: t.Optional(t.String()),
 						}),
+					}),
+				},
+			)
+			// Import from an external chord-sheet site (akordy.kytary.cz) → a new song
+			// in the chosen scope. Declared before "/:slug" routes for clarity.
+			.post(
+				"/import",
+				({ user, body }) => songsImport({ userId: user.id, payload: body }),
+				{
+					auth: true,
+					body: t.Object({
+						url: t.String({ minLength: 1 }),
+						organizationId: t.String(),
 					}),
 				},
 			)

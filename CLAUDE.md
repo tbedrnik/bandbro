@@ -85,7 +85,23 @@ bun run db:migrate   # apply migrations (deploy)
 bun run db:push      # push schema without migration (prototyping)
 bun run db:generate  # regenerate Prisma client
 bun run auth:generate  # regenerate prisma/models/auth.prisma from better-auth config
+bun run import:kytary <url|file.html> [-o dir]   # akordy.kytary.cz sheet → ChordPro
 ```
+
+**Importers.** `src/shared/kytary.ts` converts an akordy.kytary.cz ("SmartChords") song page
+into ChordPro by walking its `#sheet-content` markup (`div.scs-section[data-type]` → sections,
+`span.scs-chord` → inline `[chords]`), rewriting European note names (`H`→`B`, `B`→`Bb`) so the
+§D5 engine reads them. The conversion is pure + unit-tested; `src/tools/importKytary.ts` is the
+CLI wrapper (fetch or local file → stdout or `<slug>.cho`). Pages carry no key/capo/tempo, so
+only `{title}`/`{artist}` are emitted (plus `{x_source}` for provenance).
+
+In-app, the same converter backs **`POST /api/songs/import`** (`services/songsImport.ts`): it takes
+`{url, organizationId}`, checks `requireWrite` **and** the URL's host against an allowlist *before*
+fetching (the URL is user-supplied — the allowlist is the SSRF guard), then creates the song through
+the normal `songsCreate` path so metadata/credits/tags are derived identically. Statuses: 400 bad
+URL/host, 403 no write role, 404 missing page, 422 page holds no chord sheet, 502 fetch failed.
+`ImportSongDialog`/`ImportSongButton` sit beside "New song" on Home + Library and navigate to
+`/app/songs/$slug/edit` on success, so the importer's output lands in the editor for key/capo.
 
 ---
 

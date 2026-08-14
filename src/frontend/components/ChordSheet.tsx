@@ -60,43 +60,65 @@ export function ChordSheet({
 							{block.label}
 						</div>
 					)}
-					{block.lines.map((line, lineIndex) => (
-						<div
-							// biome-ignore lint/suspicious/noArrayIndexKey: positional lines
-							key={lineIndex}
-							className={cn(
-								"flex flex-wrap items-end gap-x-0 gap-y-1.5",
-								center && "justify-center",
-							)}
-							style={{ marginBottom: showChords ? 9 : 5 }}
-						>
-							{line.map((seg, segIndex) => (
-								<span
-									// biome-ignore lint/suspicious/noArrayIndexKey: positional segments
-									key={segIndex}
-									className="inline-flex flex-col justify-end"
-								>
-									{showChords && (
-										<b
-											className="whitespace-pre font-mono font-semibold leading-[1.35] text-primary"
-											style={{ fontSize: chordSize, minHeight: minChord }}
-										>
-											{seg.chord}
-										</b>
-									)}
+					{block.lines.map((line, lineIndex) => {
+						// Segments carrying a chord but no lyric ("…neposlouchaj.[D][D7]",
+						// or a bare `[E][B]` interlude) have an empty lyric span, which is
+						// zero-height — with `items-end` those columns would sink until
+						// their chord sat *in* the lyric row. Reserve the lyric line box so
+						// every column is the same height and the chords stay on the chord
+						// row. A line with no lyrics at all keeps its compact chords-only
+						// look, since there's no lyric row to align to.
+						const hasLyrics = line.some((seg) => seg.text.trim() !== "");
+						const lyricLine = lyricSize * (showChords ? 1.3 : 1.5);
+						return (
+							<div
+								// biome-ignore lint/suspicious/noArrayIndexKey: positional lines
+								key={lineIndex}
+								className={cn(
+									"flex flex-wrap items-end gap-x-0 gap-y-1.5",
+									center && "justify-center",
+								)}
+								style={{ marginBottom: showChords ? 9 : 5 }}
+							>
+								{line.map((seg, segIndex) => (
 									<span
-										className="whitespace-pre text-foreground"
-										style={{
-											fontSize: lyricSize,
-											lineHeight: showChords ? 1.3 : 1.5,
-										}}
+										// biome-ignore lint/suspicious/noArrayIndexKey: positional segments
+										key={segIndex}
+										className="inline-flex flex-col justify-end"
 									>
-										{seg.text}
+										{showChords && (
+											<b
+												className="whitespace-pre font-mono font-semibold leading-[1.35] text-primary"
+												style={{
+													fontSize: chordSize,
+													minHeight: minChord,
+													// Chords are packed tight so each sits over its own
+													// syllable; when the next segment also has a chord,
+													// keep a hair of space so they read as "D D7" and
+													// never collide into "DD7".
+													paddingRight: line[segIndex + 1]?.chord
+														? chordSize * 0.5
+														: undefined,
+												}}
+											>
+												{seg.chord}
+											</b>
+										)}
+										<span
+											className="whitespace-pre text-foreground"
+											style={{
+												fontSize: lyricSize,
+												lineHeight: showChords ? 1.3 : 1.5,
+												minHeight: hasLyrics ? lyricLine : undefined,
+											}}
+										>
+											{seg.text}
+										</span>
 									</span>
-								</span>
-							))}
-						</div>
-					))}
+								))}
+							</div>
+						);
+					})}
 				</section>
 			))}
 		</div>

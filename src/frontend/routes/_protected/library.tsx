@@ -1,4 +1,5 @@
 import { api } from "@frontend/api";
+import { ImportSongButton } from "@frontend/components/ImportSongDialog";
 import { MetaChip, Tag } from "@frontend/components/MetaChip";
 import { ScopeSwitcher } from "@frontend/components/ScopeSwitcher";
 import { Button } from "@frontend/components/ui/button";
@@ -47,9 +48,12 @@ function LibraryPage() {
 					value={scopeParam}
 					onChange={setScopeParam}
 				/>
-				<Button render={<Link to="/songs/new" />}>
-					<IconPlus className="size-4" /> New song
-				</Button>
+				<div className="flex gap-2">
+					<ImportSongButton />
+					<Button render={<Link to="/songs/new" />}>
+						<IconPlus className="size-4" /> New song
+					</Button>
+				</div>
 			</div>
 
 			<div className="mt-6 flex items-end justify-between">

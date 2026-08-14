@@ -1,5 +1,6 @@
 import { api } from "@frontend/api";
 import { auth } from "@frontend/auth";
+import { ImportSongButton } from "@frontend/components/ImportSongDialog";
 import { MetaChip } from "@frontend/components/MetaChip";
 import { NamePromptDialog } from "@frontend/components/NamePromptDialog";
 import { Button } from "@frontend/components/ui/button";
@@ -51,6 +52,7 @@ function HomePage() {
 					<Button variant="outline" render={<Link to="/library" />}>
 						<IconMusic className="size-4" /> Library
 					</Button>
+					<ImportSongButton />
 					<Button render={<Link to="/songs/new" />}>
 						<IconPlus className="size-4" /> New song
 					</Button>

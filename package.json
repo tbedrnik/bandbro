@@ -12,7 +12,8 @@
 		"db:migrate": "bun --bun run prisma migrate deploy",
 		"db:push": "bun --bun run prisma db push",
 		"db:reset": "bun --bun run prisma db reset",
-		"db:seed": "bun run prisma/seed.ts"
+		"db:seed": "bun run prisma/seed.ts",
+		"import:kytary": "bun run src/tools/importKytary.ts"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.6.0",
