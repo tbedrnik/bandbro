@@ -38,6 +38,17 @@ describe("transposeChord", () => {
 		expect(transposeChord("", 5)).toBe("");
 		expect(transposeChord("N.C.", 5)).toBe("N.C.");
 	});
+
+	test("section markers keep their names, note letter or not", () => {
+		expect(transposeChord("Bridge", 2)).toBe("Bridge");
+		expect(transposeChord("Chorus", -1)).toBe("Chorus");
+		expect(transposeChord("Repeat this", 3)).toBe("Repeat this");
+		expect(transposeChord("Em, G#, Eb, Bb", 1)).toBe("Em, G#, Eb, Bb");
+	});
+
+	test("Czech-style suffixes are still chords", () => {
+		expect(transposeChord("Emi", 2)).toBe("F#mi");
+	});
 });
 
 describe("viewSteps", () => {

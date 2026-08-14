@@ -310,9 +310,48 @@ All unit-tested.
 - **Round trip** is pitch-exact for `B`/`Bb`; `A#` comes back as the enharmonically equal `Bb`. The inherent
   ambiguity is that international-convention text *pasted* into the editor reads its `B` as B-flat — the price of
   the convention, hence the footer hint.
+- **Only chords are mapped — `isChord` (notation.ts) is the gate.** Brackets also hold section markers
+  (`[Bridge]`, `[Chorus]`) and notes to the player (`[Repeat this]`), and a note letter is an ordinary first
+  letter of an English word. `isChord` matches a root (`A`–`H` + `#`/`b`) followed by a **closed** suffix
+  alphabet (`m`/`mi`/`maj`/`sus`/`add`/`dim`/digits/…), so anything else is copied through byte-for-byte by
+  `displayChord`/`internationalChord`, by `mapChordproChords` and by **`transposeChord`** (§D5 — same defect:
+  the render path transposes every parsed segment, so `[Bridge]` used to become `[C#ridge]`, and a bake down a
+  semitone wrote `[Bhorus]` into the DB). Chord *lists* in one bracket (`[Em, G#, Eb, Bb]`) are not chords
+  either — no single root to map — so they are left alone rather than half-rewritten.
+  `src/tools/repairSectionMarkers.ts` (`bun run repair:markers [--write]`) is the one-off repair for rows
+  already damaged; it restores the shifted first letter from a dictionary of section words and reports, never
+  guesses, the rest.
 - The server-side PDF (`chordpro` CLI, §D8) renders raw source and stays international.
 - Every entry point takes a `NoteConvention` argument (defaulting to `european`), so the per-user preference
   (a sibling of `defaultChordView`, §D2) is a matter of threading it down — deliberately not built yet.
+
+### D12 — Live mode display prefs: per-device, with a measured fit-to-screen *(implemented)*
+Live mode gets the fan view's kind of view controls — text size, line spacing, 1/2/3 columns, fit-to-screen and a
+theme toggle — in a `DisplaySettings` panel above the control bar (`components/DisplaySettings.tsx`). These describe
+a player's *physical setup* (an iPad on a stand vs. a phone on a mic clip), not the song, so they're stored per
+device in localStorage (`lib/liveDisplay.ts`) and never broadcast to fans or bandmates.
+- **`<ChordSheet>` gained `gap` and `columns`.** `gap` scales every vertical gap; `columns` lays the sheet out in
+  CSS multicol with `break-inside: avoid` on each section, so a long song divides its height instead of scrolling
+  (3 columns is a landscape-tablet setting; tabs still scroll if a staff is wider than a column).
+- **Lines wrap only at word boundaries** (`wordGroups`). A segment is a run of lyrics under one chord, which matches
+  neither end of a word — ChordPro puts chords mid-word (`My shallow h[Em]eart's`) and then runs several words to the
+  next one — so with one flex item per segment a narrow column printed "My shallow h / eart's" and refused to break
+  inside the long run after it. Each segment is now split at its internal spaces and the pieces whose boundary isn't
+  whitespace are glued back into one flex item. A chord wider than its own word keeps overhanging the words after it
+  (`width: 0` when the next part carries no chord), as it did when the whole run was one span.
+- **The vertical rhythm is now proportional to `lyricSize`** rather than absolute px — the ratios reproduce the
+  design's 34/12/9/6 exactly at the default 21px lyric (Song View, editor preview and print are unchanged), and the
+  section label scales with it too. This is load-bearing for fit-to-screen: with fixed gaps, a song with a dozen
+  sections carries hundreds of px that never shrink, and the fit bottoms out long before the song fits.
+- **Fit-to-screen** (`lib/useFitScale.ts`) binary-searches the largest text scale whose content still fits the
+  scroll container. Height isn't a smooth function of font size (text reflows), so there's no closed form: each
+  candidate is committed as state and measured in a **layout** effect, which React re-runs before paint — the whole
+  search resolves inside one frame, so the intermediate sizes are never visible. `resetKey` (song, gap, columns,
+  view, transpose) restarts it; a `ResizeObserver` covers rotation and split view. `FIT_MIN` is a **legibility**
+  floor, not a fitting one — a song with several tab staves won't fit an iPad at any readable size, and it's better
+  to let that one scroll than to shrink it to 8px.
+- The Live song title + key **scroll with the chart** instead of holding a permanent row across the top; the setlist
+  name and position live in the top bar already.
 
 ---
 

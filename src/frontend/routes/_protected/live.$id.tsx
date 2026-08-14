@@ -1,10 +1,19 @@
 import { api } from "@frontend/api";
 import { CapoToggle } from "@frontend/components/CapoToggle";
+import { DisplaySettings } from "@frontend/components/DisplaySettings";
 import { ShareWithFansModal } from "@frontend/components/ShareWithFansModal";
 import { SongSheet } from "@frontend/components/SongSheet";
 import { useUser } from "@frontend/contexts/UserContext";
+import {
+	GAP_SCALES,
+	LIVE_CHORD_SIZE,
+	LIVE_LYRIC_SIZE,
+	TEXT_SCALES,
+	useLiveDisplay,
+} from "@frontend/lib/liveDisplay";
 import { getOfflineSetlist, useOnline } from "@frontend/lib/offline";
 import { useFanSession } from "@frontend/lib/useFanSession";
+import { useFitScale } from "@frontend/lib/useFitScale";
 import { displayKey } from "@shared/notation";
 import type { ChordView } from "@shared/transpose";
 import { transposeKey } from "@shared/transpose";
@@ -16,6 +25,7 @@ import {
 	IconPlayerPlay,
 	IconPlus,
 	IconShare3,
+	IconTextSize,
 	IconX,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
@@ -50,6 +60,8 @@ function LiveMode() {
 	const [scrolling, setScrolling] = useState(false);
 	const [speed, setSpeed] = useState(2);
 	const [shareOpen, setShareOpen] = useState(false);
+	const [displayOpen, setDisplayOpen] = useState(false);
+	const [display, setDisplay] = useLiveDisplay();
 	const scrollRef = useRef<HTMLDivElement>(null);
 
 	const fan = useFanSession(id);
@@ -87,6 +99,14 @@ function LiveMode() {
 		setTranspose(0);
 		if (scrollRef.current) scrollRef.current.scrollTop = 0;
 	}, [index]);
+
+	// "Fit to screen" re-measures whenever anything that changes the rendered height does.
+	const fitScale = useFitScale({
+		enabled: display.fit,
+		viewportRef: scrollRef,
+		resetKey: `${id}:${index}:${display.gapIdx}:${display.columns}:${view}:${transpose}`,
+	});
+	const textScale = display.fit ? fitScale : TEXT_SCALES[display.textIdx];
 
 	if (!setlist) {
 		return (
@@ -158,34 +178,55 @@ function LiveMode() {
 				watching={fan.watching}
 			/>
 
-			{/* Song header */}
-			<div className="flex items-baseline gap-3 px-6 pt-4">
-				<h1 className="font-display text-2xl font-bold sm:text-3xl">
-					{song.name}
-				</h1>
-				<span className="font-mono text-sm text-muted-foreground">
-					{displayedKey && `KEY ${displayedKey}`}
-					{capo > 0 && ` · CAPO ${capo}`}
-				</span>
-			</div>
-
-			{/* Chart — the hero, scaled up */}
+			{/* Chart — the hero, scaled up. The song header scrolls away with it rather than
+			    holding a permanent band across the top: on a tablet that row is a line of
+			    lyrics, and the setlist name + position are already in the top bar. */}
 			<div
 				ref={scrollRef}
 				className="live-scroll min-h-0 flex-1 overflow-auto px-6 py-4"
 			>
+				<div className="mb-3 flex items-baseline gap-3">
+					<h1 className="font-display text-xl font-bold sm:text-2xl">
+						{song.name}
+					</h1>
+					<span className="font-mono text-xs text-muted-foreground">
+						{displayedKey && `KEY ${displayedKey}`}
+						{capo > 0 && ` · CAPO ${capo}`}
+					</span>
+				</div>
 				<SongSheet
 					content={chart.content}
 					capo={capo}
 					view={view}
 					transpose={transpose}
-					lyricSize={28}
-					chordSize={20}
+					lyricSize={Math.round(LIVE_LYRIC_SIZE * textScale)}
+					chordSize={Math.round(LIVE_CHORD_SIZE * textScale)}
+					gap={GAP_SCALES[display.gapIdx]}
+					columns={display.columns}
 				/>
 			</div>
 
 			{/* Controls */}
-			<div className="border-t border-border px-4 py-3">
+			<div className="relative border-t border-border px-4 py-3">
+				{displayOpen && (
+					<>
+						{/* Tap-away closer — the panel sits over the chart, so it must not swallow
+						    the whole screen's next tap silently. */}
+						<button
+							type="button"
+							aria-label="Close display settings"
+							onClick={() => setDisplayOpen(false)}
+							className="fixed inset-0 z-40 cursor-default"
+						/>
+						<div className="absolute bottom-full right-4 z-50 mb-2">
+							<DisplaySettings
+								value={display}
+								onChange={setDisplay}
+								fitScale={fitScale}
+							/>
+						</div>
+					</>
+				)}
 				<div className="flex items-center justify-between gap-3">
 					<BigBtn
 						label="Prev"
@@ -239,6 +280,19 @@ function LiveMode() {
 								<IconPlus className="size-4" />
 							</SmallBtn>
 						</div>
+						<button
+							type="button"
+							aria-label="Display settings"
+							aria-expanded={displayOpen}
+							onClick={() => setDisplayOpen((o) => !o)}
+							className={`grid size-11 place-items-center rounded-xl transition-colors ${
+								displayOpen
+									? "bg-primary text-primary-foreground"
+									: "bg-secondary hover:bg-muted"
+							}`}
+						>
+							<IconTextSize className="size-5" />
+						</button>
 					</div>
 
 					<BigBtn

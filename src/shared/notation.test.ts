@@ -1,5 +1,46 @@
 import { describe, expect, test } from "bun:test";
-import { displayChord, displayKey, internationalChord } from "./notation";
+import {
+	displayChord,
+	displayKey,
+	internationalChord,
+	isChord,
+} from "./notation";
+
+/** Bracket tokens a chord sheet holds that are *not* chords. */
+const NOT_CHORDS = [
+	"Bridge",
+	"Chorus",
+	"Repeat this",
+	"Post chorus",
+	"Break",
+	"Ending",
+	"Coda",
+	"Riff",
+	"Repeat verse 2",
+	"Em, G#, Eb, Bb",
+	"N.C.",
+];
+
+/** Real chords, in both conventions. */
+const CHORDS = [
+	"B",
+	"Bb",
+	"H",
+	"Bm7",
+	"F#/A#",
+	"C",
+	"Am",
+	"Emi",
+	"Hmi",
+	"G/F#",
+	"Ebsus4",
+	"F#m7b5",
+	"Cadd9",
+	"A#",
+	"Cb",
+	"G+",
+	"C(no3)",
+];
 
 describe("displayChord (European by default)", () => {
 	test("B natural becomes H", () => {
@@ -65,6 +106,51 @@ describe("internationalChord", () => {
 		]) {
 			expect(internationalChord(displayChord(written))).toBe(back);
 		}
+	});
+});
+
+describe("isChord", () => {
+	test("recognizes chords in both conventions", () => {
+		for (const c of CHORDS) expect(isChord(c)).toBe(true);
+	});
+
+	test("rejects section markers, notes to the player and chord lists", () => {
+		for (const t of NOT_CHORDS) expect(isChord(t)).toBe(false);
+	});
+
+	test("rejects empty and missing tokens", () => {
+		expect(isChord("")).toBe(false);
+		expect(isChord("   ")).toBe(false);
+		expect(isChord(null)).toBe(false);
+		expect(isChord(undefined)).toBe(false);
+	});
+});
+
+describe("tokens that aren't chords are never rewritten", () => {
+	test("both directions pass them through byte-for-byte", () => {
+		for (const t of NOT_CHORDS) {
+			expect(displayChord(t)).toBe(t);
+			expect(internationalChord(t)).toBe(t);
+		}
+	});
+
+	test("the specific regressions: [Bridge] and [Chorus] keep their names", () => {
+		expect(displayChord("Bridge")).toBe("Bridge");
+		expect(internationalChord("Bridge")).toBe("Bridge");
+		expect(displayChord("Chorus")).toBe("Chorus");
+		expect(internationalChord("Chorus")).toBe("Chorus");
+		expect(displayChord("Repeat this")).toBe("Repeat this");
+		expect(internationalChord("Repeat this")).toBe("Repeat this");
+	});
+
+	test("real chords still convert (the guard isn't too tight)", () => {
+		expect(displayChord("B")).toBe("H");
+		expect(displayChord("Bb")).toBe("B");
+		expect(displayChord("Bm7")).toBe("Hm7");
+		expect(displayChord("F#/A#")).toBe("F#/B");
+		expect(internationalChord("H")).toBe("B");
+		expect(internationalChord("B")).toBe("Bb");
+		expect(internationalChord("Hmi")).toBe("Bmi");
 	});
 });
 

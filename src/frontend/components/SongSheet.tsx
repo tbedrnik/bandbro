@@ -16,6 +16,8 @@ export function SongSheet({
 	lyricSize,
 	chordSize,
 	hideChords,
+	gap,
+	columns,
 	align,
 	className,
 }: {
@@ -26,6 +28,8 @@ export function SongSheet({
 	lyricSize?: number;
 	chordSize?: number;
 	hideChords?: boolean;
+	gap?: number;
+	columns?: number;
 	align?: "left" | "center";
 	className?: string;
 }) {
@@ -39,6 +43,8 @@ export function SongSheet({
 			lyricSize={lyricSize}
 			chordSize={chordSize}
 			hideChords={hideChords}
+			gap={gap}
+			columns={columns}
 			align={align}
 			className={className}
 		/>

@@ -15,6 +15,7 @@ import {
 	DEFAULT_NOTE_CONVENTION,
 	displayChord,
 	internationalChord,
+	isChord,
 	type NoteConvention,
 } from "./notation";
 import {
@@ -31,14 +32,20 @@ const KEY_DIRECTIVE = /\{(key|k)\s*:\s*([^}]+)\}/gi;
 /**
  * Apply `fn` to every inline [chord] and to the {key} directive's value — and to nothing
  * else, so lyrics (where a stray "B" is just a letter) and every other directive are safe.
+ *
+ * Not every bracket holds a chord: section markers ("[Bridge]") and performance notes
+ * ("[Repeat this]") share the syntax, and their first letter is often a note name. Those
+ * are copied through verbatim rather than fed to `fn` — otherwise a save or a baked
+ * transpose rewrites them ("[Chorus]" → "[Bhorus]").
  */
 function mapChordproChords(
 	content: string,
 	fn: (chord: string) => string,
 ): string {
+	const map = (token: string) => (isChord(token) ? fn(token) : token);
 	return content
-		.replace(INLINE_CHORD, (_m, chord) => `[${fn(chord)}]`)
-		.replace(KEY_DIRECTIVE, (_m, dir, key) => `{${dir}: ${fn(key.trim())}}`);
+		.replace(INLINE_CHORD, (_m, chord) => `[${map(chord)}]`)
+		.replace(KEY_DIRECTIVE, (_m, dir, key) => `{${dir}: ${map(key.trim())}}`);
 }
 
 /**

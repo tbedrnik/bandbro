@@ -14,6 +14,8 @@
  * "Eb/Ab/Bb" rather than "D#/G#/A#". See `keyAccidental`.
  */
 
+import { isChord } from "./notation";
+
 const SHARP = [
 	"A",
 	"A#",
@@ -79,14 +81,17 @@ function shiftRoot(token: string, steps: number, spell: Accidental): string {
 /**
  * Transpose a full chord, handling slash chords like "C/G" and "D/F#".
  * `spell` picks the enharmonic spelling of the result (default sharps).
+ *
+ * Tokens that aren't chords are returned as they came in. The parser hands us everything
+ * that sat between brackets, section markers included, and "Chorus" begins with a note
+ * name — without the guard, transposing a song down a semitone renames it "Bhorus".
  */
 export function transposeChord(
 	chord: string,
 	steps: number,
 	spell: Accidental = "sharp",
 ): string {
-	if (!chord?.trim()) return chord;
-	if (steps === 0) return chord;
+	if (steps === 0 || !isChord(chord)) return chord;
 	return chord
 		.split("/")
 		.map((part) => shiftRoot(part, steps, spell))

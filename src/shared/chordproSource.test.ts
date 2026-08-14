@@ -85,6 +85,38 @@ describe("note-name convention in the source", () => {
 	});
 });
 
+describe("brackets that aren't chords", () => {
+	const src = [
+		"{title: T}",
+		"{key: Em}",
+		"[Bridge]",
+		"[Chorus]",
+		"[Repeat this]",
+		"[Post chorus]",
+		"[Em]I walk a [G]lonely [B]road",
+	].join("\n");
+
+	test("section markers survive the editor's save round trip", () => {
+		expect(displayChordproSource(src)).toBe(src.replace("[B]road", "[H]road"));
+		expect(internationalChordproSource(displayChordproSource(src))).toBe(src);
+	});
+
+	test("a baked transpose leaves them alone ([Chorus] → [Bhorus])", () => {
+		const out = transposeChordproText(src, -1);
+		expect(out).toContain("[Chorus]");
+		expect(out).toContain("[Bridge]");
+		expect(out).toContain("[Repeat this]");
+		expect(out).not.toContain("[Bhorus]");
+		expect(out).toContain("[D#m]I walk a [F#]lonely [A#]road");
+	});
+
+	test("chords next to them still transpose", () => {
+		expect(transposeChordproSource("[Bridge]\n[C]a [Am]b", 2)).toBe(
+			"[Bridge]\n[D]a [Bm]b",
+		);
+	});
+});
+
 describe("sourceKey", () => {
 	test("prefers the {key} directive", () => {
 		expect(sourceKey("{key: Am}\n[C]hi")).toBe("Am");
