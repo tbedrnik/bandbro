@@ -1,10 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { parseChordpro } from "./chordpro";
-import {
-	kytaryHtmlToChordpro,
-	normalizeChordConvention,
-	parseKytaryHtml,
-} from "./kytary";
+import { kytaryHtmlToChordpro, parseKytaryHtml } from "./kytary";
 
 /** A chord span as the page emits it (root + optional suffix + optional bass). */
 function chord(root: string, variant = "", bass = ""): string {
@@ -64,23 +60,6 @@ describe("parseKytaryHtml", () => {
 	test("drops the trailing <br> instead of emitting a blank line", () => {
 		expect(sheet.sections[2].lines).toHaveLength(2);
 		expect(sheet.sections[2].lines[1]).toBe("[G]——[Em]————");
-	});
-});
-
-describe("normalizeChordConvention", () => {
-	test("rewrites European note names to international ones", () => {
-		expect(normalizeChordConvention("H")).toBe("B");
-		expect(normalizeChordConvention("Hm7")).toBe("Bm7");
-		expect(normalizeChordConvention("B")).toBe("Bb");
-		expect(normalizeChordConvention("Bmaj7")).toBe("Bbmaj7");
-		expect(normalizeChordConvention("H/F#")).toBe("B/F#");
-		expect(normalizeChordConvention("D/H")).toBe("D/B");
-	});
-
-	test("leaves unambiguous chords alone", () => {
-		for (const c of ["Am", "G/F#", "C", "Ebsus4", "F#m7b5"]) {
-			expect(normalizeChordConvention(c)).toBe(c);
-		}
 	});
 });
 

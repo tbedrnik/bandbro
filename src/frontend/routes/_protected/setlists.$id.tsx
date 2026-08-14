@@ -12,6 +12,7 @@ import {
 import { Input } from "@frontend/components/ui/input";
 import { downloadSetlist, isDownloaded } from "@frontend/lib/offline";
 import { useFanSession } from "@frontend/lib/useFanSession";
+import { displayKey } from "@shared/notation";
 import {
 	IconArrowDown,
 	IconArrowUp,
@@ -199,7 +200,7 @@ function SetlistDetail() {
 								{entry.chart.key && (
 									<MetaChip
 										label=""
-										value={entry.chart.key}
+										value={displayKey(entry.chart.key)}
 										className="px-2 py-1"
 									/>
 								)}

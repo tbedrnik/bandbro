@@ -6,7 +6,6 @@ const chordProLanguage = ChordPro();
 
 type Props = { content: string; onChange: (content: string) => void };
 
-
 export function SongEditor({ content, onChange }: Props) {
 	const theme = useDerivedTheme();
 

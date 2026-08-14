@@ -90,8 +90,8 @@ bun run import:kytary <url|file.html> [-o dir]   # akordy.kytary.cz sheet → Ch
 
 **Importers.** `src/shared/kytary.ts` converts an akordy.kytary.cz ("SmartChords") song page
 into ChordPro by walking its `#sheet-content` markup (`div.scs-section[data-type]` → sections,
-`span.scs-chord` → inline `[chords]`), rewriting European note names (`H`→`B`, `B`→`Bb`) so the
-§D5 engine reads them. The conversion is pure + unit-tested; `src/tools/importKytary.ts` is the
+`span.scs-chord` → inline `[chords]`), rewriting European note names (`H`→`B`, `B`→`Bb` via
+`notation.internationalChord`, §D11) so the §D5 engine reads them. The conversion is pure + unit-tested; `src/tools/importKytary.ts` is the
 CLI wrapper (fetch or local file → stdout or `<slug>.cho`). Pages carry no key/capo/tempo, so
 only `{title}`/`{artist}` are emitted (plus `{x_source}` for provenance).
 
@@ -196,6 +196,15 @@ slash-chord aware). Port it to `src/shared/transpose.ts`, use it for
 both controls, and derive the **concert view = transpose by `+capo`**. No API involved. One canonical
 engine → identical results in Song View, Live mode, and PDF export.
 
+**Source-level transpose (baking).** Views transpose the *render*; the editor can also transpose the
+**source**. `src/shared/chordproSource.ts` (`transposeChordproSource`, unit-tested) rewrites every inline
+`[chord]` plus the `{key}` directive in the ChordPro text — used by the editor toolbar's "Transpose source"
+stepper so an imported song written in E/F#m/C#m/B becomes G/Am/Em/D for everyone, not just the current
+viewer. `{capo}` is deliberately left alone (a capo is a physical position, not a property of the written
+chords). Baked output is spelled for the **target key** (`keyAccidental` in `transpose.ts`: +3 from C gives
+Eb/Ab/Bb, not D#/G#/A#); the view/PDF paths keep the sharps-only default. `chordproSource.ts` also owns the
+`concertChordpro`/`stripCapoDirective` helpers the PDF export uses (moved out of `chordproPdf.ts`).
+
 ### D6 — Roles via better-auth access control *(needs config)*
 Map the org plugin to the PRD's three roles. Define an access-control instance with **Admin / Writer /
 Reader** (Admin = manage band+members+songs; Writer = CRUD songs + build playlists; Reader = read/
@@ -258,6 +267,29 @@ their own phones that auto-follows the current song. Implements the "Fan experie
 - **URLs.** The design names `bandbro.live/s/<code>`; this single-app build serves the fan view at
   `/app/s/<code>` and encodes the **real reachable origin** in the QR/copy-link (`lib/fanSession.ts`) so codes
   actually scan. A production reverse-proxy can map `bandbro.live` → this app with no code change.
+
+### D11 — Note names: international **stored**, European **read and written** *(implemented)*
+What we persist and compute on is always the international convention (`B` = B natural, `Bb` = B-flat) — that's
+what `transpose.ts` understands and what the kytary importer normalizes to. What a user sees and types is the
+Central-European convention by default: `H` for B natural, `B` for anything sounding as B-flat. Both chord-level
+mappers live in **`src/shared/notation.ts`** (`displayChord`/`displayKey` out, `internationalChord` in — the
+former `kytary.normalizeChordConvention`, moved here); the ChordPro-text-level pair
+(`displayChordproSource`/`internationalChordproSource` in `chordproSource.ts`) rewrites **only `[chords]` and the
+`{key}` directive**, never lyrics/titles, via one `mapChordproChords` helper shared with the transpose rewrite.
+All unit-tested.
+- **Render:** `ChordSheet` prints `displayChord(...)`, so every chord sheet (Song View, Live, fan view, editor
+  preview, print) shows `H`/`B`; each key-label site wraps its value in `displayKey`.
+- **Editor:** `ChordProEditorScreen` keeps the pane text (`source`) in the display convention and derives the
+  international `content` from it (`useMemo`) for the preview, metadata, transpose-bake and save. Conversion is
+  strictly **at the boundary** — once on load, on each save — never per keystroke: a round trip on every
+  keystroke would rewrite `Bb` back to `B` under the cursor and make typing flats impossible. A footer under the
+  pane states the convention.
+- **Round trip** is pitch-exact for `B`/`Bb`; `A#` comes back as the enharmonically equal `Bb`. The inherent
+  ambiguity is that international-convention text *pasted* into the editor reads its `B` as B-flat — the price of
+  the convention, hence the footer hint.
+- The server-side PDF (`chordpro` CLI, §D8) renders raw source and stays international.
+- Every entry point takes a `NoteConvention` argument (defaulting to `european`), so the per-user preference
+  (a sibling of `defaultChordView`, §D2) is a matter of threading it down — deliberately not built yet.
 
 ---
 

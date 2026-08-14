@@ -19,6 +19,8 @@
  * Dependency-free on purpose: a small tolerant scanner over the markup, no DOM.
  */
 
+import { internationalChord } from "./notation";
+
 export type ChordConvention = "eu" | "us";
 
 /** A `div.scs-section` — `type` is the raw `data-type` from the page. */
@@ -167,29 +169,6 @@ function childElements(html: string, tag: string): string[] {
 	return children;
 }
 
-const EU_ROOTS: Record<string, string> = {
-	H: "B",
-	Hb: "Bb",
-	B: "Bb",
-	Bb: "Bb",
-};
-
-/**
- * European → international note names, applied to the root and to a slash bass:
- * `H` → `B`, `B` → `Bb`. Everything else (suffixes, `#`/`b`, `/`) is untouched.
- */
-export function normalizeChordConvention(chord: string): string {
-	return chord
-		.split("/")
-		.map((part) => {
-			const m = /^([A-H])([b#]?)/.exec(part);
-			if (!m) return part;
-			const note = EU_ROOTS[m[1] + m[2]] ?? EU_ROOTS[m[1]];
-			return note ? note + part.slice(m[0].length) : part;
-		})
-		.join("/");
-}
-
 /**
  * Square brackets in the lyrics themselves would be read as chords. The site uses
  * them for repeats (`[: … :]`), which become the standard repeat barlines `|: … :|`;
@@ -234,7 +213,7 @@ function lineToChordpro(inner: string, convention: ChordConvention): string[] {
 			const chordHtml =
 				close === -1 ? inner.slice(gt + 1) : inner.slice(gt + 1, close);
 			let chord = decodeEntities(stripTags(chordHtml)).trim();
-			if (convention === "eu") chord = normalizeChordConvention(chord);
+			if (convention === "eu") chord = internationalChord(chord);
 			if (chord) buf += `[${chord}]`;
 			i =
 				close === -1

@@ -1,8 +1,13 @@
 import { api } from "@frontend/api";
 import { SongSheet } from "@frontend/components/SongSheet";
-import { Drawer, DrawerContent, DrawerTitle } from "@frontend/components/ui/drawer";
+import {
+	Drawer,
+	DrawerContent,
+	DrawerTitle,
+} from "@frontend/components/ui/drawer";
 import { getClientId } from "@frontend/lib/fanSession";
 import { FAN_SIZES, type FanTheme, fanPalette } from "@frontend/lib/fanTheme";
+import { displayKey } from "@shared/notation";
 import { transposeKey } from "@shared/transpose";
 import {
 	IconChevronUp,
@@ -94,7 +99,9 @@ function FanLiveView() {
 	const f = FAN_SIZES[sizeIdx];
 	const lyricSize = Math.round(24 * f);
 	const chordSize = Math.round(16 * f);
-	const displayedKey = song ? transposeKey(song.key, transpose) : "";
+	const displayedKey = song
+		? displayKey(transposeKey(song.key, transpose))
+		: "";
 	const palette = fanPalette(theme);
 	const eyebrow = `${data.band} · ${data.title}`;
 
@@ -192,9 +199,7 @@ function FanLiveView() {
 									{song?.title}
 								</DrawerTitle>
 							</div>
-							<IconChevronUp
-								className="size-4 flex-none rotate-180 text-muted-foreground"
-							/>
+							<IconChevronUp className="size-4 flex-none rotate-180 text-muted-foreground" />
 						</div>
 					</button>
 

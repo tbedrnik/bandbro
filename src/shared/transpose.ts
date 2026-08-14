@@ -7,8 +7,11 @@
  * bassist. One engine → identical results in the Song View, Live mode and PDF export.
  * See CLAUDE.md §D5. Ported from the Claude Design "Song View" prototype.
  *
- * v1 spells everything with sharps (and normalizes incoming flats to sharps). Key-aware
- * enharmonic spelling (Bb vs A#) is a deliberate later refinement.
+ * By default everything is spelled with sharps (and incoming flats are normalized to
+ * sharps) — that's what the on-screen views and the PDF do. Callers that *write* the
+ * result back into ChordPro source (the editor's "bake a transpose in") pass the
+ * accidental the target key is conventionally spelled with, so an Eb song reads
+ * "Eb/Ab/Bb" rather than "D#/G#/A#". See `keyAccidental`.
  */
 
 const SHARP = [
@@ -26,6 +29,25 @@ const SHARP = [
 	"G#",
 ] as const;
 
+/** Same pitch classes as SHARP, spelled with flats. */
+const FLAT = [
+	"A",
+	"Bb",
+	"B",
+	"C",
+	"Db",
+	"D",
+	"Eb",
+	"E",
+	"F",
+	"Gb",
+	"G",
+	"Ab",
+] as const;
+
+/** Which accidental a spelling uses. */
+export type Accidental = "sharp" | "flat";
+
 const FLAT_TO_SHARP: Record<string, string> = {
 	Db: "C#",
 	Eb: "D#",
@@ -36,25 +58,38 @@ const FLAT_TO_SHARP: Record<string, string> = {
 	Fb: "E",
 };
 
-/** Shift a single root token (e.g. "Am", "F#maj7", "Bb") by `steps` semitones. */
-function shiftRoot(token: string, steps: number): string {
-	const m = token.match(/^([A-G][#b]?)(.*)$/);
-	if (!m) return token;
-	let root = m[1];
-	const suffix = m[2];
-	if (root.length === 2 && root[1] === "b") root = FLAT_TO_SHARP[root] ?? root;
-	const idx = SHARP.indexOf(root as (typeof SHARP)[number]);
-	if (idx === -1) return token;
-	return SHARP[(((idx + steps) % 12) + 12) % 12] + suffix;
+/** Pitch class (index into SHARP/FLAT) of a root token, or -1 if unrecognizable. */
+function rootIndex(root: string): number {
+	const normalized =
+		root.length === 2 && root[1] === "b" ? (FLAT_TO_SHARP[root] ?? root) : root;
+	return SHARP.indexOf(normalized as (typeof SHARP)[number]);
 }
 
-/** Transpose a full chord, handling slash chords like "C/G" and "D/F#". */
-export function transposeChord(chord: string, steps: number): string {
+/** Shift a single root token (e.g. "Am", "F#maj7", "Bb") by `steps` semitones. */
+function shiftRoot(token: string, steps: number, spell: Accidental): string {
+	const m = token.match(/^([A-G][#b]?)(.*)$/);
+	if (!m) return token;
+	const suffix = m[2];
+	const idx = rootIndex(m[1]);
+	if (idx === -1) return token;
+	const notes = spell === "flat" ? FLAT : SHARP;
+	return notes[(((idx + steps) % 12) + 12) % 12] + suffix;
+}
+
+/**
+ * Transpose a full chord, handling slash chords like "C/G" and "D/F#".
+ * `spell` picks the enharmonic spelling of the result (default sharps).
+ */
+export function transposeChord(
+	chord: string,
+	steps: number,
+	spell: Accidental = "sharp",
+): string {
 	if (!chord?.trim()) return chord;
 	if (steps === 0) return chord;
 	return chord
 		.split("/")
-		.map((part) => shiftRoot(part, steps))
+		.map((part) => shiftRoot(part, steps, spell))
 		.join("/");
 }
 
@@ -90,9 +125,56 @@ const NOTE_INDEX: Record<string, number> = SHARP.reduce(
 export function transposeKey(
 	key: string | null | undefined,
 	steps: number,
+	spell: Accidental = "sharp",
 ): string {
 	if (!key) return "";
-	return transposeChord(key, steps);
+	return transposeChord(key, steps, spell);
 }
 
-export { NOTE_INDEX, SHARP };
+/**
+ * The accidental a key is conventionally written with, by pitch class — indexed like
+ * SHARP (A…G#). Eb/Bb/F/Ab/Db major and Cm/Gm/Dm/Fm/Bbm/Ebm take flats; the rest take
+ * sharps. Used when baking a transpose into the source so the written chords look like
+ * what a player would expect on paper.
+ */
+const MAJOR_ACCIDENTAL: Accidental[] = [
+	"sharp", // A
+	"flat", // Bb
+	"sharp", // B
+	"sharp", // C
+	"flat", // Db
+	"sharp", // D
+	"flat", // Eb
+	"sharp", // E
+	"flat", // F
+	"sharp", // F#
+	"sharp", // G
+	"flat", // Ab
+];
+
+const MINOR_ACCIDENTAL: Accidental[] = [
+	"sharp", // Am
+	"flat", // Bbm
+	"sharp", // Bm
+	"flat", // Cm
+	"sharp", // C#m
+	"flat", // Dm
+	"flat", // Ebm
+	"sharp", // Em
+	"flat", // Fm
+	"sharp", // F#m
+	"flat", // Gm
+	"sharp", // G#m
+];
+
+/** Sharp or flat spelling for a key label like "Eb", "Cm", "F#m". Defaults to sharps. */
+export function keyAccidental(key: string | null | undefined): Accidental {
+	const m = key?.trim().match(/^([A-G][#b]?)(.*)$/);
+	if (!m) return "sharp";
+	const idx = rootIndex(m[1]);
+	if (idx === -1) return "sharp";
+	const isMinor = /^m(?!aj)/i.test(m[2].trim());
+	return (isMinor ? MINOR_ACCIDENTAL : MAJOR_ACCIDENTAL)[idx];
+}
+
+export { FLAT, NOTE_INDEX, SHARP };

@@ -11,6 +11,7 @@ import {
 } from "@frontend/components/ui/dropdown-menu";
 import { Input } from "@frontend/components/ui/input";
 import { type Scope, useScopes } from "@frontend/lib/scopes";
+import { displayKey } from "@shared/notation";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -126,7 +127,7 @@ function LibraryPage() {
 									{chart?.key ? (
 										<MetaChip
 											label=""
-											value={chart.key}
+											value={displayKey(chart.key)}
 											className="px-2 py-1"
 										/>
 									) : (

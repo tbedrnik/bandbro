@@ -1,5 +1,6 @@
 import { cn } from "@frontend/lib/utils";
 import type { ChordBlock, ChordLine, ChordSegment } from "@shared/chordpro";
+import { displayChord } from "@shared/notation";
 
 // Re-exported for components that import the block types alongside <ChordSheet>.
 export type { ChordBlock, ChordLine, ChordSegment };
@@ -25,6 +26,9 @@ type Props = {
  * words, as a chord sheet. Ported from Claude Design "ChordSheet.dc.html"; the
  * hero of the whole app, reused by the editor preview, song view, Live mode and the
  * public fan view.
+ *
+ * Chord symbols are printed in the European convention (`H` for B natural, `B` for
+ * B-flat) — the blocks themselves stay international. See `shared/notation.ts`.
  */
 export function ChordSheet({
 	blocks,
@@ -101,7 +105,7 @@ export function ChordSheet({
 														: undefined,
 												}}
 											>
-												{seg.chord}
+												{displayChord(seg.chord)}
 											</b>
 										)}
 										<span

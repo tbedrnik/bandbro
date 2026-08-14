@@ -6,6 +6,7 @@ import { NamePromptDialog } from "@frontend/components/NamePromptDialog";
 import { Button } from "@frontend/components/ui/button";
 import { useUser } from "@frontend/contexts/UserContext";
 import { useScopes } from "@frontend/lib/scopes";
+import { displayKey } from "@shared/notation";
 import { slugify } from "@shared/slug";
 import { IconMusic, IconPlus } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
@@ -101,7 +102,7 @@ function HomePage() {
 										{chart?.key && (
 											<MetaChip
 												label=""
-												value={chart.key}
+												value={displayKey(chart.key)}
 												className="px-2 py-1"
 											/>
 										)}

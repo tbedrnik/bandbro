@@ -1,5 +1,6 @@
 import { api } from "@frontend/api";
 import { ChordSheet } from "@frontend/components/ChordSheet";
+import { displayKey } from "@shared/notation";
 import { buildSongView } from "@shared/songView";
 import type { ChordView } from "@shared/transpose";
 import { useQuery } from "@tanstack/react-query";
@@ -98,7 +99,7 @@ function PrintView() {
 							<h1 className="font-display text-2xl font-bold">{page.title}</h1>
 							<div className="mt-1 font-mono text-sm text-gray-600">
 								{meta.artist && `${meta.artist} · `}
-								{displayedKey && `Key ${displayedKey} · `}
+								{displayedKey && `Key ${displayKey(displayedKey)} · `}
 								{page.capo > 0 && `Capo ${page.capo} · `}
 								{page.view === "concert" ? "concert pitch" : "as-fingered"}
 							</div>

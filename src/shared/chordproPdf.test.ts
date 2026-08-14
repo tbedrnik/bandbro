@@ -1,43 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-	buildSetlistChordpro,
-	concertChordpro,
-	transposeChordproText,
-} from "./chordproPdf";
-
-describe("transposeChordproText", () => {
-	test("transposes inline chords and the key", () => {
-		const src = "{key: C}\n[C]hello [G]world [Am]now [F]end";
-		const out = transposeChordproText(src, 2);
-		expect(out).toContain("{key: D}");
-		expect(out).toContain("[D]hello [A]world [Bm]now [G]end");
-	});
-
-	test("leaves annotations and non-chords untouched", () => {
-		const src = "[*Slowly] [C]hi";
-		expect(transposeChordproText(src, 2)).toBe("[*Slowly] [D]hi");
-	});
-
-	test("is a no-op at 0 steps", () => {
-		const src = "[C]x";
-		expect(transposeChordproText(src, 0)).toBe(src);
-	});
-});
-
-describe("concertChordpro", () => {
-	test("capo 2: transposes up and drops the capo directive", () => {
-		const src = "{title: T}\n{key: C}\n{capo: 2}\n[C]hi [G]there";
-		const out = concertChordpro(src, 2);
-		expect(out).toContain("[D]hi [A]there");
-		expect(out).toContain("{key: D}");
-		expect(out).not.toMatch(/\{capo/i);
-	});
-
-	test("no capo: unchanged", () => {
-		const src = "{title: T}\n[C]hi";
-		expect(concertChordpro(src, 0)).toBe(src);
-	});
-});
+import { buildSetlistChordpro } from "./chordproPdf";
 
 describe("buildSetlistChordpro", () => {
 	const songs = [

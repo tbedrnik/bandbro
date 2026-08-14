@@ -5,6 +5,7 @@ import { SongSheet } from "@frontend/components/SongSheet";
 import { useUser } from "@frontend/contexts/UserContext";
 import { getOfflineSetlist, useOnline } from "@frontend/lib/offline";
 import { useFanSession } from "@frontend/lib/useFanSession";
+import { displayKey } from "@shared/notation";
 import type { ChordView } from "@shared/transpose";
 import { transposeKey } from "@shared/transpose";
 import {
@@ -106,7 +107,9 @@ function LiveMode() {
 	const song = chart.song;
 	const capo = chart.capo ?? 0;
 	const steps = (view === "concert" ? capo : 0) + transpose;
-	const displayedKey = chart.key ? transposeKey(chart.key, steps) : "";
+	const displayedKey = chart.key
+		? displayKey(transposeKey(chart.key, steps))
+		: "";
 	const next = songs[index + 1];
 
 	return (

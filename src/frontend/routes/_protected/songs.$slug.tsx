@@ -12,6 +12,7 @@ import {
 } from "@frontend/components/ui/dropdown-menu";
 import { useUser } from "@frontend/contexts/UserContext";
 import { useScopes } from "@frontend/lib/scopes";
+import { displayKey } from "@shared/notation";
 import type { ChordView } from "@shared/transpose";
 import { transposeKey } from "@shared/transpose";
 import { IconBulb, IconGitFork, IconPencil } from "@tabler/icons-react";
@@ -56,7 +57,7 @@ function SongViewPage() {
 	const displayedKey = useMemo(() => {
 		if (!chart?.key) return "";
 		const steps = (view === "concert" ? capo : 0) + transpose;
-		return transposeKey(chart.key, steps);
+		return displayKey(transposeKey(chart.key, steps));
 	}, [chart?.key, view, capo, transpose]);
 
 	if (isPending) return <Centered>Loading…</Centered>;
