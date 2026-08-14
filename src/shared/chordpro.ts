@@ -6,7 +6,16 @@
  */
 
 /** One chord positioned above the syllable(s) it falls on. */
-export type ChordSegment = { chord: string; text: string };
+export type ChordSegment = {
+	chord: string;
+	text: string;
+	/**
+	 * Width in characters of the `[chord]` marker this segment came from (`[D]` = 3).
+	 * Only set inside verbatim (tab) sections, where the renderer prints the chord in
+	 * that same column width so the chord row keeps lining up with the staff below it.
+	 */
+	width?: number;
+};
 /** A line is a run of chord/lyric segments. */
 export type ChordLine = ChordSegment[];
 /** A labelled section (Verse, Chorus, Bridge) of chord lines. */
@@ -68,27 +77,37 @@ function parseDirective(line: string): { name: string; value: string } | null {
 	return { name: m[1].toLowerCase(), value: (m[2] ?? "").trim() };
 }
 
-/** Split a lyric line with inline [chords] into chord/text segments. */
-function parseLine(line: string): ChordLine {
+/**
+ * Split a lyric line with inline [chords] into chord/text segments. `keepWidth`
+ * records each marker's source width on the segment — set for verbatim (tab) lines,
+ * whose columns are load-bearing.
+ */
+function parseLine(line: string, keepWidth = false): ChordLine {
 	const segments: ChordLine = [];
 	const re = /\[([^\]]*)\]/g;
 	let lastIndex = 0;
 	let pendingChord = "";
+	let pendingWidth = 0;
 	let match: RegExpExecArray | null;
+	const push = (chord: string, text: string, width: number) => {
+		segments.push(
+			keepWidth && chord ? { chord, text, width } : { chord, text },
+		);
+	};
 	// biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop
 	while ((match = re.exec(line)) !== null) {
 		const text = line.slice(lastIndex, match.index);
 		if (text.length > 0) {
-			segments.push({ chord: pendingChord, text });
+			push(pendingChord, text, pendingWidth);
 		} else if (pendingChord) {
 			// two chords with no lyric between them: keep the chord on its own segment
-			segments.push({ chord: pendingChord, text: "" });
+			push(pendingChord, "", pendingWidth);
 		}
 		pendingChord = match[1];
+		pendingWidth = match[0].length;
 		lastIndex = re.lastIndex;
 	}
-	const tail = line.slice(lastIndex);
-	segments.push({ chord: pendingChord, text: tail });
+	push(pendingChord, line.slice(lastIndex), pendingWidth);
 	return segments.length ? segments : [{ chord: "", text: line }];
 }
 
@@ -167,13 +186,18 @@ export function parseChordpro(content: string): ParsedSong {
 		}
 
 		if (raw.trim() === "") {
-			// Blank line ends an implicit paragraph but not an explicit section.
-			if (!inExplicitSection) flush();
+			// Blank line ends an implicit paragraph but not an explicit section. Inside
+			// a tab it's part of the art (the gap between staves) — keep it.
+			if (current?.kind === "tab")
+				current.lines.push([{ chord: "", text: "" }]);
+			else if (!inExplicitSection) flush();
 			continue;
 		}
 
 		if (!current) current = { kind: "none", lines: [] };
-		current.lines.push(parseLine(raw));
+		// Tab lines are verbatim: whitespace is the alignment, so keep the chord
+		// markers' column widths for the renderer.
+		current.lines.push(parseLine(raw, current.kind === "tab"));
 	}
 	flush();
 

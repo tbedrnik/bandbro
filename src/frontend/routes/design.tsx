@@ -6,6 +6,7 @@ import { RoleBadge } from "@frontend/components/RoleBadge";
 import { TransposeStepper } from "@frontend/components/TransposeStepper";
 import { Button } from "@frontend/components/ui/button";
 import { Input } from "@frontend/components/ui/input";
+import { parseChordpro } from "@shared/chordpro";
 import { IconCheck } from "@tabler/icons-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -51,6 +52,22 @@ const SAMPLE_BLOCKS: ChordBlock[] = [
 		],
 	},
 ];
+
+// Tabs come out of the parser, not hand-written blocks: their columns are the whole
+// point, so the showcase renders the real ChordPro → ChordSheet path.
+const TAB_BLOCKS: ChordBlock[] = parseChordpro(
+	[
+		"{start_of_tab: Intro}",
+		"   [Am]           [C]",
+		"e|-----0-----------0-----|",
+		"H|---1---1-------1---1---|",
+		"G|-2-------2---0-------0-|",
+		"D|-----------2-----------|",
+		"A|-0-----------3---------|",
+		"E|-----------------------|",
+		"{end_of_tab}",
+	].join("\n"),
+).blocks;
 
 const SWATCHES: { name: string; cssVar: string }[] = [
 	{ name: "bg", cssVar: "--background" },
@@ -163,6 +180,14 @@ function DesignBoard({ theme }: { theme: "light" | "dark" }) {
 				<Kicker>Chord sheet — the hero</Kicker>
 				<div className="rounded-xl border border-border bg-card px-6 py-[22px]">
 					<ChordSheet blocks={SAMPLE_BLOCKS} lyricSize={20} chordSize={14} />
+				</div>
+			</section>
+
+			{/* Tab — verbatim monospace grid */}
+			<section className="mb-[34px]">
+				<Kicker>Tab — verbatim, monospace, tight-leaded</Kicker>
+				<div className="rounded-xl border border-border bg-card px-6 py-[22px]">
+					<ChordSheet blocks={TAB_BLOCKS} lyricSize={20} chordSize={14} />
 				</div>
 			</section>
 
