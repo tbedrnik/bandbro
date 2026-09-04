@@ -33,6 +33,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
 export const Route = createFileRoute("/_protected/live/$id")({
+	// `?song=` opens the set at a given position — how the offline search jumps straight
+	// to the song it found (CLAUDE.md §D15).
+	// Returning `{}` rather than `{song: undefined}` keeps the param genuinely optional,
+	// so every other `to="/live/$id"` link stays a plain link with no search object.
+	validateSearch: (search: Record<string, unknown>): { song?: number } => {
+		const song = Number(search.song);
+		return Number.isInteger(song) && song >= 0 ? { song } : {};
+	},
 	component: LiveMode,
 });
 
@@ -57,8 +65,9 @@ function LiveMode() {
 	// that never had one there is still a downloaded setlist worth performing.
 	const user = useUser({ optional: true });
 	const { data: setlist, online } = useLiveSetlist(id);
+	const { song: openAt } = Route.useSearch();
 
-	const [index, setIndex] = useState(0);
+	const [index, setIndex] = useState(openAt ?? 0);
 	const [view, setView] = useState<ChordView>(
 		(user?.defaultChordView as ChordView) ?? "fingered",
 	);

@@ -460,15 +460,30 @@ display prefs (§D12): the Library's scope selection is now remembered the same 
 resetting to Curated. Deliberately **not** in the URL — it's "where I left off", not a shareable address —
 and dropped once the org list confirms the user can no longer browse it (left the band, different account).
 
-### D15 — Offline Live-mode sync: no peer channel in v1
-Full analysis in [`docs/offline-live-sync.md`](docs/offline-live-sync.md). Summary: **Bluetooth is not
-reachable from a web app** — Web Bluetooth implements the GATT *central* role only, so two browsers can
-never see each other, and it is absent from Safari entirely. On a shared **hotspot**, WebRTC peers connect
-with no ICE servers, but signalling has to go out of band (QR offer/answer, two scans per bandmate, plus a
-QR *decoder* we don't ship) — recorded as a designed option, not built. The practical answer for a venue
-with no signal is to run this single Bun process on a laptop on the hotspot, which needs no code at all.
-What ships: content works offline per §D7, sync degrades silently, and each device navigates the set
-independently — which is safer than a half-connected sync that strands one player on the wrong song.
+### D15 — Offline Live-mode sync: no peer channel in v1; local search instead *(implemented)*
+Full analysis in [`docs/offline-live-sync.md`](docs/offline-live-sync.md). This is **band-internal** sync —
+one player taps next, the others' Live mode follows — not the fan feature, though both ride the same
+server-mediated mechanism (§D10), which is exactly why it dies with no internet.
+- **Bluetooth is not reachable from a web app.** Web Bluetooth implements the GATT *central* role only, so
+  two browsers can never see each other, and it is absent from Safari entirely. A platform limit, not an
+  engineering one.
+- **A shared network is necessary but not sufficient.** Bands are typically already on a local WiFi network
+  for the mixer, so the devices *can* address each other — but a web page cannot open a listening socket,
+  so with only phones on that network there is no server and no rendezvous point.
+- **What would work:** run this single Bun process on a laptop joined to that network and everything works
+  unchanged. Packaging it as a one-command "host tonight's gig" (start, print the LAN URL + a QR) is the
+  right next step, deliberately not built on spec. WebRTC peers connect on a LAN with no ICE servers, but
+  signalling has to go out of band — QR offer/answer, two scans per bandmate, plus a QR *decoder* we don't
+  ship — so it stays a designed option.
+- **What ships instead: local search** (`src/shared/songSearch.ts`, pure + unit-tested; UI on `/app/offline`).
+  Titles, artists **and lyrics** across every downloaded set, with no signal, and a hit opens Live mode at
+  that song (`/app/live/$id?song=N`). Two details make it work on real charts: lyrics are recovered through
+  the shared ChordPro parser, so a phrase matches across a chord written mid-word (`A[G]mazing grace`) where
+  a substring search over the source finds nothing; and both query and text are folded to unaccented
+  lowercase, so `sen` finds `Šeň`. The fold keeps an index map back to the source, so a lyric snippet is cut
+  from the original and keeps its diacritics. The corpus is built on demand from the stored payloads rather
+  than kept as a second index — one source of truth can't go stale.
+
 
 ---
 

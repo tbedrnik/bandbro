@@ -175,6 +175,64 @@ export function listOfflineSetlists(): OfflineSetlistMeta[] {
 	return out.sort((a, b) => b.downloadedAt - a.downloadedAt);
 }
 
+/** One downloaded song, flattened out of its setlist so it can be searched and opened. */
+export type OfflineSong = {
+	setlistId: string;
+	setlistTitle: string;
+	/** Position in the setlist — Live mode opens straight at this song. */
+	index: number;
+	title: string;
+	artist: string;
+	key: string;
+	content: string;
+};
+
+/** The shape of a stored setlist entry this module reads for the song index. */
+type StoredEntry = {
+	chart?: {
+		key?: string | null;
+		song?: {
+			name?: string | null;
+			credits?: { artist?: { name?: string | null } | null }[] | null;
+		} | null;
+	} | null;
+};
+
+/**
+ * Every song on this device, across every downloaded setlist — the corpus the offline
+ * search runs over (CLAUDE.md §D15). Built on demand from the stored payloads rather
+ * than kept as a second index: a band's downloads are a few hundred songs of text, the
+ * parse only happens while someone is typing in the search box, and one source of truth
+ * can't go stale.
+ */
+export function listOfflineSongs(): OfflineSong[] {
+	const out: OfflineSong[] = [];
+	for (const meta of listOfflineSetlists()) {
+		const payload = getOfflineSetlist<{ songs?: StoredEntry[] | null }>(
+			meta.id,
+		);
+		const entries = Array.isArray(payload?.songs) ? payload.songs : [];
+		entries.forEach((entry, index) => {
+			const chart = entry?.chart;
+			const content = (chart as { content?: string } | null)?.content;
+			if (typeof content !== "string") return;
+			out.push({
+				setlistId: meta.id,
+				setlistTitle: meta.title,
+				index,
+				title: chart?.song?.name ?? "Untitled",
+				artist: (chart?.song?.credits ?? [])
+					.map((credit) => credit?.artist?.name ?? "")
+					.filter(Boolean)
+					.join(", "),
+				key: chart?.key ?? "",
+				content,
+			});
+		});
+	}
+	return out;
+}
+
 /** Same-tab change notification — `storage` events only fire in *other* tabs. */
 const listeners = new Set<() => void>();
 function notify() {
