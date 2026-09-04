@@ -6,13 +6,40 @@ const isDev = process.env.NODE_ENV === "development";
 
 const publicDir = `${import.meta.dir}/../frontend/public`;
 
-// PWA assets (CLAUDE.md §D7). Served under /app so the service worker's scope
-// covers the app. Service-Worker-Allowed lets sw.js control the whole /app tree.
-function serveSw() {
-	return new Response(Bun.file(`${publicDir}/sw.js`), {
+// PWA assets (CLAUDE.md §D7).
+//
+// The worker is bundled from src/frontend/sw.js at request time rather than served as a
+// static file: it imports the shell-asset parser from src/shared, and there is no build
+// step that would otherwise reach it (Bun bundles the SPA from its HTML import, and the
+// worker is not part of that graph). One build per process, cached below.
+//
+// `Service-Worker-Allowed: /` is what lets a script served from /app/sw.js claim the
+// whole origin. It has to: Bun serves the SPA's hashed bundle from the origin root
+// (/chunk-<hash>.js), so a worker scoped to /app/ can never cache the files the app
+// needs to boot — which is exactly why the installed app used to open to nothing
+// offline. The worker itself still leaves / (the landing page) and /api alone.
+let swBundle: Promise<string> | undefined;
+function buildSw() {
+	if (!swBundle || isDev) {
+		swBundle = Bun.build({
+			entrypoints: [`${import.meta.dir}/../frontend/sw.js`],
+			target: "browser",
+			minify: !isDev,
+		})
+			.then((result) => result.outputs[0].text())
+			.catch((error) => {
+				swBundle = undefined; // don't cache a failure — retry on the next request
+				throw error;
+			});
+	}
+	return swBundle;
+}
+
+async function serveSw() {
+	return new Response(await buildSw(), {
 		headers: {
 			"Content-Type": "text/javascript",
-			"Service-Worker-Allowed": "/app/",
+			"Service-Worker-Allowed": "/",
 			"Cache-Control": "no-cache",
 		},
 	});
@@ -21,6 +48,15 @@ function serveManifest() {
 	return new Response(Bun.file(`${publicDir}/manifest.webmanifest`), {
 		headers: { "Content-Type": "application/manifest+json" },
 	});
+}
+function serveIcon(name: string) {
+	return () =>
+		new Response(Bun.file(`${publicDir}/${name}`), {
+			headers: {
+				"Content-Type": "image/png",
+				"Cache-Control": "public, max-age=86400",
+			},
+		});
 }
 
 const server = Bun.serve({
@@ -34,8 +70,11 @@ const server = Bun.serve({
 		"/api/*": api.fetch,
 		"/app/sw.js": serveSw,
 		"/app/manifest.webmanifest": serveManifest,
-		"/app": frontend, // bare path (PWA start_url) + the SPA basepath
-		"/app/*": frontend, // matches with basepath in frontend
+		"/app/icon-192.png": serveIcon("icon-192.png"),
+		"/app/icon-512.png": serveIcon("icon-512.png"),
+		"/app/icon-maskable-512.png": serveIcon("icon-maskable-512.png"),
+		"/app": frontend, // bare path + the SPA basepath
+		"/app/*": frontend, // matches with basepath in frontend; also the PWA start_url "/app/"
 		"/": landing,
 	},
 	development: isDev,
