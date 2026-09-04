@@ -77,12 +77,12 @@ describe("buildSetlistChordpro", () => {
 });
 
 describe("estimateSongHeight", () => {
-	// Calibrated against the chordpro CLI at A4: 26 chord+lyric pairs plus a section
-	// label render on one page, 27 spill onto a second.
+	// Calibrated against the chordpro CLI at A4: 30 chord+lyric pairs plus a section
+	// label render on one page, 31 spill onto a second.
 	test("matches the CLI's one-page capacity", () => {
-		expect(needsTwoColumns(song(26))).toBe(false);
-		expect(needsTwoColumns(song(27))).toBe(true);
-		expect(estimateSongHeight(song(26))).toBeLessThanOrEqual(PAGE_BODY_HEIGHT);
+		expect(needsTwoColumns(song(30))).toBe(false);
+		expect(needsTwoColumns(song(31))).toBe(true);
+		expect(estimateSongHeight(song(30))).toBeLessThanOrEqual(PAGE_BODY_HEIGHT);
 	});
 
 	test("counts one chord row per line, however many chords it holds", () => {

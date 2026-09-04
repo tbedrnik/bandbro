@@ -24,23 +24,33 @@ const COLUMN_SPACE = 20;
  */
 export const PAGE_BODY_HEIGHT = 715;
 
-/** Baseline distances: chordpro's default font sizes times their `pdf.spacing` factors. */
+/**
+ * Type sizes. The CLI's defaults (12pt lyrics, 1.2 line spacing) are book settings; a
+ * chord sheet is read in glances off a music stand, not line by line, and every point
+ * saved here is a song that stops needing a page turn. Chords keep their 10pt — they're
+ * what a player actually looks for — so they now sit slightly larger than the lyrics.
+ */
+const FONT_SIZE = { lyrics: 11, chords: 10, label: 9, tab: 10 };
+const SPACING = { lyrics: 1.1, chords: 1.1 };
+
+/** Dark red — readable on paper in black-and-white-ish print, distinct from the lyrics. */
+const CHORD_COLOR = "#8b1a1a";
+
+/** Baseline distances: each font size times its `pdf.spacing` factor. */
 export const LINE_HEIGHT = {
-	/** `pdf.fonts.text` "serif 12" × `spacing.lyrics` 1.2. */
-	lyrics: 14.4,
-	/** `pdf.fonts.chord` "sans italic 10" × `spacing.chords` 1.2. */
-	chords: 12,
-	/** Section labels, rendered as `pdf.fonts.comment_italic` 12 comments. */
-	label: 14.4,
-	/** `pdf.fonts.tab` "mono 10" × `spacing.tab` 1. */
-	tab: 10,
+	lyrics: FONT_SIZE.lyrics * SPACING.lyrics,
+	chords: FONT_SIZE.chords * SPACING.chords,
+	/** Section labels are rendered as `comment_italic` comments, spaced as lyrics. */
+	label: FONT_SIZE.label * SPACING.lyrics,
+	/** `spacing.tab` is 1. */
+	tab: FONT_SIZE.tab,
 };
 
 /**
- * Rough advance of one lyric character in the body font (Times-Roman 12) — enough to
+ * Rough advance of one lyric character in the body font (a Times clone) — enough to
  * predict roughly where a long line wraps, not to typeset it.
  */
-export const LYRIC_CHAR_WIDTH = 5.6;
+export const LYRIC_CHAR_WIDTH = 0.47 * FONT_SIZE.lyrics;
 
 /** Advance of one character in the tab font (Courier 10) — monospaced, so this is exact. */
 export const TAB_CHAR_WIDTH = 6;
@@ -94,6 +104,23 @@ export function chordproConfig(): Record<string, unknown> {
 			// and the strip claims ~60pt of every page (see PAGE_BODY_HEIGHT).
 			diagrams: { show: false },
 			kbdiagrams: { show: false },
+			fonts: {
+				text: `serif ${FONT_SIZE.lyrics}`,
+				// Chords in a dark red, so the eye finds them without hunting the italics.
+				chord: `sans bold ${FONT_SIZE.chords}; color=${CHORD_COLOR}`,
+				// Section labels. Spelled through the `sans` family rather than as the
+				// physical "Helvetica-Oblique" the CLI's own default names: in a user config
+				// that name resolves to nothing and the labels come out upright.
+				comment_italic: `sans italic ${FONT_SIZE.label}`,
+			},
+			spacing: SPACING,
+			formats: {
+				// Capo after the title ("Lucie - Sen (capo 4)"), from the song's own {capo}. Concert
+				// copies have had that directive stripped, so they correctly show nothing.
+				title: {
+					title: ["%{artist|%{} – }%{title}%{capo| (capo %{})}", "", ""],
+				},
+			},
 		},
 	};
 }

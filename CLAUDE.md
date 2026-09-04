@@ -230,13 +230,24 @@ the reference `chordpro` CLI** (`GET /api/songbooks/:id/pdf?mode=…`, `songbook
   `{capo}`) with the shared §D5 engine, so the PDF matches the on-screen views. **both** emits a capo'd song
   twice (as-fingered, then a `(concert)` copy). See `src/shared/chordproPdf.ts` (unit-tested).
 - **Layout** lives in `src/shared/chordproConfig.ts`, written to a temp JSON and passed as `--config`. It
-  overrides four
-  unhelpful CLI defaults: `papersize: a4`; `labels.width: 0` + `labels.comment: comment_italic` so section
-  names ("Verse 1", "Riff") sit *above* their section as an italic comment instead of in a left margin that
-  eats ~65pt of line width; `songbook.dual-pages: false`, since stock chordpro is duplex and starts every
-  song on a right-hand page — which put a **blank filler page between most songs**; and
-  `diagrams.show: false` (+ `kbdiagrams`), dropping the chord-shape strip along the bottom of each song,
-  which also hands ~60pt of every page back to the chart.
+  overrides the CLI defaults that don't suit a setlist: `papersize: a4`; `labels.width: 0` +
+  `labels.comment: comment_italic` so section names ("Verse 1", "Riff") sit *above* their section as an
+  italic comment instead of in a left margin that eats ~65pt of line width; `songbook.dual-pages: false`,
+  since stock chordpro is duplex and starts every song on a right-hand page — which put a **blank filler page
+  between most songs**; and `diagrams.show: false` (+ `kbdiagrams`), dropping the chord-shape strip along the
+  bottom of each song, which also hands ~60pt of every page back to the chart.
+- **Type** (`FONT_SIZE`/`SPACING`/`CHORD_COLOR` in `chordproConfig.ts`). The CLI's 12pt lyrics on 1.2 leading
+  are book settings; a chart is read in glances off a stand, so lyrics drop to 11pt on 1.1 and **chords stay
+  at 10pt** — they're what a player looks for, and they now sit slightly larger than the lyrics. Chords print
+  **dark red** (`#8b1a1a`), the one colour in the document. Together with the reclaimed diagram strip and
+  two columns, a 60-song setlist went 91 → 80 pages with **no song spanning a page turn**.
+  Spell fonts through a *family* (`sans italic 11`), never a physical corefont name: `Helvetica-Oblique`
+  is what the CLI's own default uses, but in a user config it resolves to nothing and the text silently
+  comes out upright. `Helvetica-Narrow` is likewise a dead end — the CLI remaps corefonts onto the Free*
+  Unicode faces (which is what renders Czech diacritics), and it lands on plain Arial, no narrower at all.
+- **Capo** is appended to the printed song title ("Sen (capo 4)") via `formats.title.title`, expanded from
+  the song's own `{capo}` — so concert copies, which have had that directive stripped, correctly show none.
+  The tables of contents interpolate `%{title}` directly and so stay free of it.
 - **Two columns on demand.** A song that doesn't fit one page is set in two columns (`{columns: 2}`, injected
   after its `{title}` so it's scoped to that song) rather than spilling over the page break.
   `needsTwoColumns` (in `chordproPdf.ts`) decides from an estimate of the rendered height — the CLI has no
