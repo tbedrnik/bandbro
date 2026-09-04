@@ -72,6 +72,7 @@ prisma/
   schema.prisma         generator + datasource only
   models/auth.prisma    better-auth models (User, Session, Account, Verification, Organization, Member, Invitation)
   models/songs.prisma    domain models (Song, Chart, Artist, Credit, Songbook, SongbookSong)
+  models/bands.prisma    band invite links (BandInvite, BandInviteUse) — see §D13
   migrations/
 ```
 
@@ -123,6 +124,7 @@ The PRD's mental model (§5) and how it maps onto the current Prisma schema:
 | **Role** (Admin/Writer/Reader) | `Member.role: String` (better-auth default `owner`/`admin`/`member`) | ❌ needs Admin/Writer/Reader mapping (D6) |
 | **Member view preference** (capo/concert default) | — | ❌ **not modeled** (D2) |
 | **Suggestion** (propose edit to non-writable song) | — | ❌ not modeled (should-have) |
+| **Invite** (join a band) | `BandInvite` + `BandInviteUse` (link/QR); legacy `Invitation` (email) | ✅ §D13 |
 
 ### Scope model (the load-bearing convention)
 
@@ -213,12 +215,59 @@ transpose/perform/offline/PDF) and enforce it in write services. PRD §12 Q1/Q6:
 can delete or Admin-only. → Task: `betterAuth` `ac`/`roles` config + a `requireRole(orgId, level)` guard
 used by `songsUpdate`/`songsDelete`/fork/songbook writes.
 
-### D7 — Offline PWA: service worker + per-playlist cache, read-only in v1 *(R)*
-Live mode must run with no signal. Plan: add a **web app manifest** + **service worker** (precache the app
-shell; runtime-cache a playlist's song payloads on "Download for offline" into the **Cache API / IndexedDB**).
-v1 is **read-only offline** (no edit-queue/sync — PRD §12 Q5). Scope = per-playlist download (matches the
-Playlist screen's "Download for offline" control). Wire SW registration into the Bun build. Note:
-`lib/push.ts` (web push) is unrelated to offline and not a v1 must-have — leave it parked.
+### D7 — Offline PWA: root-scoped service worker + per-setlist snapshot, read-only in v1 *(implemented)*
+Live mode must run with no signal, and the *installed* app must open with no signal. It now does. Three
+pieces, each of which was individually broken before:
+- **Scope.** Bun serves the SPA's content-hashed bundle from the **origin root** (`/chunk-<hash>.js`),
+  not from under `/app` — so the original worker, scoped to `/app/`, could never see, let alone cache, the
+  two files the app needs to start. The installed PWA cached the shell HTML and then opened to a blank
+  page. The worker is now registered at **scope `/`** (`src/frontend/index.tsx`), which the server permits
+  with `Service-Worker-Allowed: /` on `/app/sw.js`; the worker itself still ignores `/` (the marketing
+  landing) and `/api/*`. Old `/app/`-scoped registrations are unregistered on first load.
+- **Precache.** Hashed filenames mean there is no fixed list to precache, so on `install` the worker
+  fetches the shell (`/app/`) and reads its `<script>`/`<link>` URLs back out of the markup —
+  `extractShellAssets` in `src/shared/shellAssets.ts` (pure + unit-tested; it also normalizes the
+  `/../../chunk-x.js` hrefs Bun emits, exactly as the browser does). Document and assets are cached as a
+  pair, and every online `/app` navigation refreshes both together, so a rebuild can never leave cached
+  HTML pointing at hashes that aren't in the cache. Assets are served **cache-first** (a content hash
+  can't go stale); navigations are network-first, falling back to the cached shell for any `/app/*` URL.
+  Because the worker imports from `src/shared`, it is **bundled at request time** by `serveSw()` in
+  `src/backend/index.ts` (`Bun.build`, cached per process) rather than served as a static file.
+- **The auth gate.** `_protected/layout` bounces to `/login` whenever there is no session, and the session
+  is a network read — so offline the whole app bounced to a login form that also couldn't reach the server.
+  `lib/sessionSnapshot.ts` persists the last known session/user and `__root.tsx` boots from it **when, and
+  only when, the session read errored**; an explicit "no session" answer (sign-out, expiry) clears it. The
+  snapshot is a **UI affordance, not authorization** — it grants nothing, and every API route still goes
+  through the server's `auth` macros and role guards. It also **blanks the session token, IP and user
+  agent** on the way in: the real credential is an httpOnly cookie the page can't read, nothing on the
+  client reads the token, and copying a bearer credential into localStorage for no gain would be a
+  straight security regression. With no signal and no snapshot, the layout sends the player to `/offline`
+  instead of `/login`.
+
+**What offline actually gives you.** `/app/offline` (route `src/frontend/routes/offline.tsx`, deliberately
+*outside* `_protected`) is the shelf: every downloaded setlist with its title, song count and download age,
+each openable straight into Live mode, each removable. The same list surfaces on Home under "Available
+offline". Live mode reads the snapshot through `getOfflineSetlist` as react-query `initialData`, treats the
+user as optional, and skips the fan-session sync when there's no network — a failed sync degrades silently
+and never stalls the chart. "Share with fans" is disabled offline, since the fan view is served, not cached.
+`OfflinePill` marks the offline state on Home and on the shelf.
+
+**Store.** `lib/offline.ts` keeps per-setlist payloads in **localStorage** under
+`bandbro:offline:setlist:<id>`, plus a `bandbro:offline:meta` index for the listing. Not IndexedDB: a
+60-song set of ChordPro text is ~200 KB against a ~5 MB budget, and the reads must be **synchronous**
+(Live mode's `initialData`, the setlist screen's `useState` seed). Exported API is unchanged except that
+`downloadSetlist` now returns a boolean (a quota failure is reported rather than silently pretending), and
+`listOfflineSetlists`/`useOfflineSetlists`/`OfflineSetlistMeta` are new. The listing is driven by the
+payload keys, so it self-heals and picks up sets downloaded before the index existed.
+
+**Manifest/install.** `start_url` and `scope` are both `/app/` (they were `/app` and `/app/`, which is not
+in scope), and the icons are real committed PNGs served from `src/backend/index.ts` — the inline SVG data
+URI is not reliably accepted for Android/Chrome installability. `src/tools/generateIcons.ts` regenerates
+them (192/512 plus a 512 maskable with a safe-zone margin); `index.tsx` also adds an `apple-touch-icon`,
+which iOS needs because it ignores the manifest's icons.
+
+v1 stays **read-only offline** (no edit queue or sync — PRD §12 Q5), scoped per setlist. Note: `lib/push.ts`
+(web push) is unrelated to offline and not a v1 must-have — leave it parked.
 
 ### D8 — PDF export: server-side via the `chordpro` CLI *(DECIDED — implemented)*
 The Playlist screen exports an ordered, one-song-per-page chord-sheet PDF with a render-mode choice
@@ -364,6 +413,63 @@ device in localStorage (`lib/liveDisplay.ts`) and never broadcast to fans or ban
 - The Live song title + key **scroll with the chart** instead of holding a permanent row across the top; the setlist
   name and position live in the top bar already.
 
+### D13 — Joining a band is a link, not an email *(implemented)*
+This deployment has no mail transport, so better-auth's `inviteMember({email})` flow delivered nothing —
+the Bands screen's invite box was dead UI. A band is now joined by following an unguessable **invite
+link**: an admin holds up its QR at rehearsal, or pastes the URL (or reads out the code) over whatever
+channel the band already uses.
+- **Model** (`prisma/models/bands.prisma`). `BandInvite` (unique `code`, organization, granted `role`,
+  `createdBy`, nullable `expiresAt`/`maxUses` = never/unlimited, `revokedAt`) + `BandInviteUse`
+  (`@@unique([inviteId, userId])`) — the use rows are what make "who joined through this link?"
+  answerable, and what stops a single-use link being spent twice by the same person re-opening it.
+  The back-relations on `Organization`/`User` are hand-added to the otherwise generated `auth.prisma`.
+- **Code** (`src/shared/bandInvite.ts`, unit-tested). Same unambiguous alphabet as the stage code
+  (§D10) but **10 characters ≈ 50 bits**: a fan code only unlocks a read-only view of one gig, whereas
+  an invite link is a bearer credential to a band's songbook. Validity (`inviteStatus` → active /
+  revoked / expired / exhausted) is a pure function, so the redeem guard and the admin list's labels
+  can't disagree; revoked deliberately outranks expired.
+- **API** (`services/bandInvites.ts`, group `/bands`). Admin-only create/list/revoke plus a cancel for
+  legacy email `Invitation` rows; `GET /bands/join/:code` is **public/no-auth** so the join page can
+  say "Join The Wildcards as Writer" *before* asking anyone to sign in, and `POST /bands/join/:code`
+  redeems (adds the `Member` row + a use, idempotent for an existing member, `410` for a dead link).
+  The preview deliberately returns only band name + role + status — the caller holds nothing but a code.
+- **Frontend.** `/app/join/$code` (+ `/app/join` for typing a code) sits outside `_protected`/`_auth`,
+  like the fan routes. A visitor without a session is sent to login/register with a **`redirect` search
+  param** (validated on the `_auth` layout, guarded by `safeRedirect` against off-site targets) and comes
+  back to the join button; the protected-route guard passes the same param, so any bounced destination
+  now survives the login. The Bands screen mints links (role · expiry · single/multi-use) and lists the
+  outstanding ones with their joiners and a Revoke; legacy pending email invitations are shown, marked
+  undeliverable, with Cancel only — nothing creates new ones.
+
+### D14 — Setlist order is dragged; "where I left off" is per-device *(implemented)*
+Reordering a set with up/down arrows is a click per position — wrong for the one screen a player edits
+minutes before a gig. The setlist detail view now uses **dnd-kit** (`@dnd-kit/core` + `/sortable` +
+`/modifiers`), the maintained standard for React drag-and-drop, with a grip handle on the left of each row.
+- Listeners are bound to the **grip alone**, not the row, so the song title stays a link and a touch
+  anywhere else still scrolls the page. `touch-none` on the grip is what makes a finger drag work at all —
+  without it the browser claims the gesture for scrolling and the row never moves.
+- The pointer sensor arms after 4px so a tap on the handle is still a tap; the keyboard sensor
+  (`sortableKeyboardCoordinates`) keeps the same reorder reachable without a mouse. Drags are restricted
+  to the vertical axis and to the list.
+- The new order is applied **optimistically** — otherwise the dragged row snaps back for the length of the
+  PUT + refetch — and dropped again as soon as the server's own order changes or the mutation fails.
+
+Per-device UI state generally lives in localStorage, next to the theme (`lib/theme.ts`) and the Live
+display prefs (§D12): the Library's scope selection is now remembered the same way
+(`useRememberedScope` in `lib/scopes.ts`), so coming back lands on the band you were browsing instead of
+resetting to Curated. Deliberately **not** in the URL — it's "where I left off", not a shareable address —
+and dropped once the org list confirms the user can no longer browse it (left the band, different account).
+
+### D15 — Offline Live-mode sync: no peer channel in v1
+Full analysis in [`docs/offline-live-sync.md`](docs/offline-live-sync.md). Summary: **Bluetooth is not
+reachable from a web app** — Web Bluetooth implements the GATT *central* role only, so two browsers can
+never see each other, and it is absent from Safari entirely. On a shared **hotspot**, WebRTC peers connect
+with no ICE servers, but signalling has to go out of band (QR offer/answer, two scans per bandmate, plus a
+QR *decoder* we don't ship) — recorded as a designed option, not built. The practical answer for a venue
+with no signal is to run this single Bun process on a laptop on the hotspot, which needs no code at all.
+What ships: content works offline per §D7, sync degrades silently, and each device navigates the set
+independently — which is safer than a half-connected sync that strands one player on the wrong song.
+
 ---
 
 ## 6. Design system (for building the screens)
@@ -415,10 +521,11 @@ unblock most screens — do them first.
 - [ ] **C8.** Bands/members/invitations: wire better-auth org client calls (create band, invite by email/link, change role, switch active org) — mostly config + UI, little custom API.
 
 ### D. PWA / offline (D7)
-- [ ] **D1.** Web app manifest + icons; register a service worker in the Bun build.
-- [ ] **D2.** App-shell precache; offline fallback for `/app`.
-- [ ] **D3.** "Download for offline" → cache a playlist's resolved song payloads (Cache API/IndexedDB); progress UI; "Available offline" state.
-- [ ] **D4.** Offline detection → `OfflinePill`; ensure Live mode reads cached data with no network.
+- [x] **D1.** Web app manifest + PNG icons; root-scoped service worker, bundled by `serveSw()`.
+- [x] **D2.** App-shell precache (shell HTML + the hashed bundle it names); every `/app/*` navigation falls back to it.
+- [x] **D3.** "Download for offline" → per-setlist snapshot in localStorage; `/app/offline` shelf + "Available offline" on Home.
+- [x] **D4.** Offline detection → `OfflinePill`; Live mode reads the snapshot with no network; session snapshot lets the installed app boot signed-in.
+- [ ] **D5.** Download progress UI, and a size/quota warning for very large setlists.
 
 ### E. PDF export (D8)
 - [ ] **E1.** Print-styled route rendering a playlist in order (one song/page, page-break, capo/key header).
@@ -434,7 +541,7 @@ unblock most screens — do them first.
 | F4 | **Live mode** (mobile/tablet-first) | `/app/live/$playlistId` | Big chord sheet, auto-scroll w/ speed, prev/next + swipe, transpose + capo toggle, `OfflinePill` | B3, C5, D-* |
 | F5 | **Library / Browse** | `/app` or `/app/library` | Scope switcher (Curated · bands · Personal), search + filters, results list w/ Open/Fork | C3/C4 |
 | F6 | **Playlist / Setlist** | `/app/setlists`, `/app/setlists/$id` | Ordered drag-reorder list, add-song search, **Download offline** + **Export PDF**, clone | C5, D-*, E-* |
-| F7 | **Band Management** | `/app/bands`, `/app/bands/$id` | Member list + `RoleBadge`, invite (link/email) + role assign, band switcher | A2, C8 |
+| F7 | **Band Management** | `/app/bands`, `/app/join/$code` | Member list + `RoleBadge`, invite links + QR + outstanding-invite list (§D13), band switcher | A2, C8 |
 | F8 | **Preferences** | `/app/preferences` | `CapoToggle` as default-view setting + worked example, theme toggle, account + memberships | A3, C6 |
 | F9 | **Home / Dashboard** | `/app` (or `/app/home`) | "Up next" gig + setlist, jump-back-in, recent songs, your bands; Live-mode CTA | C3/C5, C8 |
 | F10 | **Auth** | `/app/login`, `/app/register` | better-auth email/password; style to design (Login.dc.html) | — |
