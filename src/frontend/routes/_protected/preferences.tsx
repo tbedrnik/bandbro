@@ -2,6 +2,7 @@ import { auth } from "@frontend/auth";
 import { CapoToggle } from "@frontend/components/CapoToggle";
 import { RoleBadge } from "@frontend/components/RoleBadge";
 import { useUser } from "@frontend/contexts/UserContext";
+import { useOnline } from "@frontend/lib/offline";
 import { useScopes } from "@frontend/lib/scopes";
 import { useTheme } from "@frontend/lib/theme";
 import { cn } from "@frontend/lib/utils";
@@ -17,6 +18,7 @@ function PreferencesPage() {
 	const user = useUser();
 	const { theme, setTheme } = useTheme();
 	const { bands, personal } = useScopes();
+	const online = useOnline();
 	const [view, setView] = useState<ChordView>(
 		(user.defaultChordView as ChordView) ?? "fingered",
 	);
@@ -56,10 +58,26 @@ function PreferencesPage() {
 					shapes they finger; bass &amp; keys read the notes that actually
 					sound. You can always flip it per song.
 				</p>
-				<div className="mt-4 flex items-center gap-4">
-					<CapoToggle value={view} onValueChange={onChangeView} />
-					{saved && <span className="font-mono text-xs text-ok">✓ saved</span>}
-				</div>
+				{/* The toggle writes the preference to the account, so offline it would
+				    silently fail to stick — hide it rather than lie (§D7). Theme, below,
+				    is per-device and keeps working. */}
+				{online ? (
+					<div className="mt-4 flex items-center gap-4">
+						<CapoToggle value={view} onValueChange={onChangeView} />
+						{saved && (
+							<span className="font-mono text-xs text-ok">✓ saved</span>
+						)}
+					</div>
+				) : (
+					<p className="mt-4 text-sm text-muted-foreground">
+						You're offline — changing this setting needs a connection. It's
+						currently{" "}
+						<span className="font-mono text-foreground">
+							{view === "concert" ? "concert" : "as-fingered"}
+						</span>
+						.
+					</p>
+				)}
 				<div className="mt-5 rounded-lg bg-secondary p-4 font-mono text-sm">
 					<div className="mb-1 text-xs uppercase text-muted-foreground">
 						Example · capo 2

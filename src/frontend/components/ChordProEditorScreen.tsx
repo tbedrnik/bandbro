@@ -4,6 +4,7 @@ import { SongEditor } from "@frontend/components/SongEditor";
 import { SongSheet } from "@frontend/components/SongSheet";
 import { TransposeStepper } from "@frontend/components/TransposeStepper";
 import { Button } from "@frontend/components/ui/button";
+import { useOnline } from "@frontend/lib/offline";
 import { useScopes } from "@frontend/lib/scopes";
 import { parseChordpro } from "@shared/chordpro";
 import {
@@ -53,6 +54,7 @@ export function ChordProEditorScreen(props: Props) {
 	const queryClient = useQueryClient();
 	const { bands, personal } = useScopes();
 	const writableScopes = [...bands, ...(personal ? [personal] : [])];
+	const online = useOnline();
 
 	/** What's in the editor pane: the source in the reader's note-name convention. */
 	const [source, setSource] = useState(() =>
@@ -152,7 +154,9 @@ export function ChordProEditorScreen(props: Props) {
 							? `Suggest an edit · ${name}`
 							: `Editing · ${name}`}
 				</div>
-				<div className="ml-auto flex items-center gap-3">
+				{/* Wraps: the stepper, scope select and Save together are wider than a
+				    phone, and used to run off the right edge of the new-song screen. */}
+				<div className="ml-auto flex flex-wrap items-center justify-end gap-3">
 					<div className="flex items-center gap-2">
 						<span
 							className="w-14 font-display text-xs leading-tight text-muted-foreground"
@@ -181,25 +185,35 @@ export function ChordProEditorScreen(props: Props) {
 							</button>
 						)}
 					</div>
-					{props.mode === "new" && (
-						<label className="flex items-center gap-2 text-sm text-muted-foreground">
-							Save to
-							<select
-								value={scope}
-								onChange={(e) => setScope(e.target.value)}
-								className="rounded-lg border border-border bg-card px-3 py-1.5 font-display text-sm text-foreground"
-							>
-								{writableScopes.map((s) => (
-									<option key={s.param} value={s.param}>
-										{s.name}
-									</option>
-								))}
-							</select>
-						</label>
+					{/* Saving (and picking the library it lands in) is a POST/PUT — hidden
+					    with no signal, since v1 has no edit queue to hold the work (§D7). */}
+					{online ? (
+						<>
+							{props.mode === "new" && (
+								<label className="flex items-center gap-2 text-sm text-muted-foreground">
+									Save to
+									<select
+										value={scope}
+										onChange={(e) => setScope(e.target.value)}
+										className="rounded-lg border border-border bg-card px-3 py-1.5 font-display text-sm text-foreground"
+									>
+										{writableScopes.map((s) => (
+											<option key={s.param} value={s.param}>
+												{s.name}
+											</option>
+										))}
+									</select>
+								</label>
+							)}
+							<Button onClick={onSave} disabled={pending}>
+								{pending ? "Saving…" : isSuggest ? "Send suggestion" : "Save"}
+							</Button>
+						</>
+					) : (
+						<span className="font-display text-sm text-muted-foreground">
+							You're offline — saving needs a connection.
+						</span>
 					)}
-					<Button onClick={onSave} disabled={pending}>
-						{pending ? "Saving…" : isSuggest ? "Send suggestion" : "Save"}
-					</Button>
 				</div>
 			</div>
 

@@ -1,6 +1,7 @@
 import { api } from "@frontend/api";
 import { NamePromptDialog } from "@frontend/components/NamePromptDialog";
 import { Button } from "@frontend/components/ui/button";
+import { useOnline } from "@frontend/lib/offline";
 import { useScopes } from "@frontend/lib/scopes";
 import { IconPlaylist, IconPlus } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,9 +28,12 @@ function SetlistsLayout() {
 function SetlistsIndex() {
 	const { bands, personal } = useScopes();
 	const queryClient = useQueryClient();
-	const { data: setlists, isPending } = useQuery(
-		api.songbooks.get.queryOptions({}),
-	);
+	const online = useOnline();
+	const { data: setlists, isPending } = useQuery({
+		...api.songbooks.get.queryOptions({}),
+		// With no signal this can only fail; retrying just holds "Loading…" on screen.
+		retry: online ? 3 : false,
+	});
 	const writableScopes = [...bands, ...(personal ? [personal] : [])];
 
 	const [dialogOpen, setDialogOpen] = useState(false);
@@ -52,9 +56,15 @@ function SetlistsIndex() {
 		<div className="mx-auto max-w-4xl px-6 py-8">
 			<div className="flex items-center justify-between">
 				<h1 className="font-display text-3xl font-bold">Setlists</h1>
-				<Button onClick={() => setDialogOpen(true)} disabled={create.isPending}>
-					<IconPlus className="size-4" /> New setlist
-				</Button>
+				{/* Creating a setlist is a POST — nothing to offer with no signal (§D7). */}
+				{online && (
+					<Button
+						onClick={() => setDialogOpen(true)}
+						disabled={create.isPending}
+					>
+						<IconPlus className="size-4" /> New setlist
+					</Button>
+				)}
 			</div>
 
 			<div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -62,7 +72,17 @@ function SetlistsIndex() {
 					<p className="text-muted-foreground">Loading…</p>
 				) : !setlists?.length ? (
 					<p className="text-muted-foreground">
-						No setlists yet — create one for your next rehearsal or gig.
+						{online ? (
+							"No setlists yet — create one for your next rehearsal or gig."
+						) : (
+							<>
+								You're offline — setlists are read from the server.{" "}
+								<Link to="/offline" className="text-primary hover:underline">
+									Your downloaded sets
+								</Link>{" "}
+								are on this device.
+							</>
+						)}
 					</p>
 				) : (
 					setlists.map((s) => (

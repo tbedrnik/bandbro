@@ -11,6 +11,7 @@ import {
 	DropdownMenuTrigger,
 } from "@frontend/components/ui/dropdown-menu";
 import { useUser } from "@frontend/contexts/UserContext";
+import { useOnline } from "@frontend/lib/offline";
 import { useScopes } from "@frontend/lib/scopes";
 import { displayKey } from "@shared/notation";
 import type { ChordView } from "@shared/transpose";
@@ -30,12 +31,18 @@ function SongViewPage() {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const { bands, personal } = useScopes();
+	const online = useOnline();
 
 	const {
 		data: song,
 		isPending,
 		error,
-	} = useQuery(api.songs({ slug }).get.queryOptions({}));
+	} = useQuery({
+		...api.songs({ slug }).get.queryOptions({}),
+		// Songs are only on this device inside a downloaded setlist, which Live mode
+		// reads — here a dead network can only fail, so fail fast and say so.
+		retry: online ? 3 : false,
+	});
 
 	const [view, setView] = useState<ChordView>(
 		(user.defaultChordView as ChordView) ?? "fingered",
@@ -61,7 +68,14 @@ function SongViewPage() {
 	}, [chart?.key, view, capo, transpose]);
 
 	if (isPending) return <Centered>Loading…</Centered>;
-	if (error || !song || !chart) return <Centered>Song not found.</Centered>;
+	if (error || !song || !chart)
+		return (
+			<Centered>
+				{online
+					? "Song not found."
+					: "You're offline — songs are read from the server. Open a downloaded setlist in Live mode instead."}
+			</Centered>
+		);
 
 	const artist = song.credits.map((c) => c.artist.name).join(", ");
 
@@ -137,57 +151,64 @@ function SongViewPage() {
 						</button>
 					)}
 				</div>
-				<div className="flex flex-col gap-2">
-					<DropdownMenu>
-						<DropdownMenuTrigger
-							render={
-								<Button disabled={fork.isPending || !writableScopes.length}>
-									<IconGitFork className="size-4" />
-									{fork.isPending ? "Forking…" : "Fork to my library"}
-								</Button>
-							}
-						/>
-						<DropdownMenuContent>
-							{writableScopes.map((s) => (
-								<DropdownMenuItem
-									key={s.param}
-									onClick={() =>
-										s.id && fork.mutate({ targetOrganizationId: s.id })
-									}
-								>
-									{s.name}
-								</DropdownMenuItem>
-							))}
-						</DropdownMenuContent>
-					</DropdownMenu>
+				{/* Fork, edit and suggest all write to the server (§D7) — with no signal the
+				    chart above still reads and transposes, which is the point of the screen. */}
+				{online && (
+					<div className="flex flex-col gap-2">
+						<DropdownMenu>
+							<DropdownMenuTrigger
+								render={
+									<Button disabled={fork.isPending || !writableScopes.length}>
+										<IconGitFork className="size-4" />
+										{fork.isPending ? "Forking…" : "Fork to my library"}
+									</Button>
+								}
+							/>
+							<DropdownMenuContent>
+								{writableScopes.map((s) => (
+									<DropdownMenuItem
+										key={s.param}
+										onClick={() =>
+											s.id && fork.mutate({ targetOrganizationId: s.id })
+										}
+									>
+										{s.name}
+									</DropdownMenuItem>
+								))}
+							</DropdownMenuContent>
+						</DropdownMenu>
 
-					{song.viewerCanWrite ? (
-						<Button
-							variant="outline"
-							render={<Link to="/songs/$slug/edit" params={{ slug }} />}
-						>
-							<IconPencil className="size-4" /> Edit
-						</Button>
-					) : (
-						<Button
-							variant="outline"
-							render={
-								<Link
-									to="/songs/$slug/edit"
-									params={{ slug }}
-									search={{ suggest: true }}
-								/>
-							}
-						>
-							<IconBulb className="size-4" /> Suggest an edit
-						</Button>
-					)}
-				</div>
+						{song.viewerCanWrite ? (
+							<Button
+								variant="outline"
+								render={<Link to="/songs/$slug/edit" params={{ slug }} />}
+							>
+								<IconPencil className="size-4" /> Edit
+							</Button>
+						) : (
+							<Button
+								variant="outline"
+								render={
+									<Link
+										to="/songs/$slug/edit"
+										params={{ slug }}
+										search={{ suggest: true }}
+									/>
+								}
+							>
+								<IconBulb className="size-4" /> Suggest an edit
+							</Button>
+						)}
+					</div>
+				)}
+
 				<p className="text-xs text-muted-foreground">
 					You can read &amp; transpose this song.{" "}
-					{song.viewerCanWrite
-						? "You have write access here."
-						: "Suggest proposes an edit to the band's writers."}
+					{!online
+						? "Editing needs a connection."
+						: song.viewerCanWrite
+							? "You have write access here."
+							: "Suggest proposes an edit to the band's writers."}
 				</p>
 			</aside>
 		</div>

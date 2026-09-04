@@ -266,6 +266,16 @@ URI is not reliably accepted for Android/Chrome installability. `src/tools/gener
 them (192/512 plus a 512 maskable with a safe-zone margin); `index.tsx` also adds an `apple-touch-icon`,
 which iOS needs because it ignores the manifest's icons.
 
+**Offline, server-backed controls are hidden, not disabled.** A greyed-out button on a stage is noise: it
+says "this exists" and then refuses, and half a screen of them reads as breakage. Every control that needs
+the server is removed from the DOM when `useOnline()` is false — create/edit/delete/fork/import, the
+`chordpro` PDF export, "Share with fans", invites, role changes, the account-level preference write, and the
+Library's search box (a server query). A screen whose actions all disappear says why in one line rather than
+showing a blank, in the voice Home already uses ("You're offline — the library needs a connection."), and
+those screens' queries drop to `retry: false` so the honest message arrives at once instead of after three
+retries. `ImportSongButton` hides *itself* so no call site has to remember. Controls that run purely on the
+device — transpose, capo view, display prefs, theme, prev/next, the offline search — always stay.
+
 v1 stays **read-only offline** (no edit queue or sync — PRD §12 Q5), scoped per setlist. Note: `lib/push.ts`
 (web push) is unrelated to offline and not a v1 must-have — leave it parked.
 
@@ -454,6 +464,15 @@ minutes before a gig. The setlist detail view now uses **dnd-kit** (`@dnd-kit/co
 - The new order is applied **optimistically** — otherwise the dragged row snaps back for the length of the
   PUT + refetch — and dropped again as soon as the server's own order changes or the mutation fails.
 
+**Offline the setlist screen drops the drag entirely.** Reordering is a PUT, so with no signal there is
+nothing to drag *to*; rather than leave dead handles, the offline render has no `DndContext` at all and the
+rows are plain rows (`SongRow` is presentational, wrapped by a `SortableSongRow` only when online — hooks
+can't be conditional). Each row's remove ✕ becomes a **play** link into `/live/$id?song=N`, reusing §D15's
+jump-to-song param, which turns the set into a skip-ahead list — the thing you actually want from this
+screen at a gig. The screen itself is snapshot-backed like Live mode (`getOfflineSetlist` as `initialData`
++ `retry: false`); before that it sat on "Loading…" forever offline, and a set that isn't on the device now
+fails fast into an honest panel pointing at `/offline`.
+
 Per-device UI state generally lives in localStorage, next to the theme (`lib/theme.ts`) and the Live
 display prefs (§D12): the Library's scope selection is now remembered the same way
 (`useRememberedScope` in `lib/scopes.ts`), so coming back lands on the band you were browsing instead of
@@ -484,6 +503,38 @@ server-mediated mechanism (§D10), which is exactly why it dies with no internet
   from the original and keeps its diacritics. The corpus is built on demand from the stored payloads rather
   than kept as a second index — one source of truth can't go stale.
 
+
+### D16 — Mobile chrome: a peek bar + drawer in Live mode, a sheet for the nav *(implemented)*
+Both surfaces broke on a phone in the same way — a single flex row of controls that overflowed. Measured at
+390px, Live mode's control row stretched the layout viewport to **642px**, pushing Next, the auto-scroll
+controls and the display button off-screen and cutting off the chart itself. The fix in both places reuses
+the pattern the fan view already performs (§D10): a persistent peek bar over a `vaul` bottom drawer
+(`components/ui/drawer.tsx`). One interaction vocabulary, no new dependency.
+- **Live mode** splits its controls by *when* a player touches them. **Mid-song** ones stay on the peek row
+  within thumb reach: prev/next, auto-scroll on/off, and the jump-to-song. **Between-song** settings go in
+  the drawer: capo/concert, transpose, scroll speed, the `DisplaySettings` panel and sharing. That split is
+  what keeps the row inside 390px. From `lg` up, capo + transpose are mirrored inline so a tablet or desktop
+  loses nothing. The top bar thinned to status · setlist · exit, which is what stopped "Share with fans"
+  wrapping onto two lines.
+- **The drawer's second tab is the setlist** — the current set in order, current song marked, each row
+  tapping to it, with a search box over `searchSongs` (§D15) matching titles, artists *and* lyrics. It is
+  built from the payload Live mode already holds, so it works from a downloaded snapshot, and tapping a row
+  moves the index rather than navigating, so transpose, scroll position and auto-scroll all survive. Pure
+  half in `lib/liveSetlist.ts` (unit-tested); UI in `components/LiveSetlistPanel.tsx`.
+- **`AppNav`** keeps its desktop row unchanged and, below `md`, moves the sections into the same kind of
+  bottom sheet behind a hamburger; the wordmark and theme toggle stay in the bar at every width, and the
+  active section shows both as the bar's label and as the sheet's highlighted row. Two latent bugs surfaced
+  while there: `to="/"` lacked `activeOptions.exact` so Home read as active everywhere, and the active
+  colour never applied at all — `activeProps` and the base class are equal-specificity Tailwind colour
+  utilities, so the base won. Link colours now live in `activeProps`/`inactiveProps`, never the base class.
+- **Library rows** are a stacked card below `sm` and the five-column table from `sm` up. The fixed grid
+  (~652px) sat inside `overflow-hidden`, so on a phone the Key, Capo, Open and Fork columns were silently
+  clipped away — invisible *and* untappable, while every overflow check passed.
+
+**Measuring this.** Test at a **fixed** narrow viewport (`newContext({ viewport: { width: 390, … } })`), not
+Playwright's `devices["iPhone 13"]`: with `isMobile` emulation Chromium expands the layout viewport to fit
+overflowing content, so `scrollWidth === innerWidth` passes at `innerWidth = 454` and the page looks fine
+while being broken. Assert `innerWidth === 390` too, or skip the device descriptor.
 
 ---
 
@@ -560,7 +611,7 @@ unblock most screens — do them first.
 | F8 | **Preferences** | `/app/preferences` | `CapoToggle` as default-view setting + worked example, theme toggle, account + memberships | A3, C6 |
 | F9 | **Home / Dashboard** | `/app` (or `/app/home`) | "Up next" gig + setlist, jump-back-in, recent songs, your bands; Live-mode CTA | C3/C5, C8 |
 | F10 | **Auth** | `/app/login`, `/app/register` | better-auth email/password; style to design (Login.dc.html) | — |
-| F11 | **App shell / nav** | `_protected/layout` | Top bar (BandBro logo, section, theme toggle), active-org context, route guards | A1/A2 |
+| F11 | **App shell / nav** | `_protected/layout` | Top bar (BandBro logo, section, theme toggle) + mobile sheet nav (§D16), active-org context, route guards | A1/A2 |
 
 ### G. Cross-cutting
 - [ ] **G1.** Active-organization (scope) context provider in the frontend, synced to `session.activeOrganizationId`.

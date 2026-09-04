@@ -4,6 +4,7 @@ import { InviteLinkPanel } from "@frontend/components/InviteLinkPanel";
 import { RoleBadge, roleLabel } from "@frontend/components/RoleBadge";
 import { Button } from "@frontend/components/ui/button";
 import { useUser } from "@frontend/contexts/UserContext";
+import { useOnline } from "@frontend/lib/offline";
 import { useScopes } from "@frontend/lib/scopes";
 import { cn } from "@frontend/lib/utils";
 import { IconLink, IconQrcode } from "@tabler/icons-react";
@@ -37,6 +38,7 @@ type EmailInvite = InviteList["emailInvites"][number];
 function BandsPage() {
 	const me = useUser();
 	const { bands } = useScopes();
+	const online = useOnline();
 	const [selected, setSelected] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -45,7 +47,7 @@ function BandsPage() {
 
 	const { data: org } = useQuery({
 		queryKey: ["org", selected],
-		enabled: !!selected,
+		enabled: !!selected && online,
 		queryFn: async () => {
 			const res = await auth.organization.getFullOrganization({
 				query: { organizationId: selected as string },
@@ -72,7 +74,9 @@ function BandsPage() {
 					<div className="flex flex-col gap-1">
 						{bands.length === 0 && (
 							<p className="text-sm text-muted-foreground">
-								You're not in any band yet. Create one from the Home screen.
+								{online
+									? "You're not in any band yet. Create one from the Home screen."
+									: "You're offline — your bands are read from the server."}
 							</p>
 						)}
 						{bands.map((b) => (
@@ -97,6 +101,13 @@ function BandsPage() {
 				<section>
 					{!selected ? (
 						<p className="text-muted-foreground">Select a band.</p>
+					) : !online ? (
+						// Everything on this screen — the member list, invite links, revokes —
+						// is server state a band admin changes; none of it is on the device.
+						<p className="text-muted-foreground">
+							You're offline — members and invite links are read from the
+							server. Reconnect to manage your band.
+						</p>
 					) : (
 						<>
 							<div className="flex items-center justify-between">
