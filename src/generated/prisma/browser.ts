@@ -53,6 +53,16 @@ export type Member = Prisma.MemberModel
  */
 export type Invitation = Prisma.InvitationModel
 /**
+ * Model BandInvite
+ * 
+ */
+export type BandInvite = Prisma.BandInviteModel
+/**
+ * Model BandInviteUse
+ * 
+ */
+export type BandInviteUse = Prisma.BandInviteUseModel
+/**
  * Model Song
  * 
  */

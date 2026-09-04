@@ -1,0 +1,49 @@
+// Email-free band invites (CLAUDE.md §D13). The deployment can't send mail, so a band is
+// joined through an unguessable share code: an admin shows a QR on a phone or sends the
+// link over any channel. `BandInviteUse` records who came in through which link, so the
+// band page can answer "who joined via this?" — and so a single-use link is spent exactly
+// once.
+model BandInvite {
+	id   String @id @default(cuid())
+	code String @unique
+
+	organizationId String
+	organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+	// Role granted on redemption — one of the §D6 roles (admin/writer/reader).
+	role String @default("reader")
+
+	createdById String
+	createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+	// Both nullable: null expiry = never expires, null maxUses = unlimited joins.
+	expiresAt DateTime?
+	maxUses   Int?
+	revokedAt DateTime?
+
+	uses BandInviteUse[]
+
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+
+	@@index([organizationId])
+	@@map("band_invite")
+}
+
+model BandInviteUse {
+	id String @id @default(cuid())
+
+	inviteId String
+	invite   BandInvite @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+
+	userId String
+	user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+	joinedAt DateTime @default(now())
+
+	// One use per person per link: re-opening a link you already redeemed must not
+	// spend another of its uses.
+	@@unique([inviteId, userId])
+	@@index([inviteId])
+	@@map("band_invite_use")
+}

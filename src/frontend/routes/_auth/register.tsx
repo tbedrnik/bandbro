@@ -27,6 +27,7 @@ export const Route = createFileRoute("/_auth/register")({
 });
 
 function RouteComponent() {
+	const { redirect } = Route.useSearch();
 	const mutation = useMutation({
 		mutationKey: ["auth", "signUp", "email"],
 		mutationFn: async (opts: Parameters<typeof auth.signUp.email>[0]) =>
@@ -116,7 +117,10 @@ function RouteComponent() {
 										)}
 									</form.Subscribe>
 									<FieldDescription className="text-center">
-										Already have an account? <Link to="/login">Log in</Link>
+										Already have an account?{" "}
+										<Link to="/login" search={{ redirect }}>
+											Log in
+										</Link>
 									</FieldDescription>
 								</Field>
 							</FieldGroup>

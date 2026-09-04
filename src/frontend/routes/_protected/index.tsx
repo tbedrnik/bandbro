@@ -3,12 +3,19 @@ import { auth } from "@frontend/auth";
 import { ImportSongButton } from "@frontend/components/ImportSongDialog";
 import { MetaChip } from "@frontend/components/MetaChip";
 import { NamePromptDialog } from "@frontend/components/NamePromptDialog";
+import { OfflinePill } from "@frontend/components/OfflinePill";
 import { Button } from "@frontend/components/ui/button";
 import { useUser } from "@frontend/contexts/UserContext";
+import { useOfflineSetlists, useOnline } from "@frontend/lib/offline";
 import { useScopes } from "@frontend/lib/scopes";
 import { displayKey } from "@shared/notation";
 import { slugify } from "@shared/slug";
-import { IconMusic, IconPlus } from "@tabler/icons-react";
+import {
+	IconMusic,
+	IconPlayerPlay,
+	IconPlaylist,
+	IconPlus,
+} from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -20,6 +27,8 @@ export const Route = createFileRoute("/_protected/")({
 function HomePage() {
 	const user = useUser();
 	const { bands, personal } = useScopes();
+	const online = useOnline();
+	const offlineSetlists = useOfflineSetlists();
 	const { data: songs } = useQuery(api.songs.get.queryOptions({}));
 	const recent = songs?.slice(0, 6) ?? [];
 	const [bandDialogOpen, setBandDialogOpen] = useState(false);
@@ -42,8 +51,16 @@ function HomePage() {
 		<div className="mx-auto max-w-6xl px-6 py-10">
 			<div className="flex items-center justify-between">
 				<div>
-					<div className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-						Welcome back
+					<div className="flex items-center gap-3">
+						<div className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+							Welcome back
+						</div>
+						{/* The signed-in name and bands come from the on-device session
+						    snapshot when there's no signal — say so rather than letting the
+						    page look like a normal, fully-loaded home screen. */}
+						{!online && (
+							<OfflinePill label="Offline" detail="working from this device" />
+						)}
 					</div>
 					<h1 className="mt-1 font-display text-3xl font-bold">
 						Evening, {user.name}.
@@ -60,6 +77,43 @@ function HomePage() {
 				</div>
 			</div>
 
+			{offlineSetlists.length > 0 && (
+				<section className="mt-8">
+					<div className="mb-3 flex items-center justify-between">
+						<h2 className="font-display text-lg font-semibold">
+							Available offline
+						</h2>
+						<Link
+							to="/offline"
+							className="text-sm text-primary hover:underline"
+						>
+							Manage downloads →
+						</Link>
+					</div>
+					<div className="flex flex-wrap gap-3">
+						{offlineSetlists.slice(0, 4).map((s) => (
+							<Link
+								key={s.id}
+								to="/live/$id"
+								params={{ id: s.id }}
+								className="flex min-w-56 flex-1 items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary"
+							>
+								<IconPlaylist className="size-5 text-primary" />
+								<div className="min-w-0 flex-1">
+									<div className="truncate font-display font-medium">
+										{s.title}
+									</div>
+									<div className="font-mono text-xs text-muted-foreground">
+										{s.songCount} songs · on this device
+									</div>
+								</div>
+								<IconPlayerPlay className="size-4 text-muted-foreground" />
+							</Link>
+						))}
+					</div>
+				</section>
+			)}
+
 			<div className="mt-10 grid gap-8 lg:grid-cols-[1fr_280px]">
 				<section>
 					<div className="mb-3 flex items-center justify-between">
@@ -74,8 +128,9 @@ function HomePage() {
 					<div className="overflow-hidden rounded-xl border border-border">
 						{recent.length === 0 ? (
 							<div className="px-4 py-10 text-center text-sm text-muted-foreground">
-								No songs yet — fork one from the curated library or write your
-								own.
+								{online
+									? "No songs yet — fork one from the curated library or write your own."
+									: "You're offline — the library needs a connection. Your downloaded setlists are above."}
 							</div>
 						) : (
 							recent.map((song) => {

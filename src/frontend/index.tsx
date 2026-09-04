@@ -40,18 +40,38 @@ ReactDOM.createRoot(root).render(
 	</React.StrictMode>,
 );
 
-// Link the web app manifest at runtime (kept out of index.html so the bundler
-// doesn't try to resolve the runtime-served path).
-const manifestLink = document.createElement("link");
-manifestLink.rel = "manifest";
-manifestLink.href = "/app/manifest.webmanifest";
-document.head.appendChild(manifestLink);
+// Link the web app manifest and the home-screen icon at runtime (kept out of index.html
+// so the bundler doesn't try to resolve these runtime-served paths). iOS ignores the
+// manifest's icons entirely, hence the separate apple-touch-icon.
+for (const [rel, href] of [
+	["manifest", "/app/manifest.webmanifest"],
+	["apple-touch-icon", "/app/icon-192.png"],
+	["icon", "/app/icon-192.png"],
+]) {
+	const link = document.createElement("link");
+	link.rel = rel;
+	link.href = href;
+	document.head.appendChild(link);
+}
 
 // Register the service worker for offline app-shell support (CLAUDE.md §D7).
+//
+// Scope is "/", not "/app/": Bun serves the SPA's content-hashed bundle from the origin
+// root (/chunk-<hash>.js), so a worker confined to /app/ can never cache the files the
+// app needs to start — which is why the installed PWA used to open to a blank screen with
+// no signal. The server sends `Service-Worker-Allowed: /` to permit the wider scope.
 if ("serviceWorker" in navigator) {
-	window.addEventListener("load", () => {
-		navigator.serviceWorker
-			.register("/app/sw.js", { scope: "/app/" })
-			.catch(() => {});
+	window.addEventListener("load", async () => {
+		try {
+			await navigator.serviceWorker.register("/app/sw.js", { scope: "/" });
+			// Retire the old /app/-scoped registration from earlier installs; two workers
+			// would otherwise both claim /app/* and the narrower one would keep winning.
+			for (const reg of await navigator.serviceWorker.getRegistrations()) {
+				if (new URL(reg.scope).pathname !== "/") await reg.unregister();
+			}
+		} catch {
+			// No service worker (unsupported, or insecure origin) — the app still works
+			// online; it just won't boot without a connection.
+		}
 	});
 }

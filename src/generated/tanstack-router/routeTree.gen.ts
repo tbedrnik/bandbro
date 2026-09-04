@@ -9,12 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './../../frontend/routes/__root'
+import { Route as OfflineRouteImport } from './../../frontend/routes/offline'
 import { Route as DesignRouteImport } from './../../frontend/routes/design'
 import { Route as ProtectedLayoutRouteImport } from './../../frontend/routes/_protected/layout'
 import { Route as AuthLayoutRouteImport } from './../../frontend/routes/_auth/layout'
 import { Route as SIndexRouteImport } from './../../frontend/routes/s.index'
+import { Route as JoinIndexRouteImport } from './../../frontend/routes/join.index'
 import { Route as ProtectedIndexRouteImport } from './../../frontend/routes/_protected/index'
 import { Route as SCodeRouteImport } from './../../frontend/routes/s.$code'
+import { Route as JoinCodeRouteImport } from './../../frontend/routes/join.$code'
 import { Route as ProtectedSetlistsRouteImport } from './../../frontend/routes/_protected/setlists'
 import { Route as ProtectedPreferencesRouteImport } from './../../frontend/routes/_protected/preferences'
 import { Route as ProtectedLibraryRouteImport } from './../../frontend/routes/_protected/library'
@@ -28,6 +31,11 @@ import { Route as ProtectedLiveIdRouteImport } from './../../frontend/routes/_pr
 import { Route as ProtectedSongsSlugEditRouteImport } from './../../frontend/routes/_protected/songs.$slug_.edit'
 import { Route as ProtectedSetlistsIdPrintRouteImport } from './../../frontend/routes/_protected/setlists.$id_.print'
 
+const OfflineRoute = OfflineRouteImport.update({
+  id: '/offline',
+  path: '/offline',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DesignRoute = DesignRouteImport.update({
   id: '/design',
   path: '/design',
@@ -46,6 +54,11 @@ const SIndexRoute = SIndexRouteImport.update({
   path: '/s/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JoinIndexRoute = JoinIndexRouteImport.update({
+  id: '/join/',
+  path: '/join/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -54,6 +67,11 @@ const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
 const SCodeRoute = SCodeRouteImport.update({
   id: '/s/$code',
   path: '/s/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinCodeRoute = JoinCodeRouteImport.update({
+  id: '/join/$code',
+  path: '/join/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProtectedSetlistsRoute = ProtectedSetlistsRouteImport.update({
@@ -121,13 +139,16 @@ const ProtectedSetlistsIdPrintRoute =
 export interface FileRoutesByFullPath {
   '/': typeof ProtectedIndexRoute
   '/design': typeof DesignRoute
+  '/offline': typeof OfflineRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/bands': typeof ProtectedBandsRoute
   '/library': typeof ProtectedLibraryRoute
   '/preferences': typeof ProtectedPreferencesRoute
   '/setlists': typeof ProtectedSetlistsRouteWithChildren
+  '/join/$code': typeof JoinCodeRoute
   '/s/$code': typeof SCodeRoute
+  '/join/': typeof JoinIndexRoute
   '/s/': typeof SIndexRoute
   '/live/$id': typeof ProtectedLiveIdRoute
   '/setlists/$id': typeof ProtectedSetlistsIdRoute
@@ -139,13 +160,16 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof ProtectedIndexRoute
   '/design': typeof DesignRoute
+  '/offline': typeof OfflineRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/bands': typeof ProtectedBandsRoute
   '/library': typeof ProtectedLibraryRoute
   '/preferences': typeof ProtectedPreferencesRoute
   '/setlists': typeof ProtectedSetlistsRouteWithChildren
+  '/join/$code': typeof JoinCodeRoute
   '/s/$code': typeof SCodeRoute
+  '/join': typeof JoinIndexRoute
   '/s': typeof SIndexRoute
   '/live/$id': typeof ProtectedLiveIdRoute
   '/setlists/$id': typeof ProtectedSetlistsIdRoute
@@ -159,14 +183,17 @@ export interface FileRoutesById {
   '/_auth': typeof AuthLayoutRouteWithChildren
   '/_protected': typeof ProtectedLayoutRouteWithChildren
   '/design': typeof DesignRoute
+  '/offline': typeof OfflineRoute
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
   '/_protected/bands': typeof ProtectedBandsRoute
   '/_protected/library': typeof ProtectedLibraryRoute
   '/_protected/preferences': typeof ProtectedPreferencesRoute
   '/_protected/setlists': typeof ProtectedSetlistsRouteWithChildren
+  '/join/$code': typeof JoinCodeRoute
   '/s/$code': typeof SCodeRoute
   '/_protected/': typeof ProtectedIndexRoute
+  '/join/': typeof JoinIndexRoute
   '/s/': typeof SIndexRoute
   '/_protected/live/$id': typeof ProtectedLiveIdRoute
   '/_protected/setlists/$id': typeof ProtectedSetlistsIdRoute
@@ -180,13 +207,16 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/design'
+    | '/offline'
     | '/login'
     | '/register'
     | '/bands'
     | '/library'
     | '/preferences'
     | '/setlists'
+    | '/join/$code'
     | '/s/$code'
+    | '/join/'
     | '/s/'
     | '/live/$id'
     | '/setlists/$id'
@@ -198,13 +228,16 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/design'
+    | '/offline'
     | '/login'
     | '/register'
     | '/bands'
     | '/library'
     | '/preferences'
     | '/setlists'
+    | '/join/$code'
     | '/s/$code'
+    | '/join'
     | '/s'
     | '/live/$id'
     | '/setlists/$id'
@@ -217,14 +250,17 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/_protected'
     | '/design'
+    | '/offline'
     | '/_auth/login'
     | '/_auth/register'
     | '/_protected/bands'
     | '/_protected/library'
     | '/_protected/preferences'
     | '/_protected/setlists'
+    | '/join/$code'
     | '/s/$code'
     | '/_protected/'
+    | '/join/'
     | '/s/'
     | '/_protected/live/$id'
     | '/_protected/setlists/$id'
@@ -238,12 +274,22 @@ export interface RootRouteChildren {
   AuthLayoutRoute: typeof AuthLayoutRouteWithChildren
   ProtectedLayoutRoute: typeof ProtectedLayoutRouteWithChildren
   DesignRoute: typeof DesignRoute
+  OfflineRoute: typeof OfflineRoute
+  JoinCodeRoute: typeof JoinCodeRoute
   SCodeRoute: typeof SCodeRoute
+  JoinIndexRoute: typeof JoinIndexRoute
   SIndexRoute: typeof SIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/offline': {
+      id: '/offline'
+      path: '/offline'
+      fullPath: '/offline'
+      preLoaderRoute: typeof OfflineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/design': {
       id: '/design'
       path: '/design'
@@ -272,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/join/': {
+      id: '/join/'
+      path: '/join'
+      fullPath: '/join/'
+      preLoaderRoute: typeof JoinIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_protected/': {
       id: '/_protected/'
       path: '/'
@@ -284,6 +337,13 @@ declare module '@tanstack/react-router' {
       path: '/s/$code'
       fullPath: '/s/$code'
       preLoaderRoute: typeof SCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join/$code': {
+      id: '/join/$code'
+      path: '/join/$code'
+      fullPath: '/join/$code'
+      preLoaderRoute: typeof JoinCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_protected/setlists': {
@@ -432,7 +492,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthLayoutRoute: AuthLayoutRouteWithChildren,
   ProtectedLayoutRoute: ProtectedLayoutRouteWithChildren,
   DesignRoute: DesignRoute,
+  OfflineRoute: OfflineRoute,
+  JoinCodeRoute: JoinCodeRoute,
   SCodeRoute: SCodeRoute,
+  JoinIndexRoute: JoinIndexRoute,
   SIndexRoute: SIndexRoute,
 }
 export const routeTree = rootRouteImport

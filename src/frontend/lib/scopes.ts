@@ -1,5 +1,6 @@
 import { auth } from "@frontend/auth";
 import { useStore } from "@nanostores/react";
+import { useEffect, useState } from "react";
 
 /** A place a song can live and be browsed from. */
 export type Scope = {
@@ -60,4 +61,48 @@ export function useScopes() {
 		personal: personal ? orgToScope(personal) : null,
 		isPending,
 	};
+}
+
+const LAST_SCOPE_KEY = "bandbro:library:scope";
+
+function readLastScope(): string {
+	try {
+		return localStorage.getItem(LAST_SCOPE_KEY) ?? CURATED.param;
+	} catch {
+		return CURATED.param;
+	}
+}
+
+/**
+ * The Library's scope selection, remembered per device: coming back to the Library
+ * lands on the band you were last browsing instead of resetting to Curated. Kept out
+ * of the URL deliberately — this is a "where I left off" preference, not a shareable
+ * address. The remembered value is dropped once the org list confirms the user can no
+ * longer browse it (left the band, or a different account signed in on this device).
+ */
+export function useRememberedScope(scopes: Scope[], isPending: boolean) {
+	const [param, setParam] = useState(readLastScope);
+	const available = scopes.map((s) => s.param).join("|");
+
+	useEffect(() => {
+		if (isPending) return;
+		if (available.split("|").includes(param)) return;
+		setParam(CURATED.param);
+		try {
+			localStorage.removeItem(LAST_SCOPE_KEY);
+		} catch {
+			// ignore — the in-memory fallback above is enough
+		}
+	}, [available, isPending, param]);
+
+	const select = (next: string) => {
+		setParam(next);
+		try {
+			localStorage.setItem(LAST_SCOPE_KEY, next);
+		} catch {
+			// storage unavailable (private mode) — selection still works for this visit
+		}
+	};
+
+	return [param, select] as const;
 }

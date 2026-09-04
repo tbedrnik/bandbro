@@ -33,6 +33,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
 export const Route = createFileRoute("/_protected/live/$id")({
+	// `?song=` opens the set at a given position — how the offline search jumps straight
+	// to the song it found (CLAUDE.md §D15).
+	// Returning `{}` rather than `{song: undefined}` keeps the param genuinely optional,
+	// so every other `to="/live/$id"` link stays a plain link with no search object.
+	validateSearch: (search: Record<string, unknown>): { song?: number } => {
+		const song = Number(search.song);
+		return Number.isInteger(song) && song >= 0 ? { song } : {};
+	},
 	component: LiveMode,
 });
 
@@ -40,21 +48,28 @@ function useLiveSetlist(id: string) {
 	const online = useOnline();
 	const query = useQuery({
 		...api.songbooks({ id }).get.queryOptions({}),
-		// Cached snapshot keeps the chart on screen if the network drops mid-set.
+		// The downloaded snapshot is what makes Live mode work with no signal at all: it
+		// seeds the query before the first fetch, so the chart is on screen whether the
+		// network is merely flaky mid-set or absent since launch. `retry: false` keeps a
+		// dead network from queueing retries behind every song change.
 		initialData: () => getOfflineSetlist(id) ?? undefined,
 		retry: false,
+		refetchOnWindowFocus: false,
 	});
 	return { ...query, online };
 }
 
 function LiveMode() {
 	const { id } = Route.useParams();
-	const user = useUser();
+	// Optional: offline the session comes from the on-device snapshot, and on a device
+	// that never had one there is still a downloaded setlist worth performing.
+	const user = useUser({ optional: true });
 	const { data: setlist, online } = useLiveSetlist(id);
+	const { song: openAt } = Route.useSearch();
 
-	const [index, setIndex] = useState(0);
+	const [index, setIndex] = useState(openAt ?? 0);
 	const [view, setView] = useState<ChordView>(
-		(user.defaultChordView as ChordView) ?? "fingered",
+		(user?.defaultChordView as ChordView) ?? "fingered",
 	);
 	const [transpose, setTranspose] = useState(0);
 	const [scrolling, setScrolling] = useState(false);
@@ -70,11 +85,13 @@ function LiveMode() {
 	const entry = songs[index];
 
 	// Once the band has opened "Share with fans", keep the live session's current-song
-	// index in sync so fans auto-follow the set.
+	// index in sync so fans auto-follow the set. A failed sync is silent by design: the
+	// band's own chart must never stall because the room's copy couldn't be updated.
 	const { syncCurrent } = fan;
 	useEffect(() => {
+		if (!online) return;
 		syncCurrent(index);
-	}, [index, syncCurrent]);
+	}, [index, syncCurrent, online]);
 
 	// Auto-scroll loop.
 	useEffect(() => {
@@ -110,8 +127,17 @@ function LiveMode() {
 
 	if (!setlist) {
 		return (
-			<div className="grid min-h-dvh place-items-center bg-background text-muted-foreground">
-				{online ? "Loading…" : "This setlist isn't available offline."}
+			<div className="grid min-h-dvh place-items-center bg-background px-6 text-center text-muted-foreground">
+				{online ? (
+					"Loading…"
+				) : (
+					<div>
+						<p>This setlist wasn't downloaded to this device.</p>
+						<Link to="/offline" className="mt-3 inline-block text-primary">
+							See what is available offline →
+						</Link>
+					</div>
+				)}
 			</div>
 		);
 	}
@@ -148,13 +174,17 @@ function LiveMode() {
 				<span className="truncate font-display text-sm text-muted-foreground">
 					{setlist.title} · {index + 1}/{songs.length}
 				</span>
+				{/* Sharing is the one control here that genuinely needs the network —
+				    the fan view is served, not cached. Disable it rather than hand the
+				    band a share sheet with no code in it. */}
 				<button
 					type="button"
+					disabled={!online}
 					onClick={() => {
 						fan.ensure();
 						setShareOpen(true);
 					}}
-					className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 font-display text-[13px] font-semibold text-primary-foreground"
+					className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 font-display text-[13px] font-semibold text-primary-foreground disabled:opacity-40"
 				>
 					<IconShare3 className="size-4" /> Share with fans
 				</button>

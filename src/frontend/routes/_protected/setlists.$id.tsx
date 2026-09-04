@@ -1,3 +1,24 @@
+import {
+	closestCenter,
+	DndContext,
+	type DragEndEvent,
+	KeyboardSensor,
+	PointerSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import {
+	restrictToParentElement,
+	restrictToVerticalAxis,
+} from "@dnd-kit/modifiers";
+import {
+	arrayMove,
+	SortableContext,
+	sortableKeyboardCoordinates,
+	useSortable,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { api } from "@frontend/api";
 import { MetaChip } from "@frontend/components/MetaChip";
 import { OfflinePill } from "@frontend/components/OfflinePill";
@@ -12,12 +33,12 @@ import {
 import { Input } from "@frontend/components/ui/input";
 import { downloadSetlist, isDownloaded } from "@frontend/lib/offline";
 import { useFanSession } from "@frontend/lib/useFanSession";
+import { cn } from "@frontend/lib/utils";
 import { displayKey } from "@shared/notation";
 import {
-	IconArrowDown,
-	IconArrowUp,
 	IconDownload,
 	IconFileTypePdf,
+	IconGripVertical,
 	IconPlayerPlay,
 	IconPlus,
 	IconShare3,
@@ -25,11 +46,20 @@ import {
 } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/_protected/setlists/$id")({
 	component: SetlistDetail,
 });
+
+// Wrapping the Eden query in a hook lets the row component derive its prop type from
+// the real response instead of re-declaring a shape that would silently drift.
+function useSetlistQuery(id: string) {
+	return useQuery(api.songbooks({ id }).get.queryOptions({}));
+}
+
+type Setlist = NonNullable<ReturnType<typeof useSetlistQuery>["data"]>;
+type SetlistEntry = Setlist["songs"][number];
 
 function SetlistDetail() {
 	const { id } = Route.useParams();
@@ -38,17 +68,35 @@ function SetlistDetail() {
 	const [q, setQ] = useState("");
 	const [downloaded, setDownloaded] = useState(() => isDownloaded(id));
 	const [shareOpen, setShareOpen] = useState(false);
+	// Order shown while a reorder is in flight, so a dragged row doesn't snap back to
+	// its old position for the length of the PUT + refetch. Cleared as soon as the
+	// server's own order changes (it caught up, or a song was added/removed).
+	const [pendingOrder, setPendingOrder] = useState<string[] | null>(null);
 	const fan = useFanSession(id);
 
-	const { data: setlist, isPending } = useQuery(
-		api.songbooks({ id }).get.queryOptions({}),
-	);
+	const { data: setlist, isPending } = useSetlistQuery(id);
 
 	const update = useMutation({
 		...api.songbooks({ id }).put.mutationOptions(),
 		onSuccess: () =>
 			queryClient.invalidateQueries(api.songbooks.get.queryFilter()),
+		onError: () => setPendingOrder(null),
 	});
+
+	// Pointer drags start after a few px so a tap on the handle still behaves like a
+	// tap; the keyboard sensor makes the same reorder reachable without a mouse.
+	const sensors = useSensors(
+		useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+		useSensor(KeyboardSensor, {
+			coordinateGetter: sortableKeyboardCoordinates,
+		}),
+	);
+
+	const serverOrder = (setlist?.songs ?? []).map((s) => s.chartId).join(",");
+	// biome-ignore lint/correctness/useExhaustiveDependencies: the server order string is the trigger
+	useEffect(() => {
+		setPendingOrder(null);
+	}, [serverOrder]);
 
 	const { data: searchResults } = useQuery({
 		...api.songs.get.queryOptions(q ? { q } : {}),
@@ -63,17 +111,27 @@ function SetlistDetail() {
 		);
 	}
 
-	const chartIds = setlist.songs.map((s) => s.chartId);
+	const chartIds = pendingOrder ?? setlist.songs.map((s) => s.chartId);
+	const byChartId = new Map(setlist.songs.map((s) => [s.chartId, s]));
+	const ordered = chartIds.flatMap((chartId) => {
+		const entry = byChartId.get(chartId);
+		return entry ? [entry] : [];
+	});
 
-	const reorder = (from: number, to: number) => {
-		if (to < 0 || to >= chartIds.length) return;
-		const next = [...chartIds];
-		const [moved] = next.splice(from, 1);
-		next.splice(to, 0, moved);
+	const onDragEnd = ({ active, over }: DragEndEvent) => {
+		if (!over || active.id === over.id) return;
+		const from = chartIds.indexOf(String(active.id));
+		const to = chartIds.indexOf(String(over.id));
+		if (from < 0 || to < 0) return;
+		const next = arrayMove(chartIds, from, to);
+		setPendingOrder(next);
 		update.mutate({ chartIds: next });
 	};
-	const remove = (chartId: string) =>
-		update.mutate({ chartIds: chartIds.filter((c) => c !== chartId) });
+	const remove = (chartId: string) => {
+		const next = chartIds.filter((c) => c !== chartId);
+		setPendingOrder(next);
+		update.mutate({ chartIds: next });
+	};
 	const add = (chartId: string) => {
 		if (chartIds.includes(chartId)) return;
 		update.mutate({ chartIds: [...chartIds, chartId] });
@@ -169,57 +227,35 @@ function SetlistDetail() {
 				showPrint
 			/>
 
-			{/* Songs */}
-			<div className="mt-6 overflow-hidden rounded-xl border border-border">
-				{setlist.songs.length === 0 ? (
-					<div className="px-4 py-10 text-center text-muted-foreground">
-						No songs yet — add some below.
-					</div>
-				) : (
-					setlist.songs.map((entry, i) => {
-						const song = entry.chart.song;
-						const artist = song.credits.map((c) => c.artist.name).join(", ");
-						return (
-							<div
-								key={entry.chartId}
-								className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-0"
-							>
-								<span className="w-6 text-center font-mono text-sm text-muted-foreground">
-									{i + 1}
-								</span>
-								<div className="flex-1">
-									<Link
-										to="/songs/$slug"
-										params={{ slug: song.slug }}
-										className="font-display font-medium hover:text-primary"
-									>
-										{song.name}
-									</Link>
-									<div className="text-xs text-muted-foreground">{artist}</div>
-								</div>
-								{entry.chart.key && (
-									<MetaChip
-										label=""
-										value={displayKey(entry.chart.key)}
-										className="px-2 py-1"
-									/>
-								)}
-								<div className="flex gap-1">
-									<IconBtn label="Up" onClick={() => reorder(i, i - 1)}>
-										<IconArrowUp className="size-4" />
-									</IconBtn>
-									<IconBtn label="Down" onClick={() => reorder(i, i + 1)}>
-										<IconArrowDown className="size-4" />
-									</IconBtn>
-									<IconBtn label="Remove" onClick={() => remove(entry.chartId)}>
-										<IconX className="size-4" />
-									</IconBtn>
-								</div>
-							</div>
-						);
-					})
-				)}
-			</div>
+			{/* Songs — drag the handle on the left to reorder the set. */}
+			{ordered.length === 0 ? (
+				<div className="mt-6 rounded-xl border border-border px-4 py-10 text-center text-muted-foreground">
+					No songs yet — add some below.
+				</div>
+			) : (
+				<DndContext
+					sensors={sensors}
+					collisionDetection={closestCenter}
+					modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+					onDragEnd={onDragEnd}
+				>
+					<SortableContext
+						items={chartIds}
+						strategy={verticalListSortingStrategy}
+					>
+						<div className="mt-6 rounded-xl border border-border">
+							{ordered.map((entry, i) => (
+								<SongRow
+									key={entry.chartId}
+									entry={entry}
+									position={i + 1}
+									onRemove={() => remove(entry.chartId)}
+								/>
+							))}
+						</div>
+					</SortableContext>
+				</DndContext>
+			)}
 
 			{/* Add songs */}
 			<div className="mt-4">
@@ -276,23 +312,78 @@ function SetlistDetail() {
 	);
 }
 
-function IconBtn({
-	children,
-	label,
-	onClick,
+/**
+ * One song in the set. `useSortable` supplies the drag transform; the listeners are
+ * bound to the grip alone (not the whole row) so the title stays a link and a touch
+ * anywhere else still scrolls the page — `touch-none` on the grip is what lets a
+ * finger drag it at all.
+ */
+function SongRow({
+	entry,
+	position,
+	onRemove,
 }: {
-	children: React.ReactNode;
-	label: string;
-	onClick: () => void;
+	entry: SetlistEntry;
+	position: number;
+	onRemove: () => void;
 }) {
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		transform,
+		transition,
+		isDragging,
+	} = useSortable({ id: entry.chartId });
+	const song = entry.chart.song;
+	const artist = song.credits.map((c) => c.artist.name).join(", ");
+
 	return (
-		<button
-			type="button"
-			aria-label={label}
-			onClick={onClick}
-			className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+		<div
+			ref={setNodeRef}
+			style={{ transform: CSS.Transform.toString(transform), transition }}
+			className={cn(
+				"flex items-center gap-3 border-b border-border bg-background px-4 py-3 first:rounded-t-xl last:rounded-b-xl last:border-0",
+				isDragging && "relative z-10 rounded-xl shadow-lg",
+			)}
 		>
-			{children}
-		</button>
+			<button
+				type="button"
+				aria-label={`Reorder ${song.name}`}
+				className="grid size-8 shrink-0 cursor-grab touch-none place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:cursor-grabbing"
+				{...attributes}
+				{...listeners}
+			>
+				<IconGripVertical className="size-4" />
+			</button>
+			<span className="w-6 text-center font-mono text-sm text-muted-foreground">
+				{position}
+			</span>
+			<div className="flex-1">
+				<Link
+					to="/songs/$slug"
+					params={{ slug: song.slug }}
+					className="font-display font-medium hover:text-primary"
+				>
+					{song.name}
+				</Link>
+				<div className="text-xs text-muted-foreground">{artist}</div>
+			</div>
+			{entry.chart.key && (
+				<MetaChip
+					label=""
+					value={displayKey(entry.chart.key)}
+					className="px-2 py-1"
+				/>
+			)}
+			<button
+				type="button"
+				aria-label={`Remove ${song.name}`}
+				onClick={onRemove}
+				className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+			>
+				<IconX className="size-4" />
+			</button>
+		</div>
 	);
 }

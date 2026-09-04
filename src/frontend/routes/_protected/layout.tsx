@@ -1,5 +1,6 @@
 import { AppNav } from "@frontend/components/AppNav";
 import { useSession } from "@frontend/contexts/SessionContext";
+import { useOnline } from "@frontend/lib/offline";
 import { useTheme } from "@frontend/lib/theme";
 import {
 	createFileRoute,
@@ -24,10 +25,15 @@ function ProtectedLayout() {
 	const session = useSession({ optional: true });
 	// Ensure the persisted theme is applied across the authed app.
 	useTheme();
+	const online = useOnline();
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 
 	if (!session) {
-		return <Navigate to="/login" />;
+		// With no signal, /login is a form that can't reach the server either — send the
+		// player to the offline shelf, which needs nothing but this device (§D7).
+		if (!online) return <Navigate to="/offline" />;
+		// Hand the destination to the login screen so it lands back here (see _auth/layout).
+		return <Navigate to="/login" search={{ redirect: pathname }} />;
 	}
 
 	// Live mode and the print/PDF view are full-bleed (no app chrome); everything

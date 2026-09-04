@@ -1,25 +1,107 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 /**
- * Per-playlist offline cache (CLAUDE.md §D7). v1 is read-only offline: "Download for
+ * Per-setlist offline cache (CLAUDE.md §D7). v1 is read-only offline: "Download for
  * offline" snapshots the resolved setlist payload (songs + charts) into localStorage,
- * and Live mode reads from that snapshot whenever the network is unavailable. The
- * service worker (sw.js) separately precaches the app shell so /app boots offline.
+ * Live mode reads from that snapshot whenever the network is unavailable, and
+ * `/app/offline` lists what is on the device. The service worker (src/frontend/sw.js)
+ * separately precaches the app shell so the installed app boots with no signal.
+ *
+ * **Why localStorage and not IndexedDB.** The payload is ChordPro text: a 60-song set is
+ * on the order of 200 KB, against a ~5 MB per-origin localStorage budget, so capacity is
+ * not the constraint. What *is* load-bearing is that reads are synchronous — Live mode
+ * feeds `getOfflineSetlist` straight into react-query's `initialData` and the setlist
+ * screen seeds `useState` from `isDownloaded`, both of which run during render. Moving to
+ * IndexedDB would make every one of those call sites async for no capacity we need.
+ * `downloadSetlist` returns whether the write survived, so a quota failure is visible
+ * rather than silently pretending the set is on the device.
  */
 
 const PREFIX = "bandbro:offline:setlist:";
+const META = "bandbro:offline:meta";
 
-export function downloadSetlist(id: string, payload: unknown) {
+export type OfflineSetlistMeta = {
+	id: string;
+	title: string;
+	songCount: number;
+	/** Epoch ms of the download, so the shelf can say how fresh a set is. */
+	downloadedAt: number;
+};
+
+/** The shape of a stored payload that this module reads for its listing. */
+type StoredSetlist = {
+	title?: string | null;
+	songs?: unknown[] | null;
+};
+
+function storage(): Storage | null {
 	try {
-		localStorage.setItem(PREFIX + id, JSON.stringify(payload));
+		return typeof localStorage === "undefined" ? null : localStorage;
 	} catch {
-		// storage full / unavailable — surfaced by isDownloaded staying false
+		// Safari in private mode, or a browser configured to block site data.
+		return null;
 	}
 }
 
-export function getOfflineSetlist<T = unknown>(id: string): T | null {
+function readMetaIndex(): Record<string, OfflineSetlistMeta> {
+	const store = storage();
+	if (!store) return {};
 	try {
-		const raw = localStorage.getItem(PREFIX + id);
+		const raw = store.getItem(META);
+		const parsed = raw ? JSON.parse(raw) : null;
+		return parsed && typeof parsed === "object" ? parsed : {};
+	} catch {
+		return {};
+	}
+}
+
+function writeMetaIndex(index: Record<string, OfflineSetlistMeta>) {
+	const store = storage();
+	if (!store) return;
+	try {
+		store.setItem(META, JSON.stringify(index));
+	} catch {
+		// The listing self-heals from the payloads, so a lost index is survivable.
+	}
+}
+
+/** Derive a set's listing entry from its payload — the fallback when the index is gone. */
+function deriveMeta(
+	id: string,
+	payload: unknown,
+	downloadedAt: number,
+): OfflineSetlistMeta {
+	const setlist = (payload ?? {}) as StoredSetlist;
+	return {
+		id,
+		title: setlist.title || "Untitled setlist",
+		songCount: Array.isArray(setlist.songs) ? setlist.songs.length : 0,
+		downloadedAt,
+	};
+}
+
+export function downloadSetlist(id: string, payload: unknown): boolean {
+	const store = storage();
+	if (!store) return false;
+	try {
+		store.setItem(PREFIX + id, JSON.stringify(payload));
+	} catch {
+		// Quota exceeded, or storage unavailable.
+		return false;
+	}
+	writeMetaIndex({
+		...readMetaIndex(),
+		[id]: deriveMeta(id, payload, Date.now()),
+	});
+	notify();
+	return true;
+}
+
+export function getOfflineSetlist<T = unknown>(id: string): T | null {
+	const store = storage();
+	if (!store) return null;
+	try {
+		const raw = store.getItem(PREFIX + id);
 		return raw ? (JSON.parse(raw) as T) : null;
 	} catch {
 		return null;
@@ -27,19 +109,150 @@ export function getOfflineSetlist<T = unknown>(id: string): T | null {
 }
 
 export function isDownloaded(id: string): boolean {
+	const store = storage();
+	if (!store) return false;
 	try {
-		return localStorage.getItem(PREFIX + id) !== null;
+		return store.getItem(PREFIX + id) !== null;
 	} catch {
 		return false;
 	}
 }
 
 export function removeOfflineSetlist(id: string) {
+	const store = storage();
+	if (!store) return;
 	try {
-		localStorage.removeItem(PREFIX + id);
+		store.removeItem(PREFIX + id);
 	} catch {
 		// ignore
 	}
+	const index = readMetaIndex();
+	delete index[id];
+	writeMetaIndex(index);
+	notify();
+}
+
+/**
+ * Every setlist currently on this device, newest download first.
+ *
+ * Driven by the *payload* keys rather than the index, so it stays true even if the index
+ * is stale, and so sets downloaded before the index existed still appear (their metadata
+ * is derived from the payload and folded back into the index on read).
+ */
+export function listOfflineSetlists(): OfflineSetlistMeta[] {
+	const store = storage();
+	if (!store) return [];
+	const index = readMetaIndex();
+	const out: OfflineSetlistMeta[] = [];
+	let repaired = false;
+	try {
+		for (let i = 0; i < store.length; i++) {
+			const key = store.key(i);
+			if (!key?.startsWith(PREFIX)) continue;
+			const id = key.slice(PREFIX.length);
+			const known = index[id];
+			if (known) {
+				out.push(known);
+				continue;
+			}
+			// Downloaded before the index existed (or the index was lost) — rebuild it.
+			const meta = deriveMeta(id, getOfflineSetlist(id), 0);
+			index[id] = meta;
+			out.push(meta);
+			repaired = true;
+		}
+	} catch {
+		return out;
+	}
+	// Drop index entries whose payload is gone, so the two can't drift apart.
+	for (const id of Object.keys(index)) {
+		if (!out.some((m) => m.id === id)) {
+			delete index[id];
+			repaired = true;
+		}
+	}
+	if (repaired) writeMetaIndex(index);
+	return out.sort((a, b) => b.downloadedAt - a.downloadedAt);
+}
+
+/** One downloaded song, flattened out of its setlist so it can be searched and opened. */
+export type OfflineSong = {
+	setlistId: string;
+	setlistTitle: string;
+	/** Position in the setlist — Live mode opens straight at this song. */
+	index: number;
+	title: string;
+	artist: string;
+	key: string;
+	content: string;
+};
+
+/** The shape of a stored setlist entry this module reads for the song index. */
+type StoredEntry = {
+	chart?: {
+		key?: string | null;
+		song?: {
+			name?: string | null;
+			credits?: { artist?: { name?: string | null } | null }[] | null;
+		} | null;
+	} | null;
+};
+
+/**
+ * Every song on this device, across every downloaded setlist — the corpus the offline
+ * search runs over (CLAUDE.md §D15). Built on demand from the stored payloads rather
+ * than kept as a second index: a band's downloads are a few hundred songs of text, the
+ * parse only happens while someone is typing in the search box, and one source of truth
+ * can't go stale.
+ */
+export function listOfflineSongs(): OfflineSong[] {
+	const out: OfflineSong[] = [];
+	for (const meta of listOfflineSetlists()) {
+		const payload = getOfflineSetlist<{ songs?: StoredEntry[] | null }>(
+			meta.id,
+		);
+		const entries = Array.isArray(payload?.songs) ? payload.songs : [];
+		entries.forEach((entry, index) => {
+			const chart = entry?.chart;
+			const content = (chart as { content?: string } | null)?.content;
+			if (typeof content !== "string") return;
+			out.push({
+				setlistId: meta.id,
+				setlistTitle: meta.title,
+				index,
+				title: chart?.song?.name ?? "Untitled",
+				artist: (chart?.song?.credits ?? [])
+					.map((credit) => credit?.artist?.name ?? "")
+					.filter(Boolean)
+					.join(", "),
+				key: chart?.key ?? "",
+				content,
+			});
+		});
+	}
+	return out;
+}
+
+/** Same-tab change notification — `storage` events only fire in *other* tabs. */
+const listeners = new Set<() => void>();
+function notify() {
+	for (const fn of listeners) fn();
+}
+
+/** Reactive view of {@link listOfflineSetlists}, kept in step with downloads/removals. */
+export function useOfflineSetlists(): OfflineSetlistMeta[] {
+	const [items, setItems] = useState<OfflineSetlistMeta[]>([]);
+	const refresh = useCallback(() => setItems(listOfflineSetlists()), []);
+	useEffect(() => {
+		refresh();
+		listeners.add(refresh);
+		window.addEventListener("storage", refresh);
+		return () => {
+			listeners.delete(refresh);
+			window.removeEventListener("storage", refresh);
+		};
+	}, [refresh]);
+	return items;
 }
 
 /** Reactive online/offline flag. */

@@ -529,14 +529,6 @@ export type SongUncheckedCreateNestedManyWithoutForkedFromInput = {
   connect?: Prisma.SongWhereUniqueInput | Prisma.SongWhereUniqueInput[]
 }
 
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type SongUpdateOneWithoutForksNestedInput = {
   create?: Prisma.XOR<Prisma.SongCreateWithoutForksInput, Prisma.SongUncheckedCreateWithoutForksInput>
   connectOrCreate?: Prisma.SongCreateOrConnectWithoutForksInput
