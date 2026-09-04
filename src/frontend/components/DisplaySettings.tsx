@@ -29,7 +29,8 @@ const COLUMN_OPTIONS = [
  * Live mode's display controls — the band-facing sibling of the fan view's drawer
  * controls: text size, line spacing, one or two columns, and "fit to screen" (which
  * takes the size stepper over and sizes the text so the song lands on one screen).
- * Rendered as a panel above the Live control bar.
+ * Rendered inside Live mode's bottom drawer, so it fills the width it is given rather
+ * than carrying its own popover chrome.
  */
 export function DisplaySettings({
 	value,
@@ -46,7 +47,7 @@ export function DisplaySettings({
 	const { theme, toggle } = useTheme();
 
 	return (
-		<div className="w-[290px] rounded-2xl border border-border bg-card p-3 shadow-xl">
+		<div className="w-full rounded-2xl border border-border p-3">
 			<Row>
 				<button
 					type="button"
