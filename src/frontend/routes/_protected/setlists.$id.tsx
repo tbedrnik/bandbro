@@ -31,7 +31,12 @@ import {
 	DropdownMenuTrigger,
 } from "@frontend/components/ui/dropdown-menu";
 import { Input } from "@frontend/components/ui/input";
-import { downloadSetlist, isDownloaded } from "@frontend/lib/offline";
+import {
+	downloadSetlist,
+	getOfflineSetlist,
+	isDownloaded,
+	useOnline,
+} from "@frontend/lib/offline";
 import { useFanSession } from "@frontend/lib/useFanSession";
 import { cn } from "@frontend/lib/utils";
 import { displayKey } from "@shared/notation";
@@ -55,7 +60,14 @@ export const Route = createFileRoute("/_protected/setlists/$id")({
 // Wrapping the Eden query in a hook lets the row component derive its prop type from
 // the real response instead of re-declaring a shape that would silently drift.
 function useSetlistQuery(id: string) {
-	return useQuery(api.songbooks({ id }).get.queryOptions({}));
+	return useQuery({
+		...api.songbooks({ id }).get.queryOptions({}),
+		// Same seed Live mode uses (§D7): a downloaded set opens from the device, so
+		// arriving here with no signal shows the songs instead of a stuck "Loading…".
+		// `retry: false` lets a set that *isn't* on this device fail fast and say so.
+		initialData: () => getOfflineSetlist(id) ?? undefined,
+		retry: false,
+	});
 }
 
 type Setlist = NonNullable<ReturnType<typeof useSetlistQuery>["data"]>;
@@ -64,6 +76,7 @@ type SetlistEntry = Setlist["songs"][number];
 function SetlistDetail() {
 	const { id } = Route.useParams();
 	const queryClient = useQueryClient();
+	const online = useOnline();
 	const [adding, setAdding] = useState(false);
 	const [q, setQ] = useState("");
 	const [downloaded, setDownloaded] = useState(() => isDownloaded(id));
@@ -100,13 +113,35 @@ function SetlistDetail() {
 
 	const { data: searchResults } = useQuery({
 		...api.songs.get.queryOptions(q ? { q } : {}),
-		enabled: adding,
+		enabled: adding && online,
 	});
 
-	if (isPending || !setlist) {
+	if (isPending) {
 		return (
 			<div className="grid min-h-[60vh] place-items-center text-muted-foreground">
 				Loading…
+			</div>
+		);
+	}
+	// Offline with nothing downloaded there is genuinely nothing to show — say that
+	// rather than spinning on a fetch that can't complete.
+	if (!setlist) {
+		return (
+			<div className="mx-auto grid min-h-[60vh] max-w-md place-items-center px-6 text-center">
+				<div>
+					<p className="text-muted-foreground">
+						{online
+							? "This setlist couldn't be loaded."
+							: "You're offline and this setlist isn't on this device. Downloaded sets are on your offline shelf."}
+					</p>
+					<Button
+						variant="outline"
+						className="mt-4"
+						render={<Link to={online ? "/setlists" : "/offline"} />}
+					>
+						{online ? "Back to setlists" : "Offline shelf"}
+					</Button>
+				</div>
 			</div>
 		);
 	}
@@ -142,6 +177,37 @@ function SetlistDetail() {
 		setDownloaded(true);
 	};
 
+	const rows = ordered.map((entry, i) =>
+		online ? (
+			<SortableSongRow
+				key={entry.chartId}
+				entry={entry}
+				position={i + 1}
+				onRemove={() => remove(entry.chartId)}
+			/>
+		) : (
+			// Offline every edit is a PUT away from the server, so the row loses its grip
+			// and its ✕ and gains the one thing it *can* do with no signal: open the set
+			// in Live mode at this song — the fastest way to skip ahead mid-gig.
+			<SongRow
+				key={entry.chartId}
+				entry={entry}
+				position={i + 1}
+				action={
+					<Link
+						to="/live/$id"
+						params={{ id }}
+						search={{ song: i }}
+						aria-label={`Play ${entry.chart.song.name} in Live mode`}
+						className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+					>
+						<IconPlayerPlay className="size-4" />
+					</Link>
+				}
+			/>
+		),
+	);
+
 	return (
 		<div className="mx-auto max-w-4xl px-6 py-8">
 			<Link
@@ -161,52 +227,60 @@ function SetlistDetail() {
 					{downloaded ? (
 						<OfflinePill label="Offline" detail="setlist downloaded" />
 					) : (
-						<Button variant="outline" onClick={onDownload}>
-							<IconDownload className="size-4" /> Download for offline
+						online && (
+							<Button variant="outline" onClick={onDownload}>
+								<IconDownload className="size-4" /> Download for offline
+							</Button>
+						)
+					)}
+					{/* PDF is rendered by the server's chordpro CLI, and the fan session is
+					    created on the server — neither exists without a connection. */}
+					{online && (
+						<DropdownMenu>
+							<DropdownMenuTrigger
+								render={
+									<Button variant="outline" disabled={!setlist.songs.length}>
+										<IconFileTypePdf className="size-4" /> Export PDF
+									</Button>
+								}
+							/>
+							<DropdownMenuContent>
+								{(
+									[
+										["both", "As-fingered + concert"],
+										["fingered", "As-fingered only"],
+										["concert", "Concert pitch only"],
+									] as const
+								).map(([mode, label]) => (
+									<DropdownMenuItem
+										key={mode}
+										render={
+											// Server-rendered PDF (chordpro CLI). Same-origin link sends the
+											// session cookie; `download` saves it straight to disk.
+											<a
+												href={`/api/songbooks/${id}/pdf?mode=${mode}`}
+												download
+											/>
+										}
+									>
+										{label}
+									</DropdownMenuItem>
+								))}
+							</DropdownMenuContent>
+						</DropdownMenu>
+					)}
+					{online && (
+						<Button
+							variant="outline"
+							disabled={!setlist.songs.length}
+							onClick={() => {
+								fan.ensure();
+								setShareOpen(true);
+							}}
+						>
+							<IconShare3 className="size-4" /> Share with fans
 						</Button>
 					)}
-					<DropdownMenu>
-						<DropdownMenuTrigger
-							render={
-								<Button variant="outline" disabled={!setlist.songs.length}>
-									<IconFileTypePdf className="size-4" /> Export PDF
-								</Button>
-							}
-						/>
-						<DropdownMenuContent>
-							{(
-								[
-									["both", "As-fingered + concert"],
-									["fingered", "As-fingered only"],
-									["concert", "Concert pitch only"],
-								] as const
-							).map(([mode, label]) => (
-								<DropdownMenuItem
-									key={mode}
-									render={
-										// Server-rendered PDF (chordpro CLI). Same-origin link sends the
-										// session cookie; `download` saves it straight to disk.
-										<a
-											href={`/api/songbooks/${id}/pdf?mode=${mode}`}
-											download
-										/>
-									}
-								>
-									{label}
-								</DropdownMenuItem>
-							))}
-						</DropdownMenuContent>
-					</DropdownMenu>
-					<Button
-						variant="outline"
-						disabled={!setlist.songs.length}
-						onClick={() => {
-							fan.ensure();
-							setShareOpen(true);
-						}}
-					>
-						<IconShare3 className="size-4" /> Share with fans
-					</Button>
 					<Button
 						render={<Link to="/live/$id" params={{ id }} />}
 						disabled={!setlist.songs.length}
@@ -227,12 +301,14 @@ function SetlistDetail() {
 				showPrint
 			/>
 
-			{/* Songs — drag the handle on the left to reorder the set. */}
+			{/* Songs — online, drag the handle on the left to reorder the set. */}
 			{ordered.length === 0 ? (
 				<div className="mt-6 rounded-xl border border-border px-4 py-10 text-center text-muted-foreground">
-					No songs yet — add some below.
+					{online
+						? "No songs yet — add some below."
+						: "This downloaded set has no songs."}
 				</div>
-			) : (
+			) : online ? (
 				<DndContext
 					sensors={sensors}
 					collisionDetection={closestCenter}
@@ -243,119 +319,110 @@ function SetlistDetail() {
 						items={chartIds}
 						strategy={verticalListSortingStrategy}
 					>
-						<div className="mt-6 rounded-xl border border-border">
-							{ordered.map((entry, i) => (
-								<SongRow
-									key={entry.chartId}
-									entry={entry}
-									position={i + 1}
-									onRemove={() => remove(entry.chartId)}
-								/>
-							))}
-						</div>
+						<div className="mt-6 rounded-xl border border-border">{rows}</div>
 					</SortableContext>
 				</DndContext>
+			) : (
+				<div className="mt-6 rounded-xl border border-border">{rows}</div>
 			)}
 
-			{/* Add songs */}
-			<div className="mt-4">
-				{!adding ? (
-					<Button
-						variant="dashed"
-						className="w-full"
-						onClick={() => setAdding(true)}
-					>
-						<IconPlus className="size-4" /> Add songs
-					</Button>
-				) : (
-					<div className="rounded-xl border border-border bg-card p-4">
-						<div className="flex items-center gap-2">
-							<Input
-								value={q}
-								onChange={(e) => setQ(e.target.value)}
-								placeholder="Search songs across your libraries"
-								autoFocus
-							/>
-							<Button variant="ghost" onClick={() => setAdding(false)}>
-								Done
-							</Button>
-						</div>
-						<div className="mt-3 max-h-72 overflow-auto">
-							{searchResults?.map((song) => {
-								const chartId = song.charts[0]?.id;
-								const inList = chartId && chartIds.includes(chartId);
-								return (
-									<button
-										key={song.id}
-										type="button"
-										disabled={!chartId || !!inList}
-										onClick={() => chartId && add(chartId)}
-										className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left hover:bg-muted disabled:opacity-40"
-									>
-										<span className="font-display text-sm">
-											{song.name}
-											<span className="ml-2 text-xs text-muted-foreground">
-												{song.organization?.name ?? "Curated"}
+			{/* Add songs — a search over the server's libraries plus a PUT, so online only. */}
+			{online ? (
+				<div className="mt-4">
+					{!adding ? (
+						<Button
+							variant="dashed"
+							className="w-full"
+							onClick={() => setAdding(true)}
+						>
+							<IconPlus className="size-4" /> Add songs
+						</Button>
+					) : (
+						<div className="rounded-xl border border-border bg-card p-4">
+							<div className="flex items-center gap-2">
+								<Input
+									value={q}
+									onChange={(e) => setQ(e.target.value)}
+									placeholder="Search songs across your libraries"
+									autoFocus
+								/>
+								<Button variant="ghost" onClick={() => setAdding(false)}>
+									Done
+								</Button>
+							</div>
+							<div className="mt-3 max-h-72 overflow-auto">
+								{searchResults?.map((song) => {
+									const chartId = song.charts[0]?.id;
+									const inList = chartId && chartIds.includes(chartId);
+									return (
+										<button
+											key={song.id}
+											type="button"
+											disabled={!chartId || !!inList}
+											onClick={() => chartId && add(chartId)}
+											className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left hover:bg-muted disabled:opacity-40"
+										>
+											<span className="font-display text-sm">
+												{song.name}
+												<span className="ml-2 text-xs text-muted-foreground">
+													{song.organization?.name ?? "Curated"}
+												</span>
 											</span>
-										</span>
-										<span className="text-xs text-muted-foreground">
-											{inList ? "added" : "+ add"}
-										</span>
-									</button>
-								);
-							})}
+											<span className="text-xs text-muted-foreground">
+												{inList ? "added" : "+ add"}
+											</span>
+										</button>
+									);
+								})}
+							</div>
 						</div>
-					</div>
-				)}
-			</div>
+					)}
+				</div>
+			) : (
+				<p className="mt-4 text-sm text-muted-foreground">
+					You're offline — editing this set needs a connection. Use ▶ to open
+					the set in Live mode at that song.
+				</p>
+			)}
 		</div>
 	);
 }
 
 /**
- * One song in the set. `useSortable` supplies the drag transform; the listeners are
- * bound to the grip alone (not the whole row) so the title stays a link and a touch
- * anywhere else still scrolls the page — `touch-none` on the grip is what lets a
- * finger drag it at all.
+ * One song in the set: position, title, key, and one trailing action. Presentational so
+ * the same row serves the draggable online list and the plain offline one — `useSortable`
+ * is a hook, so the two variants have to be separate components.
  */
 function SongRow({
 	entry,
 	position,
-	onRemove,
+	action,
+	handle,
+	ref,
+	style,
+	dragging,
 }: {
 	entry: SetlistEntry;
 	position: number;
-	onRemove: () => void;
+	action: React.ReactNode;
+	handle?: React.ReactNode;
+	ref?: React.Ref<HTMLDivElement>;
+	style?: React.CSSProperties;
+	dragging?: boolean;
 }) {
-	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		transition,
-		isDragging,
-	} = useSortable({ id: entry.chartId });
 	const song = entry.chart.song;
 	const artist = song.credits.map((c) => c.artist.name).join(", ");
 
 	return (
 		<div
-			ref={setNodeRef}
-			style={{ transform: CSS.Transform.toString(transform), transition }}
+			ref={ref}
+			style={style}
 			className={cn(
 				"flex items-center gap-3 border-b border-border bg-background px-4 py-3 first:rounded-t-xl last:rounded-b-xl last:border-0",
-				isDragging && "relative z-10 rounded-xl shadow-lg",
+				dragging && "relative z-10 rounded-xl shadow-lg",
 			)}
 		>
-			<button
-				type="button"
-				aria-label={`Reorder ${song.name}`}
-				className="grid size-8 shrink-0 cursor-grab touch-none place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:cursor-grabbing"
-				{...attributes}
-				{...listeners}
-			>
-				<IconGripVertical className="size-4" />
-			</button>
+			{handle}
 			<span className="w-6 text-center font-mono text-sm text-muted-foreground">
 				{position}
 			</span>
@@ -376,14 +443,63 @@ function SongRow({
 					className="px-2 py-1"
 				/>
 			)}
-			<button
-				type="button"
-				aria-label={`Remove ${song.name}`}
-				onClick={onRemove}
-				className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-			>
-				<IconX className="size-4" />
-			</button>
+			{action}
 		</div>
+	);
+}
+
+/**
+ * The online row. `useSortable` supplies the drag transform; the listeners are bound to
+ * the grip alone (not the whole row) so the title stays a link and a touch anywhere else
+ * still scrolls the page — `touch-none` on the grip is what lets a finger drag it at all.
+ */
+function SortableSongRow({
+	entry,
+	position,
+	onRemove,
+}: {
+	entry: SetlistEntry;
+	position: number;
+	onRemove: () => void;
+}) {
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		transform,
+		transition,
+		isDragging,
+	} = useSortable({ id: entry.chartId });
+	const song = entry.chart.song;
+
+	return (
+		<SongRow
+			ref={setNodeRef}
+			style={{ transform: CSS.Transform.toString(transform), transition }}
+			dragging={isDragging}
+			entry={entry}
+			position={position}
+			handle={
+				<button
+					type="button"
+					aria-label={`Reorder ${song.name}`}
+					className="grid size-8 shrink-0 cursor-grab touch-none place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:cursor-grabbing"
+					{...attributes}
+					{...listeners}
+				>
+					<IconGripVertical className="size-4" />
+				</button>
+			}
+			action={
+				<button
+					type="button"
+					aria-label={`Remove ${song.name}`}
+					onClick={onRemove}
+					className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+				>
+					<IconX className="size-4" />
+				</button>
+			}
+		/>
 	);
 }

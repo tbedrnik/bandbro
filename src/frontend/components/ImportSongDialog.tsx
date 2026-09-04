@@ -2,6 +2,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { api } from "@frontend/api";
 import { Button } from "@frontend/components/ui/button";
 import { Input } from "@frontend/components/ui/input";
+import { useOnline } from "@frontend/lib/offline";
 import { useScopes } from "@frontend/lib/scopes";
 import { IconFileImport } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -153,9 +154,15 @@ export function ImportSongDialog({
 	);
 }
 
-/** The "Import" button + its dialog, for use next to "New song". */
+/**
+ * The "Import" button + its dialog, for use next to "New song". The import is a server
+ * fetch-and-create, so the button hides itself with no signal rather than making every
+ * call site remember to (§D7: hide what can't work offline).
+ */
 export function ImportSongButton() {
 	const [open, setOpen] = useState(false);
+	const online = useOnline();
+	if (!online) return null;
 	return (
 		<>
 			<Button variant="outline" onClick={() => setOpen(true)}>

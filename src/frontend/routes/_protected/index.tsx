@@ -49,7 +49,9 @@ function HomePage() {
 
 	return (
 		<div className="mx-auto max-w-6xl px-6 py-10">
-			<div className="flex items-center justify-between">
+			{/* Wraps on a phone — the three actions are wider than a 390px screen next to
+			    the greeting, and used to push "New song" off the right edge. */}
+			<div className="flex flex-wrap items-center justify-between gap-4">
 				<div>
 					<div className="flex items-center gap-3">
 						<div className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
@@ -66,14 +68,18 @@ function HomePage() {
 						Evening, {user.name}.
 					</h1>
 				</div>
-				<div className="flex gap-2">
+				<div className="flex flex-wrap gap-2">
 					<Button variant="outline" render={<Link to="/library" />}>
 						<IconMusic className="size-4" /> Library
 					</Button>
+					{/* Writing a song ends in a POST, so with no signal the button would only
+					    lead to an editor that can't save (§D7). ImportSongButton hides itself. */}
 					<ImportSongButton />
-					<Button render={<Link to="/songs/new" />}>
-						<IconPlus className="size-4" /> New song
-					</Button>
+					{online && (
+						<Button render={<Link to="/songs/new" />}>
+							<IconPlus className="size-4" /> New song
+						</Button>
+					)}
 				</div>
 			</div>
 
@@ -176,6 +182,11 @@ function HomePage() {
 						</Link>
 					</div>
 					<div className="flex flex-col gap-2">
+						{!online && bands.length === 0 && !personal && (
+							<p className="text-sm text-muted-foreground">
+								You're offline — your bands are read from the server.
+							</p>
+						)}
 						{[...bands, ...(personal ? [personal] : [])].map((scope) => (
 							<div
 								key={scope.param}
@@ -189,13 +200,15 @@ function HomePage() {
 								</div>
 							</div>
 						))}
-						<Button
-							variant="outline"
-							className="mt-1 justify-start"
-							onClick={() => setBandDialogOpen(true)}
-						>
-							<IconPlus className="size-4" /> Create a band
-						</Button>
+						{online && (
+							<Button
+								variant="outline"
+								className="mt-1 justify-start"
+								onClick={() => setBandDialogOpen(true)}
+							>
+								<IconPlus className="size-4" /> Create a band
+							</Button>
+						)}
 					</div>
 				</aside>
 			</div>
