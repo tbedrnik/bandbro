@@ -10,7 +10,11 @@ import {
 	DropdownMenuTrigger,
 } from "@frontend/components/ui/dropdown-menu";
 import { Input } from "@frontend/components/ui/input";
-import { type Scope, useScopes } from "@frontend/lib/scopes";
+import {
+	type Scope,
+	useRememberedScope,
+	useScopes,
+} from "@frontend/lib/scopes";
 import { displayKey } from "@shared/notation";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,8 +33,8 @@ const DESCRIPTIONS: Record<string, string> = {
 };
 
 function LibraryPage() {
-	const { scopes, bands, personal } = useScopes();
-	const [scopeParam, setScopeParam] = useState("curated");
+	const { scopes, bands, personal, isPending: scopesPending } = useScopes();
+	const [scopeParam, setScopeParam] = useRememberedScope(scopes, scopesPending);
 	const [q, setQ] = useState("");
 
 	const active: Scope = scopes.find((s) => s.param === scopeParam) ?? scopes[0];
