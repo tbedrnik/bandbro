@@ -3,6 +3,14 @@ import { Elysia, t } from "elysia";
 import { CreditRole } from "../generated/prisma/enums";
 import { authMiddleware } from "./auth";
 import {
+	bandEmailInviteCancel,
+	bandInvitePreview,
+	bandInviteRedeem,
+	bandInviteRevoke,
+	bandInvitesCreate,
+	bandInvitesList,
+} from "./services/bandInvites";
+import {
 	liveSessionCreate,
 	liveSessionPublicRead,
 	liveSessionSetCurrent,
@@ -272,6 +280,77 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({ currentSongIndex: t.Integer({ minimum: 0 }) }),
+				},
+			),
+	)
+	.group("/bands", (group) =>
+		group
+			// Public, no-auth preview of an invite code — the join page names the band and
+			// the role on offer before it asks anyone to sign in (CLAUDE.md §D13).
+			.get("/join/:code", ({ params }) =>
+				bandInvitePreview({ code: params.code }),
+			)
+			// Redeem: adds the caller to the band with the link's role.
+			.post(
+				"/join/:code",
+				({ params, user }) =>
+					bandInviteRedeem({ userId: user.id, code: params.code }),
+				{
+					auth: true,
+				},
+			)
+			// Admin: the band's outstanding links (with joiners) + legacy email invitations.
+			.get(
+				"/:organizationId/invites",
+				({ params, user }) =>
+					bandInvitesList({
+						userId: user.id,
+						organizationId: params.organizationId,
+					}),
+				{
+					auth: true,
+				},
+			)
+			.post(
+				"/:organizationId/invites",
+				({ params, user, body }) =>
+					bandInvitesCreate({
+						userId: user.id,
+						organizationId: params.organizationId,
+						payload: body,
+					}),
+				{
+					auth: true,
+					body: t.Object({
+						role: t.Union([
+							t.Literal("admin"),
+							t.Literal("writer"),
+							t.Literal("reader"),
+						]),
+						// null = never expires / unlimited joins.
+						expiresInDays: t.Optional(
+							t.Nullable(t.Integer({ minimum: 1, maximum: 365 })),
+						),
+						maxUses: t.Optional(
+							t.Nullable(t.Integer({ minimum: 1, maximum: 500 })),
+						),
+					}),
+				},
+			)
+			.delete(
+				"/invites/:id",
+				({ params, user }) =>
+					bandInviteRevoke({ userId: user.id, id: params.id }),
+				{
+					auth: true,
+				},
+			)
+			.delete(
+				"/email-invites/:id",
+				({ params, user }) =>
+					bandEmailInviteCancel({ userId: user.id, id: params.id }),
+				{
+					auth: true,
 				},
 			),
 	)

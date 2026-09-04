@@ -10,8 +10,8 @@
 
 const CLIENT_ID_KEY = "bandbro:fan:clientId";
 
-/** App origin + basepath, e.g. `https://example.com/app`. */
-function appBase(): string {
+/** App origin + basepath, e.g. `https://example.com/app`. Shared with the band-invite links. */
+export function appBase(): string {
 	if (typeof window === "undefined") return "/app";
 	return `${window.location.origin}/app`;
 }

@@ -4,6 +4,16 @@ import { cn } from "@frontend/lib/utils";
 export type Role = "Admin" | "Writer" | "Reader";
 
 /**
+ * A stored `Member.role` as a badge label. better-auth's own defaults (owner/member) predate
+ * the §D6 roles and still turn up on older rows, so they map onto the nearest equivalent.
+ */
+export function roleLabel(role: string | null | undefined): Role {
+	if (role === "admin" || role === "owner") return "Admin";
+	if (role === "writer") return "Writer";
+	return "Reader";
+}
+
+/**
  * Member role badge. Admin is emphasized with the brand accent wash; Writer and
  * Reader are quiet neutral chips. Ported from Claude Design "Design System.dc.html".
  */

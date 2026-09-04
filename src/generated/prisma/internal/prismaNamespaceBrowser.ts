@@ -58,6 +58,8 @@ export const ModelName = {
   Organization: 'Organization',
   Member: 'Member',
   Invitation: 'Invitation',
+  BandInvite: 'BandInvite',
+  BandInviteUse: 'BandInviteUse',
   Song: 'Song',
   Chart: 'Chart',
   Artist: 'Artist',
@@ -178,6 +180,32 @@ export const InvitationScalarFieldEnum = {
 } as const
 
 export type InvitationScalarFieldEnum = (typeof InvitationScalarFieldEnum)[keyof typeof InvitationScalarFieldEnum]
+
+
+export const BandInviteScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  organizationId: 'organizationId',
+  role: 'role',
+  createdById: 'createdById',
+  expiresAt: 'expiresAt',
+  maxUses: 'maxUses',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BandInviteScalarFieldEnum = (typeof BandInviteScalarFieldEnum)[keyof typeof BandInviteScalarFieldEnum]
+
+
+export const BandInviteUseScalarFieldEnum = {
+  id: 'id',
+  inviteId: 'inviteId',
+  userId: 'userId',
+  joinedAt: 'joinedAt'
+} as const
+
+export type BandInviteUseScalarFieldEnum = (typeof BandInviteUseScalarFieldEnum)[keyof typeof BandInviteUseScalarFieldEnum]
 
 
 export const SongScalarFieldEnum = {

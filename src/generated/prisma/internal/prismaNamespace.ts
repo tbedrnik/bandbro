@@ -391,6 +391,8 @@ export const ModelName = {
   Organization: 'Organization',
   Member: 'Member',
   Invitation: 'Invitation',
+  BandInvite: 'BandInvite',
+  BandInviteUse: 'BandInviteUse',
   Song: 'Song',
   Chart: 'Chart',
   Artist: 'Artist',
@@ -416,7 +418,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "account" | "verification" | "organization" | "member" | "invitation" | "song" | "chart" | "artist" | "credit" | "tag" | "songTag" | "songbook" | "liveSession" | "songbookSong" | "suggestion"
+    modelProps: "user" | "session" | "account" | "verification" | "organization" | "member" | "invitation" | "bandInvite" | "bandInviteUse" | "song" | "chart" | "artist" | "credit" | "tag" | "songTag" | "songbook" | "liveSession" | "songbookSong" | "suggestion"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -935,6 +937,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.InvitationCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.InvitationCountAggregateOutputType> | number
+        }
+      }
+    }
+    BandInvite: {
+      payload: Prisma.$BandInvitePayload<ExtArgs>
+      fields: Prisma.BandInviteFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BandInviteFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInvitePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BandInviteFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInvitePayload>
+        }
+        findFirst: {
+          args: Prisma.BandInviteFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInvitePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BandInviteFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInvitePayload>
+        }
+        findMany: {
+          args: Prisma.BandInviteFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInvitePayload>[]
+        }
+        create: {
+          args: Prisma.BandInviteCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInvitePayload>
+        }
+        createMany: {
+          args: Prisma.BandInviteCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BandInviteCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInvitePayload>[]
+        }
+        delete: {
+          args: Prisma.BandInviteDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInvitePayload>
+        }
+        update: {
+          args: Prisma.BandInviteUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInvitePayload>
+        }
+        deleteMany: {
+          args: Prisma.BandInviteDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BandInviteUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BandInviteUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInvitePayload>[]
+        }
+        upsert: {
+          args: Prisma.BandInviteUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInvitePayload>
+        }
+        aggregate: {
+          args: Prisma.BandInviteAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBandInvite>
+        }
+        groupBy: {
+          args: Prisma.BandInviteGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BandInviteGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BandInviteCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BandInviteCountAggregateOutputType> | number
+        }
+      }
+    }
+    BandInviteUse: {
+      payload: Prisma.$BandInviteUsePayload<ExtArgs>
+      fields: Prisma.BandInviteUseFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BandInviteUseFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInviteUsePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BandInviteUseFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInviteUsePayload>
+        }
+        findFirst: {
+          args: Prisma.BandInviteUseFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInviteUsePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BandInviteUseFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInviteUsePayload>
+        }
+        findMany: {
+          args: Prisma.BandInviteUseFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInviteUsePayload>[]
+        }
+        create: {
+          args: Prisma.BandInviteUseCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInviteUsePayload>
+        }
+        createMany: {
+          args: Prisma.BandInviteUseCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BandInviteUseCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInviteUsePayload>[]
+        }
+        delete: {
+          args: Prisma.BandInviteUseDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInviteUsePayload>
+        }
+        update: {
+          args: Prisma.BandInviteUseUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInviteUsePayload>
+        }
+        deleteMany: {
+          args: Prisma.BandInviteUseDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BandInviteUseUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BandInviteUseUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInviteUsePayload>[]
+        }
+        upsert: {
+          args: Prisma.BandInviteUseUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BandInviteUsePayload>
+        }
+        aggregate: {
+          args: Prisma.BandInviteUseAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBandInviteUse>
+        }
+        groupBy: {
+          args: Prisma.BandInviteUseGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BandInviteUseGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BandInviteUseCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BandInviteUseCountAggregateOutputType> | number
         }
       }
     }
@@ -1811,6 +1961,32 @@ export const InvitationScalarFieldEnum = {
 export type InvitationScalarFieldEnum = (typeof InvitationScalarFieldEnum)[keyof typeof InvitationScalarFieldEnum]
 
 
+export const BandInviteScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  organizationId: 'organizationId',
+  role: 'role',
+  createdById: 'createdById',
+  expiresAt: 'expiresAt',
+  maxUses: 'maxUses',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BandInviteScalarFieldEnum = (typeof BandInviteScalarFieldEnum)[keyof typeof BandInviteScalarFieldEnum]
+
+
+export const BandInviteUseScalarFieldEnum = {
+  id: 'id',
+  inviteId: 'inviteId',
+  userId: 'userId',
+  joinedAt: 'joinedAt'
+} as const
+
+export type BandInviteUseScalarFieldEnum = (typeof BandInviteUseScalarFieldEnum)[keyof typeof BandInviteUseScalarFieldEnum]
+
+
 export const SongScalarFieldEnum = {
   id: 'id',
   slug: 'slug',
@@ -2123,6 +2299,8 @@ export type GlobalOmitConfig = {
   organization?: Prisma.OrganizationOmit
   member?: Prisma.MemberOmit
   invitation?: Prisma.InvitationOmit
+  bandInvite?: Prisma.BandInviteOmit
+  bandInviteUse?: Prisma.BandInviteUseOmit
   song?: Prisma.SongOmit
   chart?: Prisma.ChartOmit
   artist?: Prisma.ArtistOmit

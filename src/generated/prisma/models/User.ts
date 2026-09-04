@@ -211,6 +211,8 @@ export type UserWhereInput = {
   members?: Prisma.MemberListRelationFilter
   invitations?: Prisma.InvitationListRelationFilter
   suggestions?: Prisma.SuggestionListRelationFilter
+  bandInvitesCreated?: Prisma.BandInviteListRelationFilter
+  bandInviteUses?: Prisma.BandInviteUseListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -227,6 +229,8 @@ export type UserOrderByWithRelationInput = {
   members?: Prisma.MemberOrderByRelationAggregateInput
   invitations?: Prisma.InvitationOrderByRelationAggregateInput
   suggestions?: Prisma.SuggestionOrderByRelationAggregateInput
+  bandInvitesCreated?: Prisma.BandInviteOrderByRelationAggregateInput
+  bandInviteUses?: Prisma.BandInviteUseOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -246,6 +250,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   members?: Prisma.MemberListRelationFilter
   invitations?: Prisma.InvitationListRelationFilter
   suggestions?: Prisma.SuggestionListRelationFilter
+  bandInvitesCreated?: Prisma.BandInviteListRelationFilter
+  bandInviteUses?: Prisma.BandInviteUseListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -290,6 +296,8 @@ export type UserCreateInput = {
   members?: Prisma.MemberCreateNestedManyWithoutUserInput
   invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput
   suggestions?: Prisma.SuggestionCreateNestedManyWithoutProposerInput
+  bandInvitesCreated?: Prisma.BandInviteCreateNestedManyWithoutCreatedByInput
+  bandInviteUses?: Prisma.BandInviteUseCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -306,6 +314,8 @@ export type UserUncheckedCreateInput = {
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput
   suggestions?: Prisma.SuggestionUncheckedCreateNestedManyWithoutProposerInput
+  bandInvitesCreated?: Prisma.BandInviteUncheckedCreateNestedManyWithoutCreatedByInput
+  bandInviteUses?: Prisma.BandInviteUseUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -322,6 +332,8 @@ export type UserUpdateInput = {
   members?: Prisma.MemberUpdateManyWithoutUserNestedInput
   invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput
   suggestions?: Prisma.SuggestionUpdateManyWithoutProposerNestedInput
+  bandInvitesCreated?: Prisma.BandInviteUpdateManyWithoutCreatedByNestedInput
+  bandInviteUses?: Prisma.BandInviteUseUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -338,6 +350,8 @@ export type UserUncheckedUpdateInput = {
   members?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput
   suggestions?: Prisma.SuggestionUncheckedUpdateManyWithoutProposerNestedInput
+  bandInvitesCreated?: Prisma.BandInviteUncheckedUpdateManyWithoutCreatedByNestedInput
+  bandInviteUses?: Prisma.BandInviteUseUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -483,6 +497,34 @@ export type UserUpdateOneRequiredWithoutInvitationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutInvitationsInput, Prisma.UserUpdateWithoutInvitationsInput>, Prisma.UserUncheckedUpdateWithoutInvitationsInput>
 }
 
+export type UserCreateNestedOneWithoutBandInvitesCreatedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBandInvitesCreatedInput, Prisma.UserUncheckedCreateWithoutBandInvitesCreatedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBandInvitesCreatedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutBandInvitesCreatedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBandInvitesCreatedInput, Prisma.UserUncheckedCreateWithoutBandInvitesCreatedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBandInvitesCreatedInput
+  upsert?: Prisma.UserUpsertWithoutBandInvitesCreatedInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutBandInvitesCreatedInput, Prisma.UserUpdateWithoutBandInvitesCreatedInput>, Prisma.UserUncheckedUpdateWithoutBandInvitesCreatedInput>
+}
+
+export type UserCreateNestedOneWithoutBandInviteUsesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBandInviteUsesInput, Prisma.UserUncheckedCreateWithoutBandInviteUsesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBandInviteUsesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutBandInviteUsesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBandInviteUsesInput, Prisma.UserUncheckedCreateWithoutBandInviteUsesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBandInviteUsesInput
+  upsert?: Prisma.UserUpsertWithoutBandInviteUsesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutBandInviteUsesInput, Prisma.UserUpdateWithoutBandInviteUsesInput>, Prisma.UserUncheckedUpdateWithoutBandInviteUsesInput>
+}
+
 export type UserCreateNestedOneWithoutSuggestionsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutSuggestionsInput, Prisma.UserUncheckedCreateWithoutSuggestionsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutSuggestionsInput
@@ -510,6 +552,8 @@ export type UserCreateWithoutSessionsInput = {
   members?: Prisma.MemberCreateNestedManyWithoutUserInput
   invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput
   suggestions?: Prisma.SuggestionCreateNestedManyWithoutProposerInput
+  bandInvitesCreated?: Prisma.BandInviteCreateNestedManyWithoutCreatedByInput
+  bandInviteUses?: Prisma.BandInviteUseCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -525,6 +569,8 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput
   suggestions?: Prisma.SuggestionUncheckedCreateNestedManyWithoutProposerInput
+  bandInvitesCreated?: Prisma.BandInviteUncheckedCreateNestedManyWithoutCreatedByInput
+  bandInviteUses?: Prisma.BandInviteUseUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -556,6 +602,8 @@ export type UserUpdateWithoutSessionsInput = {
   members?: Prisma.MemberUpdateManyWithoutUserNestedInput
   invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput
   suggestions?: Prisma.SuggestionUpdateManyWithoutProposerNestedInput
+  bandInvitesCreated?: Prisma.BandInviteUpdateManyWithoutCreatedByNestedInput
+  bandInviteUses?: Prisma.BandInviteUseUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -571,6 +619,8 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   members?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput
   suggestions?: Prisma.SuggestionUncheckedUpdateManyWithoutProposerNestedInput
+  bandInvitesCreated?: Prisma.BandInviteUncheckedUpdateManyWithoutCreatedByNestedInput
+  bandInviteUses?: Prisma.BandInviteUseUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAccountsInput = {
@@ -586,6 +636,8 @@ export type UserCreateWithoutAccountsInput = {
   members?: Prisma.MemberCreateNestedManyWithoutUserInput
   invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput
   suggestions?: Prisma.SuggestionCreateNestedManyWithoutProposerInput
+  bandInvitesCreated?: Prisma.BandInviteCreateNestedManyWithoutCreatedByInput
+  bandInviteUses?: Prisma.BandInviteUseCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAccountsInput = {
@@ -601,6 +653,8 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput
   suggestions?: Prisma.SuggestionUncheckedCreateNestedManyWithoutProposerInput
+  bandInvitesCreated?: Prisma.BandInviteUncheckedCreateNestedManyWithoutCreatedByInput
+  bandInviteUses?: Prisma.BandInviteUseUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAccountsInput = {
@@ -632,6 +686,8 @@ export type UserUpdateWithoutAccountsInput = {
   members?: Prisma.MemberUpdateManyWithoutUserNestedInput
   invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput
   suggestions?: Prisma.SuggestionUpdateManyWithoutProposerNestedInput
+  bandInvitesCreated?: Prisma.BandInviteUpdateManyWithoutCreatedByNestedInput
+  bandInviteUses?: Prisma.BandInviteUseUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -647,6 +703,8 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   members?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput
   suggestions?: Prisma.SuggestionUncheckedUpdateManyWithoutProposerNestedInput
+  bandInvitesCreated?: Prisma.BandInviteUncheckedUpdateManyWithoutCreatedByNestedInput
+  bandInviteUses?: Prisma.BandInviteUseUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutMembersInput = {
@@ -662,6 +720,8 @@ export type UserCreateWithoutMembersInput = {
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput
   suggestions?: Prisma.SuggestionCreateNestedManyWithoutProposerInput
+  bandInvitesCreated?: Prisma.BandInviteCreateNestedManyWithoutCreatedByInput
+  bandInviteUses?: Prisma.BandInviteUseCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutMembersInput = {
@@ -677,6 +737,8 @@ export type UserUncheckedCreateWithoutMembersInput = {
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput
   suggestions?: Prisma.SuggestionUncheckedCreateNestedManyWithoutProposerInput
+  bandInvitesCreated?: Prisma.BandInviteUncheckedCreateNestedManyWithoutCreatedByInput
+  bandInviteUses?: Prisma.BandInviteUseUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutMembersInput = {
@@ -708,6 +770,8 @@ export type UserUpdateWithoutMembersInput = {
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput
   suggestions?: Prisma.SuggestionUpdateManyWithoutProposerNestedInput
+  bandInvitesCreated?: Prisma.BandInviteUpdateManyWithoutCreatedByNestedInput
+  bandInviteUses?: Prisma.BandInviteUseUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMembersInput = {
@@ -723,6 +787,8 @@ export type UserUncheckedUpdateWithoutMembersInput = {
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput
   suggestions?: Prisma.SuggestionUncheckedUpdateManyWithoutProposerNestedInput
+  bandInvitesCreated?: Prisma.BandInviteUncheckedUpdateManyWithoutCreatedByNestedInput
+  bandInviteUses?: Prisma.BandInviteUseUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutInvitationsInput = {
@@ -738,6 +804,8 @@ export type UserCreateWithoutInvitationsInput = {
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   members?: Prisma.MemberCreateNestedManyWithoutUserInput
   suggestions?: Prisma.SuggestionCreateNestedManyWithoutProposerInput
+  bandInvitesCreated?: Prisma.BandInviteCreateNestedManyWithoutCreatedByInput
+  bandInviteUses?: Prisma.BandInviteUseCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutInvitationsInput = {
@@ -753,6 +821,8 @@ export type UserUncheckedCreateWithoutInvitationsInput = {
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput
   suggestions?: Prisma.SuggestionUncheckedCreateNestedManyWithoutProposerInput
+  bandInvitesCreated?: Prisma.BandInviteUncheckedCreateNestedManyWithoutCreatedByInput
+  bandInviteUses?: Prisma.BandInviteUseUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutInvitationsInput = {
@@ -784,6 +854,8 @@ export type UserUpdateWithoutInvitationsInput = {
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   members?: Prisma.MemberUpdateManyWithoutUserNestedInput
   suggestions?: Prisma.SuggestionUpdateManyWithoutProposerNestedInput
+  bandInvitesCreated?: Prisma.BandInviteUpdateManyWithoutCreatedByNestedInput
+  bandInviteUses?: Prisma.BandInviteUseUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutInvitationsInput = {
@@ -799,6 +871,176 @@ export type UserUncheckedUpdateWithoutInvitationsInput = {
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   members?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput
   suggestions?: Prisma.SuggestionUncheckedUpdateManyWithoutProposerNestedInput
+  bandInvitesCreated?: Prisma.BandInviteUncheckedUpdateManyWithoutCreatedByNestedInput
+  bandInviteUses?: Prisma.BandInviteUseUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutBandInvitesCreatedInput = {
+  id: string
+  name: string
+  email: string
+  emailVerified?: boolean
+  image?: string | null
+  defaultChordView?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  members?: Prisma.MemberCreateNestedManyWithoutUserInput
+  invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput
+  suggestions?: Prisma.SuggestionCreateNestedManyWithoutProposerInput
+  bandInviteUses?: Prisma.BandInviteUseCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutBandInvitesCreatedInput = {
+  id: string
+  name: string
+  email: string
+  emailVerified?: boolean
+  image?: string | null
+  defaultChordView?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  members?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput
+  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput
+  suggestions?: Prisma.SuggestionUncheckedCreateNestedManyWithoutProposerInput
+  bandInviteUses?: Prisma.BandInviteUseUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutBandInvitesCreatedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutBandInvitesCreatedInput, Prisma.UserUncheckedCreateWithoutBandInvitesCreatedInput>
+}
+
+export type UserUpsertWithoutBandInvitesCreatedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutBandInvitesCreatedInput, Prisma.UserUncheckedUpdateWithoutBandInvitesCreatedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutBandInvitesCreatedInput, Prisma.UserUncheckedCreateWithoutBandInvitesCreatedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutBandInvitesCreatedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutBandInvitesCreatedInput, Prisma.UserUncheckedUpdateWithoutBandInvitesCreatedInput>
+}
+
+export type UserUpdateWithoutBandInvitesCreatedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultChordView?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  members?: Prisma.MemberUpdateManyWithoutUserNestedInput
+  invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput
+  suggestions?: Prisma.SuggestionUpdateManyWithoutProposerNestedInput
+  bandInviteUses?: Prisma.BandInviteUseUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutBandInvitesCreatedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultChordView?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  members?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput
+  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput
+  suggestions?: Prisma.SuggestionUncheckedUpdateManyWithoutProposerNestedInput
+  bandInviteUses?: Prisma.BandInviteUseUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutBandInviteUsesInput = {
+  id: string
+  name: string
+  email: string
+  emailVerified?: boolean
+  image?: string | null
+  defaultChordView?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  members?: Prisma.MemberCreateNestedManyWithoutUserInput
+  invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput
+  suggestions?: Prisma.SuggestionCreateNestedManyWithoutProposerInput
+  bandInvitesCreated?: Prisma.BandInviteCreateNestedManyWithoutCreatedByInput
+}
+
+export type UserUncheckedCreateWithoutBandInviteUsesInput = {
+  id: string
+  name: string
+  email: string
+  emailVerified?: boolean
+  image?: string | null
+  defaultChordView?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  members?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput
+  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput
+  suggestions?: Prisma.SuggestionUncheckedCreateNestedManyWithoutProposerInput
+  bandInvitesCreated?: Prisma.BandInviteUncheckedCreateNestedManyWithoutCreatedByInput
+}
+
+export type UserCreateOrConnectWithoutBandInviteUsesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutBandInviteUsesInput, Prisma.UserUncheckedCreateWithoutBandInviteUsesInput>
+}
+
+export type UserUpsertWithoutBandInviteUsesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutBandInviteUsesInput, Prisma.UserUncheckedUpdateWithoutBandInviteUsesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutBandInviteUsesInput, Prisma.UserUncheckedCreateWithoutBandInviteUsesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutBandInviteUsesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutBandInviteUsesInput, Prisma.UserUncheckedUpdateWithoutBandInviteUsesInput>
+}
+
+export type UserUpdateWithoutBandInviteUsesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultChordView?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  members?: Prisma.MemberUpdateManyWithoutUserNestedInput
+  invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput
+  suggestions?: Prisma.SuggestionUpdateManyWithoutProposerNestedInput
+  bandInvitesCreated?: Prisma.BandInviteUpdateManyWithoutCreatedByNestedInput
+}
+
+export type UserUncheckedUpdateWithoutBandInviteUsesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultChordView?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  members?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput
+  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput
+  suggestions?: Prisma.SuggestionUncheckedUpdateManyWithoutProposerNestedInput
+  bandInvitesCreated?: Prisma.BandInviteUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateWithoutSuggestionsInput = {
@@ -814,6 +1056,8 @@ export type UserCreateWithoutSuggestionsInput = {
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   members?: Prisma.MemberCreateNestedManyWithoutUserInput
   invitations?: Prisma.InvitationCreateNestedManyWithoutUserInput
+  bandInvitesCreated?: Prisma.BandInviteCreateNestedManyWithoutCreatedByInput
+  bandInviteUses?: Prisma.BandInviteUseCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSuggestionsInput = {
@@ -829,6 +1073,8 @@ export type UserUncheckedCreateWithoutSuggestionsInput = {
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutUserInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutUserInput
+  bandInvitesCreated?: Prisma.BandInviteUncheckedCreateNestedManyWithoutCreatedByInput
+  bandInviteUses?: Prisma.BandInviteUseUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSuggestionsInput = {
@@ -860,6 +1106,8 @@ export type UserUpdateWithoutSuggestionsInput = {
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   members?: Prisma.MemberUpdateManyWithoutUserNestedInput
   invitations?: Prisma.InvitationUpdateManyWithoutUserNestedInput
+  bandInvitesCreated?: Prisma.BandInviteUpdateManyWithoutCreatedByNestedInput
+  bandInviteUses?: Prisma.BandInviteUseUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSuggestionsInput = {
@@ -875,6 +1123,8 @@ export type UserUncheckedUpdateWithoutSuggestionsInput = {
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   members?: Prisma.MemberUncheckedUpdateManyWithoutUserNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutUserNestedInput
+  bandInvitesCreated?: Prisma.BandInviteUncheckedUpdateManyWithoutCreatedByNestedInput
+  bandInviteUses?: Prisma.BandInviteUseUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -888,6 +1138,8 @@ export type UserCountOutputType = {
   members: number
   invitations: number
   suggestions: number
+  bandInvitesCreated: number
+  bandInviteUses: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -896,6 +1148,8 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   members?: boolean | UserCountOutputTypeCountMembersArgs
   invitations?: boolean | UserCountOutputTypeCountInvitationsArgs
   suggestions?: boolean | UserCountOutputTypeCountSuggestionsArgs
+  bandInvitesCreated?: boolean | UserCountOutputTypeCountBandInvitesCreatedArgs
+  bandInviteUses?: boolean | UserCountOutputTypeCountBandInviteUsesArgs
 }
 
 /**
@@ -943,6 +1197,20 @@ export type UserCountOutputTypeCountSuggestionsArgs<ExtArgs extends runtime.Type
   where?: Prisma.SuggestionWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountBandInvitesCreatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BandInviteWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountBandInviteUsesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BandInviteUseWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -958,6 +1226,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   members?: boolean | Prisma.User$membersArgs<ExtArgs>
   invitations?: boolean | Prisma.User$invitationsArgs<ExtArgs>
   suggestions?: boolean | Prisma.User$suggestionsArgs<ExtArgs>
+  bandInvitesCreated?: boolean | Prisma.User$bandInvitesCreatedArgs<ExtArgs>
+  bandInviteUses?: boolean | Prisma.User$bandInviteUsesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1001,6 +1271,8 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   members?: boolean | Prisma.User$membersArgs<ExtArgs>
   invitations?: boolean | Prisma.User$invitationsArgs<ExtArgs>
   suggestions?: boolean | Prisma.User$suggestionsArgs<ExtArgs>
+  bandInvitesCreated?: boolean | Prisma.User$bandInvitesCreatedArgs<ExtArgs>
+  bandInviteUses?: boolean | Prisma.User$bandInviteUsesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1014,6 +1286,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     members: Prisma.$MemberPayload<ExtArgs>[]
     invitations: Prisma.$InvitationPayload<ExtArgs>[]
     suggestions: Prisma.$SuggestionPayload<ExtArgs>[]
+    bandInvitesCreated: Prisma.$BandInvitePayload<ExtArgs>[]
+    bandInviteUses: Prisma.$BandInviteUsePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1423,6 +1697,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   members<T extends Prisma.User$membersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$membersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   invitations<T extends Prisma.User$invitationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$invitationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   suggestions<T extends Prisma.User$suggestionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$suggestionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SuggestionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  bandInvitesCreated<T extends Prisma.User$bandInvitesCreatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$bandInvitesCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BandInvitePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  bandInviteUses<T extends Prisma.User$bandInviteUsesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$bandInviteUsesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BandInviteUsePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1968,6 +2244,54 @@ export type User$suggestionsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.SuggestionScalarFieldEnum | Prisma.SuggestionScalarFieldEnum[]
+}
+
+/**
+ * User.bandInvitesCreated
+ */
+export type User$bandInvitesCreatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BandInvite
+   */
+  select?: Prisma.BandInviteSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BandInvite
+   */
+  omit?: Prisma.BandInviteOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BandInviteInclude<ExtArgs> | null
+  where?: Prisma.BandInviteWhereInput
+  orderBy?: Prisma.BandInviteOrderByWithRelationInput | Prisma.BandInviteOrderByWithRelationInput[]
+  cursor?: Prisma.BandInviteWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BandInviteScalarFieldEnum | Prisma.BandInviteScalarFieldEnum[]
+}
+
+/**
+ * User.bandInviteUses
+ */
+export type User$bandInviteUsesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BandInviteUse
+   */
+  select?: Prisma.BandInviteUseSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BandInviteUse
+   */
+  omit?: Prisma.BandInviteUseOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BandInviteUseInclude<ExtArgs> | null
+  where?: Prisma.BandInviteUseWhereInput
+  orderBy?: Prisma.BandInviteUseOrderByWithRelationInput | Prisma.BandInviteUseOrderByWithRelationInput[]
+  cursor?: Prisma.BandInviteUseWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BandInviteUseScalarFieldEnum | Prisma.BandInviteUseScalarFieldEnum[]
 }
 
 /**
