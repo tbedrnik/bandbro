@@ -33,13 +33,14 @@
 	-->
 	<script>
 		(() => {
-			var hint = document.cookie.match(/(?:^|;\s*)bandbro_hint=([^;]*)/);
-			if (!hint || !hint[1]) return;
-			var who = decodeURIComponent(hint[1]).slice(0, 2);
+			const hint = document.cookie.match(/(?:^|;\s*)bandbro_hint=([^;]*)/);
+			if (!hint?.[1]) return;
+			const who = decodeURIComponent(hint[1]).slice(0, 2);
 			document.documentElement.className += " is-signed-in";
 			document.addEventListener("DOMContentLoaded", () => {
-				var slots = document.querySelectorAll("[data-initials]");
-				for (var i = 0; i < slots.length; i++) slots[i].textContent = who;
+				for (const slot of document.querySelectorAll("[data-initials]")) {
+					slot.textContent = who;
+				}
 			});
 		})();
 	</script>
@@ -62,7 +63,7 @@
 	-->
 	<script>
 		(() => {
-			var link = document.createElement("link");
+			const link = document.createElement("link");
 			link.rel = "manifest";
 			link.href = "/app/manifest.webmanifest";
 			document.head.appendChild(link);
