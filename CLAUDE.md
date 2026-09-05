@@ -268,6 +268,30 @@ URI is not reliably accepted for Android/Chrome installability. `src/tools/gener
 them (192/512 plus a 512 maskable with a safe-zone margin); `index.tsx` also adds an `apple-touch-icon`,
 which iOS needs because it ignores the manifest's icons.
 
+**Those PNGs have to actually decode, and for one deploy they didn't.** `generateIcons.ts` encodes the file
+by hand, and wrote the IDAT with `Bun.deflateSync`, which returns a **raw DEFLATE** stream (RFC 1951) where
+PNG specifies a **zlib** one (RFC 1950 — a 2-byte header and an Adler-32 trailer). Nothing local noticed:
+chunk lengths and CRCs were all correct, and `file(1)` still answered "PNG image data, 192 x 192, 8-bit/color
+RGB", because it only reads IHDR to say that. But no decoder could inflate them, so Chrome dropped all three
+as unreadable, the manifest was left with no acceptable icon, and **Android stopped offering to install the
+app** — a manifest that fails the icon check is not an installable app, and Chrome silently downgrades the
+menu item to "Add to Home screen", i.e. a plain shortcut. The encoder now uses `node:zlib`'s `deflateSync`,
+and `generateIcons.test.ts` inflates the committed files (and checks them against the manifest's `icons`),
+which is the check that would have caught it. The symptom is worth recognising on sight: **"only offers a
+shortcut" always means the installability criteria failed**, and Chrome's own answer is in DevTools →
+Application → Manifest, or over CDP via `Page.getInstallabilityErrors` (`no-acceptable-icon` here) — never
+guess at it from the manifest's contents.
+
+**The landing page carries the manifest too**, so the bare domain is installable. `/` is the address a
+visitor types (bandbro.app), and it is the marketing page (§D18), which had no manifest and no worker — so
+Chrome offered a shortcut there no matter how healthy `/app` was. Its head now injects
+`<link rel="manifest">` and registers the same `/app/sw.js` at scope `/`; the manifest's `start_url`/`scope`
+stay `/app/`, so installing from the landing page lands in the app. Injected from a script rather than
+written as a `<link>` for the §D18 reason — Bun's HTML bundler resolves link hrefs as modules at build time
+and cannot resolve a runtime server route. The worker registration is what makes it work for a visitor who
+has never opened `/app`: Chrome wants one covering the `start_url`, and scope `/` matches the app's own
+registration exactly, so it is the same registration rather than a second one.
+
 **Offline, server-backed controls are hidden, not disabled.** A greyed-out button on a stage is noise: it
 says "this exists" and then refuses, and half a screen of them reads as breakage. Every control that needs
 the server is removed from the DOM when `useOnline()` is false — create/edit/delete/fork/import, the
@@ -588,9 +612,11 @@ showcases what the app does — the songbook and forking, the ChordPro editor, t
 mode, setlists + PDF, offline, the fan share, the kytary importer, `H`/`B` notation — and carries the
 three ways in: **Continue to app** (`/app`), **Sign up** (`/app/register`), **Log in** (`/app/login`),
 repeated in the top bar and the closing call.
-- **No React, no Tailwind, no JS at all.** This is the one surface a stranger loads cold, often on venue
-  wifi, and it has to paint before the SPA bundle would have finished downloading. Bun bundles the linked
-  stylesheet through the same HTML entry point, so it is still one build and one deploy. The design
+- **No React, no Tailwind, no bundle.** This is the one surface a stranger loads cold, often on venue
+  wifi, and it has to paint before the SPA bundle would have finished downloading. What script it does
+  carry is a couple of inline handfuls of lines that must run before anything is fetched — the signed-in
+  hint (§D22) and the manifest/worker injection that makes the bare domain installable (§D7). Bun bundles
+  the linked stylesheet through the same HTML entry point, so it is still one build and one deploy. The design
   tokens are **copied** from `src/frontend/index.css` (§6) rather than shared — that duplication is the
   price of not pulling the SPA's stylesheet onto the landing page; keep the two palettes in step by hand.
 - **Fonts are subset by hand.** Bun's CSS bundler inlines every `url()` as base64, so each fontsource

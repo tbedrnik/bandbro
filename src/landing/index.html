@@ -33,13 +33,44 @@
 	-->
 	<script>
 		(() => {
-			var hint = document.cookie.match(/(?:^|;\s*)bandbro_hint=([^;]*)/);
-			if (!hint || !hint[1]) return;
-			var who = decodeURIComponent(hint[1]).slice(0, 2);
+			const hint = document.cookie.match(/(?:^|;\s*)bandbro_hint=([^;]*)/);
+			if (!hint?.[1]) return;
+			const who = decodeURIComponent(hint[1]).slice(0, 2);
 			document.documentElement.className += " is-signed-in";
 			document.addEventListener("DOMContentLoaded", () => {
-				var slots = document.querySelectorAll("[data-initials]");
-				for (var i = 0; i < slots.length; i++) slots[i].textContent = who;
+				for (const slot of document.querySelectorAll("[data-initials]")) {
+					slot.textContent = who;
+				}
+			});
+		})();
+	</script>
+
+	<!--
+	  Make the bare domain installable (CLAUDE.md §D7).
+
+	  Chrome only offers a real "Install app" on a page that carries a manifest; without
+	  one it offers a home-screen *shortcut* instead, which is what a visitor typing
+	  bandbro.app got, since this page is the origin root and the manifest lives with the
+	  app. The manifest's start_url/scope stay /app/ — installing from here is meant to
+	  land in the app.
+
+	  Injected rather than written as <link rel="manifest" href="/app/manifest.webmanifest">
+	  because Bun's HTML bundler resolves link hrefs as modules at build time and cannot
+	  resolve a runtime server route (the same reason the icon above points at the file).
+	  Registering the worker here matters too: Chrome wants one covering the start_url, and
+	  a visitor who has never opened /app has none. Scope "/" matches the app's own
+	  registration exactly, so the two are the same registration, not a second one.
+	-->
+	<script>
+		(() => {
+			const link = document.createElement("link");
+			link.rel = "manifest";
+			link.href = "/app/manifest.webmanifest";
+			document.head.appendChild(link);
+
+			if (!("serviceWorker" in navigator)) return;
+			window.addEventListener("load", () => {
+				navigator.serviceWorker.register("/app/sw.js", { scope: "/" }).catch(() => {});
 			});
 		})();
 	</script>
