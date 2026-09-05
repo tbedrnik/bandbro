@@ -16,9 +16,20 @@ import {
 	TAB_CHAR_WIDTH,
 } from "./chordproConfig";
 import { concertChordpro } from "./chordproSource";
+import { collapseChorusesInSource } from "./chorusCollapse";
 
 export type PdfMode = "fingered" | "concert" | "both";
 export type PdfSongEntry = { name: string; content: string; capo: number };
+
+/** Per-export layout choices that aren't the render mode. */
+export type PdfOptions = {
+	/**
+	 * Print a repeated, identical chorus as a one-line recall (CLAUDE.md §D23). Off by
+	 * default: on paper the recall can land pages away from the chorus it points at,
+	 * which is a worse trade than the page it saved.
+	 */
+	collapseChoruses?: boolean;
+};
 
 /** Ensure a ChordPro section declares a title, and tag the title for "both" mode. */
 function withTitle(content: string, name: string, suffix = ""): string {
@@ -41,7 +52,10 @@ export function estimateSongHeight(content: string, columns = 1): number {
 		1,
 		Math.floor(columnWidth(columns) / LYRIC_CHAR_WIDTH),
 	);
-	let height = 0;
+	// `{comment}` and friends render as a line of their own but carry no chords or
+	// lyrics, so the block parser drops them — including the chorus recalls the collapse
+	// of §D23 writes, which would otherwise estimate as nothing at all.
+	let height = countComments(content) * LINE_HEIGHT.label;
 	for (const block of parseChordpro(content).blocks) {
 		if (block.label) height += LINE_HEIGHT.label;
 		for (const line of block.lines) {
@@ -59,6 +73,14 @@ export function estimateSongHeight(content: string, columns = 1): number {
 		}
 	}
 	return height;
+}
+
+const COMMENT_LINE =
+	/^[ \t]*\{[ \t]*(?:comment|c|comment_italic|ci|comment_box|cb)[ \t]*:[^}]*\}[ \t]*$/gim;
+
+/** How many standalone comment lines the source prints. */
+function countComments(content: string): number {
+	return content.match(COMMENT_LINE)?.length ?? 0;
 }
 
 /** Width in points of the widest verbatim (tab) line, which chordpro won't reflow. */
@@ -110,11 +132,18 @@ function laidOut(content: string, name: string, suffix = ""): string {
 export function buildSetlistChordpro(
 	songs: PdfSongEntry[],
 	mode: PdfMode,
+	{ collapseChoruses = false }: PdfOptions = {},
 ): string {
 	const sections: string[] = [];
 	for (const s of songs) {
+		// Collapse first, so the two-column and page-fit estimates in `laidOut` reason
+		// about the document that will actually be printed — the whole point being that
+		// a shorter song stops needing a second column or a second page.
+		const content = collapseChoruses
+			? collapseChorusesInSource(s.content)
+			: s.content;
 		if (mode === "fingered" || mode === "both") {
-			sections.push(laidOut(s.content, s.name));
+			sections.push(laidOut(content, s.name));
 		}
 		if (
 			(mode === "concert" || mode === "both") &&
@@ -122,7 +151,7 @@ export function buildSetlistChordpro(
 		) {
 			sections.push(
 				laidOut(
-					concertChordpro(s.content, s.capo),
+					concertChordpro(content, s.capo),
 					s.name,
 					mode === "both" ? " (concert)" : "",
 				),

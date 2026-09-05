@@ -738,7 +738,7 @@ a render measured in minutes.
   window and focuses it; `client.navigate()` would reload the SPA and discard transpose state and scroll
   position. Only a browser with no app window open gets `openWindow`. Every push is also posted to open
   windows as `bandbro-push`, so a foreground tab refreshes immediately instead of waiting out its interval.
-- **The notification carries the job id** (`/app/setlists/$id?export=<jobId>`), and `ExportPdfMenu` adopts
+- **The notification carries the job id** (`/app/setlists/$id?export=<jobId>`), and `ExportPdfButton` adopts
   it. Push reaches *every* device on the account, so the tap often happens on the phone when the export was
   started on a laptop; without the id in the URL that device would show an idle Export button and the click
   would lead nowhere.
@@ -806,6 +806,55 @@ player with "Log in / Sign up", because it has no way to know better.
 - Verified in a real browser (headless Chromium): both landing states, the sign-out teardown, the account
   menu at 390px, and the full round trip — deep link while signed out → login → land on the page asked
   for.
+
+### D23 — A repeated chorus is recalled, not reprinted — as an option, on both surfaces *(implemented)*
+A chorus is usually a song's longest section and usually its most repeated, so it is the
+single biggest thing standing between a chart and one page (PDF, §D8) or one screen (Live
+mode, §D12). When the later choruses are *character-for-character* the one printed first,
+printing them again buys nothing. So: print the first in full, and mark each identical
+repeat with a one-line recall — its label, inside the same chorus rule.
+
+- **It is a toggle, never the default**, because the trade is real and points the other way
+  on paper: a recall three pages from the words it refers to is worse than the page it
+  saved. On a screen you scroll back; at a music stand you turn pages. Hence off by
+  default in both places, and hence the PDF export's mode picker became a **dialog** —
+  a menu of items can express "pick one of three", not "pick one of three and also tick
+  this" (`ExportPdfButton`, replacing `ExportPdfMenu`).
+- **Two entry points for one rule** (`src/shared/chorusCollapse.ts`, unit-tested), because
+  the surfaces consume different things: the screens go through `parseChordpro` → blocks →
+  `<ChordSheet>` (`collapseChorusBlocks`, reached via `buildSongView({collapseChoruses})`),
+  while the PDF hands **source text** to the `chordpro` CLI (`collapseChorusesInSource`,
+  applied by `buildSetlistChordpro`). Both compare the same `chorusSignature` — the body's
+  lines with trailing whitespace and blank lines dropped, and *nothing else* normalized, so
+  a chorus that differs by one word is a different chorus and gets printed. The section
+  **label is not part of the key**, so "Chorus 1"/"Chorus 2" still match; the recall keeps
+  its own label.
+- **Only explicitly marked choruses take part** (`{start_of_chorus}`/`{soc}`, which is what
+  the kytary importer emits). A chart whose choruses are blank-line-separated paragraphs
+  parses as `kind: "none"` and has nothing to match on, and collapsing *any* repeated block
+  would start collapsing verses that only look alike.
+- **The render tree gained a recall block** (`ChordBlock.recall`: a label, no lines) — and
+  with it, `{chorus}` finally means the same thing on both paths. Our parser used to splice
+  in a *copy* of the previous chorus while the reference CLI printed just the tag, so a
+  chart authored with `{chorus}` came out long on screen and short on paper. It is now a
+  recall in both.
+- **The PDF writes `{comment_italic:}`, not `{chorus}`.** Core ChordPro, rendered in the
+  very face §D8 already configures for section labels, and it does not depend on the CLI's
+  `chorus.recall` defaults being what we think they are. `estimateSongHeight` had to learn
+  to count comment lines at the same time: the block parser drops them, so a collapsed
+  chorus would have estimated as *zero* height and quietly broken the two-column and
+  page-fit decisions it exists to improve. The collapse runs **before** `laidOut`, which is
+  what lets a shortened song stop needing a second column or a second page.
+- **The Live-mode setting is per device** (`LiveDisplay.collapseChoruses`, localStorage —
+  §D12), never broadcast to fans or bandmates, and part of `useFitScale`'s `resetKey`:
+  removing whole sections changes the height, so the fit has to be searched again. Purely
+  client-side, so it works from a downloaded snapshot with no signal.
+- **The export setting is part of the job**, not just the request: a
+  `PdfExport.collapseChoruses` column, re-read by the worker at render time — and added to
+  the in-flight dedupe key of §D20, keyed on (setlist, mode, requester). Without that,
+  exporting with the box unticked would silently hand back the earlier ticked render.
+- Deliberately **not** applied to Song View, the editor preview or the fan view: those show
+  a song as it is written.
 
 ---
 

@@ -207,6 +207,11 @@ model PdfExport {
 	// One of PdfMode: "fingered" | "concert" | "both".
 	mode String @default("both")
 
+	// Print a repeated, identical chorus as a one-line recall (CLAUDE.md §D23). Part of
+	// the render, so it is part of the job — and part of what makes two requests
+	// "identical" for the in-flight dedupe in `pdfExports.ts`.
+	collapseChoruses Boolean @default(false)
+
 	// "pending" | "running" | "done" | "failed". `error` is player-facing on failure.
 	status String  @default("pending")
 	error  String?

@@ -5,6 +5,7 @@
  */
 
 import { type ChordBlock, parseChordpro, type SongMeta } from "./chordpro";
+import { collapseChorusBlocks } from "./chorusCollapse";
 import {
 	type ChordView,
 	transposeChord,
@@ -19,6 +20,11 @@ export type SongViewInput = {
 	/** Manual key shift in semitones, layered on top of the view. */
 	transpose?: number;
 	view: ChordView;
+	/**
+	 * Print a repeated, identical chorus as a one-line "Chorus" recall instead of in
+	 * full — the per-device Live-mode setting of CLAUDE.md §D23.
+	 */
+	collapseChoruses?: boolean;
 };
 
 export type SongViewResult = {
@@ -46,8 +52,12 @@ export function buildSongView({
 	capo,
 	transpose = 0,
 	view,
+	collapseChoruses = false,
 }: SongViewInput): SongViewResult {
-	const { meta, blocks } = parseChordpro(content);
+	const { meta, blocks: parsed } = parseChordpro(content);
+	// Collapse before transposing: the shift is uniform, so it can only make identical
+	// choruses harder to compare, never easier.
+	const blocks = collapseChoruses ? collapseChorusBlocks(parsed) : parsed;
 	const effectiveCapo = capo ?? meta.capo ?? 0;
 	const steps = viewSteps(view, effectiveCapo, transpose);
 	return {

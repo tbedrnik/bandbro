@@ -41,6 +41,7 @@ export type PdfExportMinAggregateOutputType = {
   songbookId: string | null
   requestedById: string | null
   mode: string | null
+  collapseChoruses: boolean | null
   status: string | null
   error: string | null
   filePath: string | null
@@ -57,6 +58,7 @@ export type PdfExportMaxAggregateOutputType = {
   songbookId: string | null
   requestedById: string | null
   mode: string | null
+  collapseChoruses: boolean | null
   status: string | null
   error: string | null
   filePath: string | null
@@ -73,6 +75,7 @@ export type PdfExportCountAggregateOutputType = {
   songbookId: number
   requestedById: number
   mode: number
+  collapseChoruses: number
   status: number
   error: number
   filePath: number
@@ -101,6 +104,7 @@ export type PdfExportMinAggregateInputType = {
   songbookId?: true
   requestedById?: true
   mode?: true
+  collapseChoruses?: true
   status?: true
   error?: true
   filePath?: true
@@ -117,6 +121,7 @@ export type PdfExportMaxAggregateInputType = {
   songbookId?: true
   requestedById?: true
   mode?: true
+  collapseChoruses?: true
   status?: true
   error?: true
   filePath?: true
@@ -133,6 +138,7 @@ export type PdfExportCountAggregateInputType = {
   songbookId?: true
   requestedById?: true
   mode?: true
+  collapseChoruses?: true
   status?: true
   error?: true
   filePath?: true
@@ -236,6 +242,7 @@ export type PdfExportGroupByOutputType = {
   songbookId: string
   requestedById: string
   mode: string
+  collapseChoruses: boolean
   status: string
   error: string | null
   filePath: string | null
@@ -275,6 +282,7 @@ export type PdfExportWhereInput = {
   songbookId?: Prisma.StringFilter<"PdfExport"> | string
   requestedById?: Prisma.StringFilter<"PdfExport"> | string
   mode?: Prisma.StringFilter<"PdfExport"> | string
+  collapseChoruses?: Prisma.BoolFilter<"PdfExport"> | boolean
   status?: Prisma.StringFilter<"PdfExport"> | string
   error?: Prisma.StringNullableFilter<"PdfExport"> | string | null
   filePath?: Prisma.StringNullableFilter<"PdfExport"> | string | null
@@ -293,6 +301,7 @@ export type PdfExportOrderByWithRelationInput = {
   songbookId?: Prisma.SortOrder
   requestedById?: Prisma.SortOrder
   mode?: Prisma.SortOrder
+  collapseChoruses?: Prisma.SortOrder
   status?: Prisma.SortOrder
   error?: Prisma.SortOrderInput | Prisma.SortOrder
   filePath?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -314,6 +323,7 @@ export type PdfExportWhereUniqueInput = Prisma.AtLeast<{
   songbookId?: Prisma.StringFilter<"PdfExport"> | string
   requestedById?: Prisma.StringFilter<"PdfExport"> | string
   mode?: Prisma.StringFilter<"PdfExport"> | string
+  collapseChoruses?: Prisma.BoolFilter<"PdfExport"> | boolean
   status?: Prisma.StringFilter<"PdfExport"> | string
   error?: Prisma.StringNullableFilter<"PdfExport"> | string | null
   filePath?: Prisma.StringNullableFilter<"PdfExport"> | string | null
@@ -332,6 +342,7 @@ export type PdfExportOrderByWithAggregationInput = {
   songbookId?: Prisma.SortOrder
   requestedById?: Prisma.SortOrder
   mode?: Prisma.SortOrder
+  collapseChoruses?: Prisma.SortOrder
   status?: Prisma.SortOrder
   error?: Prisma.SortOrderInput | Prisma.SortOrder
   filePath?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -356,6 +367,7 @@ export type PdfExportScalarWhereWithAggregatesInput = {
   songbookId?: Prisma.StringWithAggregatesFilter<"PdfExport"> | string
   requestedById?: Prisma.StringWithAggregatesFilter<"PdfExport"> | string
   mode?: Prisma.StringWithAggregatesFilter<"PdfExport"> | string
+  collapseChoruses?: Prisma.BoolWithAggregatesFilter<"PdfExport"> | boolean
   status?: Prisma.StringWithAggregatesFilter<"PdfExport"> | string
   error?: Prisma.StringNullableWithAggregatesFilter<"PdfExport"> | string | null
   filePath?: Prisma.StringNullableWithAggregatesFilter<"PdfExport"> | string | null
@@ -370,6 +382,7 @@ export type PdfExportScalarWhereWithAggregatesInput = {
 export type PdfExportCreateInput = {
   id?: string
   mode?: string
+  collapseChoruses?: boolean
   status?: string
   error?: string | null
   filePath?: string | null
@@ -388,6 +401,7 @@ export type PdfExportUncheckedCreateInput = {
   songbookId: string
   requestedById: string
   mode?: string
+  collapseChoruses?: boolean
   status?: string
   error?: string | null
   filePath?: string | null
@@ -402,6 +416,7 @@ export type PdfExportUncheckedCreateInput = {
 export type PdfExportUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   mode?: Prisma.StringFieldUpdateOperationsInput | string
+  collapseChoruses?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -420,6 +435,7 @@ export type PdfExportUncheckedUpdateInput = {
   songbookId?: Prisma.StringFieldUpdateOperationsInput | string
   requestedById?: Prisma.StringFieldUpdateOperationsInput | string
   mode?: Prisma.StringFieldUpdateOperationsInput | string
+  collapseChoruses?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -436,6 +452,7 @@ export type PdfExportCreateManyInput = {
   songbookId: string
   requestedById: string
   mode?: string
+  collapseChoruses?: boolean
   status?: string
   error?: string | null
   filePath?: string | null
@@ -450,6 +467,7 @@ export type PdfExportCreateManyInput = {
 export type PdfExportUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   mode?: Prisma.StringFieldUpdateOperationsInput | string
+  collapseChoruses?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -466,6 +484,7 @@ export type PdfExportUncheckedUpdateManyInput = {
   songbookId?: Prisma.StringFieldUpdateOperationsInput | string
   requestedById?: Prisma.StringFieldUpdateOperationsInput | string
   mode?: Prisma.StringFieldUpdateOperationsInput | string
+  collapseChoruses?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -492,6 +511,7 @@ export type PdfExportCountOrderByAggregateInput = {
   songbookId?: Prisma.SortOrder
   requestedById?: Prisma.SortOrder
   mode?: Prisma.SortOrder
+  collapseChoruses?: Prisma.SortOrder
   status?: Prisma.SortOrder
   error?: Prisma.SortOrder
   filePath?: Prisma.SortOrder
@@ -513,6 +533,7 @@ export type PdfExportMaxOrderByAggregateInput = {
   songbookId?: Prisma.SortOrder
   requestedById?: Prisma.SortOrder
   mode?: Prisma.SortOrder
+  collapseChoruses?: Prisma.SortOrder
   status?: Prisma.SortOrder
   error?: Prisma.SortOrder
   filePath?: Prisma.SortOrder
@@ -529,6 +550,7 @@ export type PdfExportMinOrderByAggregateInput = {
   songbookId?: Prisma.SortOrder
   requestedById?: Prisma.SortOrder
   mode?: Prisma.SortOrder
+  collapseChoruses?: Prisma.SortOrder
   status?: Prisma.SortOrder
   error?: Prisma.SortOrder
   filePath?: Prisma.SortOrder
@@ -632,6 +654,7 @@ export type PdfExportUncheckedUpdateManyWithoutSongbookNestedInput = {
 export type PdfExportCreateWithoutRequestedByInput = {
   id?: string
   mode?: string
+  collapseChoruses?: boolean
   status?: string
   error?: string | null
   filePath?: string | null
@@ -648,6 +671,7 @@ export type PdfExportUncheckedCreateWithoutRequestedByInput = {
   id?: string
   songbookId: string
   mode?: string
+  collapseChoruses?: boolean
   status?: string
   error?: string | null
   filePath?: string | null
@@ -692,6 +716,7 @@ export type PdfExportScalarWhereInput = {
   songbookId?: Prisma.StringFilter<"PdfExport"> | string
   requestedById?: Prisma.StringFilter<"PdfExport"> | string
   mode?: Prisma.StringFilter<"PdfExport"> | string
+  collapseChoruses?: Prisma.BoolFilter<"PdfExport"> | boolean
   status?: Prisma.StringFilter<"PdfExport"> | string
   error?: Prisma.StringNullableFilter<"PdfExport"> | string | null
   filePath?: Prisma.StringNullableFilter<"PdfExport"> | string | null
@@ -706,6 +731,7 @@ export type PdfExportScalarWhereInput = {
 export type PdfExportCreateWithoutSongbookInput = {
   id?: string
   mode?: string
+  collapseChoruses?: boolean
   status?: string
   error?: string | null
   filePath?: string | null
@@ -722,6 +748,7 @@ export type PdfExportUncheckedCreateWithoutSongbookInput = {
   id?: string
   requestedById: string
   mode?: string
+  collapseChoruses?: boolean
   status?: string
   error?: string | null
   filePath?: string | null
@@ -762,6 +789,7 @@ export type PdfExportCreateManyRequestedByInput = {
   id?: string
   songbookId: string
   mode?: string
+  collapseChoruses?: boolean
   status?: string
   error?: string | null
   filePath?: string | null
@@ -776,6 +804,7 @@ export type PdfExportCreateManyRequestedByInput = {
 export type PdfExportUpdateWithoutRequestedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   mode?: Prisma.StringFieldUpdateOperationsInput | string
+  collapseChoruses?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -792,6 +821,7 @@ export type PdfExportUncheckedUpdateWithoutRequestedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   songbookId?: Prisma.StringFieldUpdateOperationsInput | string
   mode?: Prisma.StringFieldUpdateOperationsInput | string
+  collapseChoruses?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -807,6 +837,7 @@ export type PdfExportUncheckedUpdateManyWithoutRequestedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   songbookId?: Prisma.StringFieldUpdateOperationsInput | string
   mode?: Prisma.StringFieldUpdateOperationsInput | string
+  collapseChoruses?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -822,6 +853,7 @@ export type PdfExportCreateManySongbookInput = {
   id?: string
   requestedById: string
   mode?: string
+  collapseChoruses?: boolean
   status?: string
   error?: string | null
   filePath?: string | null
@@ -836,6 +868,7 @@ export type PdfExportCreateManySongbookInput = {
 export type PdfExportUpdateWithoutSongbookInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   mode?: Prisma.StringFieldUpdateOperationsInput | string
+  collapseChoruses?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -852,6 +885,7 @@ export type PdfExportUncheckedUpdateWithoutSongbookInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   requestedById?: Prisma.StringFieldUpdateOperationsInput | string
   mode?: Prisma.StringFieldUpdateOperationsInput | string
+  collapseChoruses?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -867,6 +901,7 @@ export type PdfExportUncheckedUpdateManyWithoutSongbookInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   requestedById?: Prisma.StringFieldUpdateOperationsInput | string
   mode?: Prisma.StringFieldUpdateOperationsInput | string
+  collapseChoruses?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -885,6 +920,7 @@ export type PdfExportSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   songbookId?: boolean
   requestedById?: boolean
   mode?: boolean
+  collapseChoruses?: boolean
   status?: boolean
   error?: boolean
   filePath?: boolean
@@ -903,6 +939,7 @@ export type PdfExportSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   songbookId?: boolean
   requestedById?: boolean
   mode?: boolean
+  collapseChoruses?: boolean
   status?: boolean
   error?: boolean
   filePath?: boolean
@@ -921,6 +958,7 @@ export type PdfExportSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   songbookId?: boolean
   requestedById?: boolean
   mode?: boolean
+  collapseChoruses?: boolean
   status?: boolean
   error?: boolean
   filePath?: boolean
@@ -939,6 +977,7 @@ export type PdfExportSelectScalar = {
   songbookId?: boolean
   requestedById?: boolean
   mode?: boolean
+  collapseChoruses?: boolean
   status?: boolean
   error?: boolean
   filePath?: boolean
@@ -950,7 +989,7 @@ export type PdfExportSelectScalar = {
   finishedAt?: boolean
 }
 
-export type PdfExportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "songbookId" | "requestedById" | "mode" | "status" | "error" | "filePath" | "filename" | "bytes" | "songCount" | "createdAt" | "startedAt" | "finishedAt", ExtArgs["result"]["pdfExport"]>
+export type PdfExportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "songbookId" | "requestedById" | "mode" | "collapseChoruses" | "status" | "error" | "filePath" | "filename" | "bytes" | "songCount" | "createdAt" | "startedAt" | "finishedAt", ExtArgs["result"]["pdfExport"]>
 export type PdfExportInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   songbook?: boolean | Prisma.SongbookDefaultArgs<ExtArgs>
   requestedBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -975,6 +1014,7 @@ export type $PdfExportPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     songbookId: string
     requestedById: string
     mode: string
+    collapseChoruses: boolean
     status: string
     error: string | null
     filePath: string | null
@@ -1413,6 +1453,7 @@ export interface PdfExportFieldRefs {
   readonly songbookId: Prisma.FieldRef<"PdfExport", 'String'>
   readonly requestedById: Prisma.FieldRef<"PdfExport", 'String'>
   readonly mode: Prisma.FieldRef<"PdfExport", 'String'>
+  readonly collapseChoruses: Prisma.FieldRef<"PdfExport", 'Boolean'>
   readonly status: Prisma.FieldRef<"PdfExport", 'String'>
   readonly error: Prisma.FieldRef<"PdfExport", 'String'>
   readonly filePath: Prisma.FieldRef<"PdfExport", 'String'>

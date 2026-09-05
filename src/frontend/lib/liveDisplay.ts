@@ -14,6 +14,11 @@ export type LiveDisplay = {
 	columns: 1 | 2 | 3;
 	/** Auto-size the text so the whole song lands on one screen. */
 	fit: boolean;
+	/**
+	 * Print a repeated, identical chorus as a one-line "Chorus" recall (CLAUDE.md §D23) —
+	 * usually the single biggest thing between a long song and one screenful.
+	 */
+	collapseChoruses: boolean;
 };
 
 /** Text-size multipliers for the A−/A+ stepper, applied to the base Live font sizes. */
@@ -30,6 +35,7 @@ const DEFAULTS: LiveDisplay = {
 	gapIdx: GAP_SCALES.indexOf(1),
 	columns: 1,
 	fit: false,
+	collapseChoruses: false,
 };
 
 const KEY = "bandbro:live-display";
@@ -50,6 +56,7 @@ function read(): LiveDisplay {
 			gapIdx: clamp(saved.gapIdx, DEFAULTS.gapIdx, GAP_SCALES.length),
 			columns: saved.columns === 2 || saved.columns === 3 ? saved.columns : 1,
 			fit: saved.fit === true,
+			collapseChoruses: saved.collapseChoruses === true,
 		};
 	} catch {
 		return DEFAULTS;

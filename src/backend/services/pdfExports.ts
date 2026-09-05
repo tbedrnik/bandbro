@@ -53,6 +53,7 @@ function toJobView(job: {
 	id: string;
 	songbookId: string;
 	mode: string;
+	collapseChoruses: boolean;
 	status: string;
 	error: string | null;
 	filename: string | null;
@@ -65,6 +66,7 @@ function toJobView(job: {
 		id: job.id,
 		songbookId: job.songbookId,
 		mode: job.mode,
+		collapseChoruses: job.collapseChoruses,
 		status: job.status as PdfExportStatus,
 		error: job.error,
 		filename: job.filename,
@@ -89,10 +91,12 @@ export async function pdfExportCreate({
 	songbookId,
 	userId,
 	mode = "both",
+	collapseChoruses = false,
 }: {
 	songbookId: string;
 	userId: string;
 	mode?: PdfMode;
+	collapseChoruses?: boolean;
 }): Promise<PdfExportView> {
 	const setlist = await loadSetlistForPdf({ id: songbookId, userId });
 
@@ -100,7 +104,10 @@ export async function pdfExportCreate({
 		where: {
 			songbookId,
 			requestedById: userId,
+			// Every input to the render is part of what makes two requests identical: hand
+			// back an in-flight job only if it is producing the document being asked for.
 			mode,
+			collapseChoruses,
 			status: { in: ["pending", "running"] },
 		},
 		orderBy: { createdAt: "desc" },
@@ -112,6 +119,7 @@ export async function pdfExportCreate({
 			songbookId,
 			requestedById: userId,
 			mode,
+			collapseChoruses,
 			status: "pending",
 			filename: setlist.filename,
 			songCount: setlist.entries.length,
@@ -202,7 +210,7 @@ async function drain(): Promise<void> {
 				orderBy: { createdAt: "asc" },
 			});
 			if (!job) return;
-			await runJob(job.id, job.songbookId, job.requestedById, job.mode);
+			await runJob(job);
 		}
 	} catch (error) {
 		// The loop itself failing (a DB read, say) must not leave `draining` stuck true —
@@ -213,12 +221,19 @@ async function drain(): Promise<void> {
 	}
 }
 
-async function runJob(
-	jobId: string,
-	songbookId: string,
-	requestedById: string,
-	mode: string,
-): Promise<void> {
+async function runJob({
+	id: jobId,
+	songbookId,
+	requestedById,
+	mode,
+	collapseChoruses,
+}: {
+	id: string;
+	songbookId: string;
+	requestedById: string;
+	mode: string;
+	collapseChoruses: boolean;
+}): Promise<void> {
 	await prisma.pdfExport.update({
 		where: { id: jobId },
 		data: { status: "running", startedAt: new Date() },
@@ -235,6 +250,7 @@ async function runJob(
 		const pdf = await renderSetlistPdf({
 			entries: setlist.entries,
 			mode: mode as PdfMode,
+			collapseChoruses,
 		});
 
 		const dir = exportsDir();

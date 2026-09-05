@@ -23,6 +23,12 @@ export type ChordBlock = {
 	label?: string;
 	kind?: SectionKind;
 	lines: ChordLine[];
+	/**
+	 * A *recall* of a section printed earlier rather than the section itself: it carries
+	 * a label and no lines, and renders as just that label. Produced by the `{chorus}`
+	 * directive and by the chorus collapse of `chorusCollapse.ts` (CLAUDE.md §D23).
+	 */
+	recall?: boolean;
 };
 
 export type SectionKind = "verse" | "chorus" | "bridge" | "tab" | "none";
@@ -165,9 +171,17 @@ export function parseChordpro(content: string): ParsedSong {
 						.filter(Boolean);
 					break;
 				case "chorus": {
-					// {chorus} repeats the most recent chorus block.
-					const prevChorus = blocks.findLast((b) => b.kind === "chorus");
-					if (prevChorus) blocks.push({ ...prevChorus });
+					// {chorus} *recalls* the chorus — it prints the tag, it does not reprint
+					// the section. (We used to splice in a copy of the previous chorus, which
+					// put us at odds with the reference `chordpro` renderer the PDF goes
+					// through: the same chart came out long on screen and short on paper.)
+					flush();
+					blocks.push({
+						kind: "chorus",
+						label: value || LABELS.chorus,
+						recall: true,
+						lines: [],
+					});
 					break;
 				}
 				default:

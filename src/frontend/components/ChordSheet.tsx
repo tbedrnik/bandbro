@@ -103,9 +103,12 @@ export function ChordSheet({
 						)}
 						style={{ marginBottom: sectionGap, breakInside: "avoid" }}
 					>
-						{block.label && (
+						{/* A recall (a `{chorus}` directive, or a repeat collapsed by §D23)
+						    carries no lines, so this label is the whole block — a lone
+						    "CHORUS" inside the chorus rule. */}
+						{(block.label || block.recall) && (
 							<SectionLabel marginBottom={labelGap} fontSize={labelSize}>
-								{block.label}
+								{block.label || "Chorus"}
 							</SectionLabel>
 						)}
 						{block.lines.map((line, lineIndex) => {

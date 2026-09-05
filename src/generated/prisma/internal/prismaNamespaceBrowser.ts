@@ -340,6 +340,7 @@ export const PdfExportScalarFieldEnum = {
   songbookId: 'songbookId',
   requestedById: 'requestedById',
   mode: 'mode',
+  collapseChoruses: 'collapseChoruses',
   status: 'status',
   error: 'error',
   filePath: 'filePath',
