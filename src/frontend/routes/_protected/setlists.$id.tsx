@@ -48,6 +48,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/_protected/setlists/$id")({
+	// `?export=<jobId>` is how a "your PDF is ready" notification points back here
+	// (§D21) — it carries the job so the Download button is waiting even on a device
+	// that didn't start the export.
+	// Optional by construction — an absent key rather than an explicit `undefined`,
+	// which would make `search` a required prop on every Link pointing here.
+	validateSearch: (search: Record<string, unknown>): { export?: string } =>
+		typeof search.export === "string" ? { export: search.export } : {},
 	component: SetlistDetail,
 });
 
@@ -69,6 +76,7 @@ type SetlistEntry = Setlist["songs"][number];
 
 function SetlistDetail() {
 	const { id } = Route.useParams();
+	const { export: exportJobId } = Route.useSearch();
 	const queryClient = useQueryClient();
 	const online = useOnline();
 	const [adding, setAdding] = useState(false);
@@ -230,7 +238,11 @@ function SetlistDetail() {
 					{/* PDF is rendered by the server's chordpro CLI, and the fan session is
 					    created on the server — neither exists without a connection. */}
 					{online && (
-						<ExportPdfMenu songbookId={id} disabled={!setlist.songs.length} />
+						<ExportPdfMenu
+							songbookId={id}
+							adoptJobId={exportJobId}
+							disabled={!setlist.songs.length}
+						/>
 					)}
 					{online && (
 						<Button

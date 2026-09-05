@@ -2,6 +2,7 @@ import { AppNav } from "@frontend/components/AppNav";
 import { SiteFooter } from "@frontend/components/SiteFooter";
 import { useSession } from "@frontend/contexts/SessionContext";
 import { useOnline } from "@frontend/lib/offline";
+import { syncPushSubscription, usePushMessages } from "@frontend/lib/push";
 import { useTheme } from "@frontend/lib/theme";
 import {
 	createFileRoute,
@@ -9,6 +10,7 @@ import {
 	Outlet,
 	useRouterState,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 const SECTIONS: Record<string, string> = {
 	"/library": "Library",
@@ -28,6 +30,13 @@ function ProtectedLayout() {
 	useTheme();
 	const online = useOnline();
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
+	// Push (§D21): let the worker refresh this tab and route notification taps, and
+	// re-register the device's subscription in case its endpoint rotated while away.
+	usePushMessages();
+	const signedIn = Boolean(session);
+	useEffect(() => {
+		if (signedIn) void syncPushSubscription();
+	}, [signedIn]);
 
 	if (!session) {
 		// With no signal, /login is a form that can't reach the server either — send the

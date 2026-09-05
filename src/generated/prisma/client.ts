@@ -87,6 +87,11 @@ export type BandInvite = Prisma.BandInviteModel
  */
 export type BandInviteUse = Prisma.BandInviteUseModel
 /**
+ * Model PushSubscription
+ * 
+ */
+export type PushSubscription = Prisma.PushSubscriptionModel
+/**
  * Model Song
  * 
  */

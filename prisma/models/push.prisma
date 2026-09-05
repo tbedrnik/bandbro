@@ -1,0 +1,37 @@
+// Web push subscriptions (CLAUDE.md §D21). A setlist PDF renders for minutes, and the
+// browser stops being a reliable place to wait: a backgrounded tab is throttled and then
+// frozen outright, and a locked phone runs nothing at all. Push is the one channel that
+// survives that, because it is delivered by the OS rather than by the page.
+//
+// A subscription belongs to a *device*, not to a session — it outlives the tab that
+// created it — so the endpoint is the identity. The push service rotates endpoints
+// silently and drops dead ones with 404/410, which is why nothing here is treated as
+// permanent: `pushPrune` deletes on those statuses rather than retrying.
+model PushSubscription {
+	id String @id @default(cuid())
+
+	userId String
+	user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+	// The push service URL. Unique across users on purpose: a shared device that
+	// re-subscribes under a second account must move the row, not duplicate it, or the
+	// first account keeps a live channel to a browser it no longer owns.
+	endpoint String @unique
+
+	// The subscription's own keys, base64url as the browser hands them over. Together
+	// with the server's VAPID pair these encrypt the payload end-to-end — the push
+	// service relays bytes it cannot read.
+	p256dh String
+	auth   String
+
+	// Only to tell devices apart in Preferences ("Chrome on macOS"); never parsed.
+	userAgent String?
+
+	createdAt DateTime @default(now())
+	// Refreshed whenever the browser re-registers this endpoint, which is the closest
+	// thing to a liveness signal we get without sending.
+	lastSeenAt DateTime @default(now())
+
+	@@index([userId])
+	@@map("push_subscription")
+}

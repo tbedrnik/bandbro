@@ -1,7 +1,9 @@
 import { mkdir, rm } from "node:fs/promises";
 import { dirname } from "node:path";
 import { prisma } from "@backend/prisma";
+import { pdfExportPush } from "@shared/pushPayload";
 import type { PdfMode } from "../../shared/chordproPdf";
+import { pushSendToUser } from "./push";
 import { HttpError } from "./scope";
 import {
 	loadSetlistForPdf,
@@ -251,6 +253,15 @@ async function runJob(
 				finishedAt: new Date(),
 			},
 		});
+
+		notify({
+			id: jobId,
+			songbookId,
+			requestedById,
+			status: "done",
+			filename: setlist.filename,
+			songCount: setlist.entries.length,
+		});
 	} catch (error) {
 		const message =
 			error instanceof HttpError
@@ -261,7 +272,46 @@ async function runJob(
 			where: { id: jobId },
 			data: { status: "failed", error: message, finishedAt: new Date() },
 		});
+
+		notify({
+			id: jobId,
+			songbookId,
+			requestedById,
+			status: "failed",
+			filename: null,
+			songCount: null,
+			error: message,
+		});
 	}
+}
+
+/**
+ * Tell the requester their export has settled (CLAUDE.md §D21).
+ *
+ * A render outlives the attention span it was started with — the tab gets backgrounded
+ * and eventually frozen, and a locked phone runs nothing at all — so the poll alone can't
+ * be relied on to notice. Push is delivered by the OS, so it reaches a device that has
+ * stopped executing our JavaScript entirely.
+ *
+ * Fire-and-forget on purpose: the job is already recorded as done, and a push service
+ * being slow or down must not hold the drain loop or change the outcome. `pushSendToUser`
+ * swallows its own failures; the `catch` is for anything before it (a DB read).
+ */
+function notify(job: {
+	id: string;
+	songbookId: string;
+	requestedById: string;
+	status: "done" | "failed";
+	filename: string | null;
+	songCount: number | null;
+	error?: string;
+}): void {
+	void pushSendToUser({
+		userId: job.requestedById,
+		payload: pdfExportPush(job),
+	}).catch((error) =>
+		console.error("[PDF] notify failed", { job: job.id, error }),
+	);
 }
 
 /**

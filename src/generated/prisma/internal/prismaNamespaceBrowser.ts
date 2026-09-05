@@ -60,6 +60,7 @@ export const ModelName = {
   Invitation: 'Invitation',
   BandInvite: 'BandInvite',
   BandInviteUse: 'BandInviteUse',
+  PushSubscription: 'PushSubscription',
   Song: 'Song',
   Chart: 'Chart',
   Artist: 'Artist',
@@ -207,6 +208,20 @@ export const BandInviteUseScalarFieldEnum = {
 } as const
 
 export type BandInviteUseScalarFieldEnum = (typeof BandInviteUseScalarFieldEnum)[keyof typeof BandInviteUseScalarFieldEnum]
+
+
+export const PushSubscriptionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  endpoint: 'endpoint',
+  p256dh: 'p256dh',
+  auth: 'auth',
+  userAgent: 'userAgent',
+  createdAt: 'createdAt',
+  lastSeenAt: 'lastSeenAt'
+} as const
+
+export type PushSubscriptionScalarFieldEnum = (typeof PushSubscriptionScalarFieldEnum)[keyof typeof PushSubscriptionScalarFieldEnum]
 
 
 export const SongScalarFieldEnum = {

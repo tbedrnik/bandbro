@@ -1,3 +1,4 @@
+import { parsePushPayload } from "../shared/pushPayload";
 import { extractShellAssets } from "../shared/shellAssets";
 
 /**
@@ -22,6 +23,10 @@ import { extractShellAssets } from "../shared/shellAssets";
  *
  * API responses are never cached here: a setlist's offline copy is an explicit user
  * action, snapshotted by `lib/offline.ts` into localStorage.
+ *
+ * It also carries web push (§D21) — the `push` and `notificationclick` handlers below.
+ * That is the whole reason a worker can report a finished PDF export at all: it is woken
+ * by the OS, so it runs when the page that asked for the export has been frozen or closed.
  */
 
 const CACHE = "bandbro-shell-v2";
@@ -136,6 +141,78 @@ self.addEventListener("fetch", (event) => {
 			const res = await fetch(request);
 			if (res.ok) await cache.put(request, res.clone());
 			return res;
+		})(),
+	);
+});
+
+/**
+ * Web push (CLAUDE.md §D21). Today this is only ever a finished setlist PDF export, but
+ * the handler is deliberately payload-driven rather than export-specific.
+ *
+ * A notification is shown for *every* push, without exception. The subscription is
+ * `userVisibleOnly`, and a browser that sees a push produce no notification will show its
+ * own "this site was updated in the background" message and, after a few, revoke the
+ * permission outright. So `parsePushPayload` never throws and never returns a blank —
+ * even an empty push (which services are allowed to send, and Chrome does) shows something.
+ */
+self.addEventListener("push", (event) => {
+	const payload = parsePushPayload(event.data ? event.data.text() : null);
+
+	event.waitUntil(
+		(async () => {
+			// Foreground tabs first: a page that is still alive should update from the
+			// push rather than wait out the rest of its polling interval.
+			const clients = await self.clients.matchAll({
+				type: "window",
+				includeUncontrolled: true,
+			});
+			for (const client of clients) {
+				client.postMessage({ type: "bandbro-push", payload });
+			}
+
+			await self.registration.showNotification(payload.title, {
+				body: payload.body,
+				tag: payload.tag,
+				icon: "/app/icon-192.png",
+				badge: "/app/icon-192.png",
+				data: { url: payload.url, ...payload.data },
+			});
+		})(),
+	);
+});
+
+/**
+ * Clicking the notification lands on the thing it is about — for an export, the setlist
+ * with its Download button.
+ *
+ * An already-open app window is focused and told to route there, rather than opened
+ * again: `client.navigate()` would reload the SPA and throw away transpose state, scroll
+ * position and anything unsaved, and `openWindow` would leave the player with two copies
+ * of the app. Only a window with no app open at all gets a fresh one.
+ */
+self.addEventListener("notificationclick", (event) => {
+	event.notification.close();
+	const url = event.notification.data?.url ?? "/app/";
+	const target = new URL(url, self.location.origin);
+
+	event.waitUntil(
+		(async () => {
+			const clients = await self.clients.matchAll({
+				type: "window",
+				includeUncontrolled: true,
+			});
+			for (const client of clients) {
+				const open = new URL(client.url);
+				if (open.origin !== target.origin) continue;
+				if (!open.pathname.startsWith("/app")) continue;
+				client.postMessage({
+					type: "bandbro-navigate",
+					url: target.pathname + target.search,
+				});
+				await client.focus();
+				return;
+			}
+			await self.clients.openWindow(target.href);
 		})(),
 	);
 });

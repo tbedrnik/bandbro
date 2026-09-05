@@ -19,6 +19,7 @@ model User {
   bandInvitesCreated BandInvite[]
   bandInviteUses     BandInviteUse[]
   pdfExports         PdfExport[]
+  pushSubscriptions  PushSubscription[]
 
   @@unique([email])
   @@map("user")

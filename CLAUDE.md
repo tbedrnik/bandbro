@@ -62,7 +62,7 @@ src/
     components/         ChordSheet, CapoToggle, TransposeStepper, RoleBadge, OfflinePill, MetaChip,
                         SongEditor, SongPreview, + ui/ (shadcn primitives)
     contexts/           SessionContext, UserContext
-    lib/                utils (cn), push (stub)
+    lib/                utils (cn), push (web push opt-in + SW bridge, §D21)
     api.ts / auth.ts    Eden client + better-auth React client
     index.css           Design tokens (see §6)
   shared/               isomorphic code (currently addNumbers demo) — transpose engine goes here
@@ -73,6 +73,7 @@ prisma/
   models/auth.prisma    better-auth models (User, Session, Account, Verification, Organization, Member, Invitation)
   models/songs.prisma    domain models (Song, Chart, Artist, Credit, Songbook, SongbookSong)
   models/bands.prisma    band invite links (BandInvite, BandInviteUse) — see §D13
+  models/push.prisma     web push subscriptions (PushSubscription) — see §D21
   migrations/
 ```
 
@@ -88,6 +89,7 @@ bun run db:push      # push schema without migration (prototyping)
 bun run db:generate  # regenerate Prisma client
 bun run auth:generate  # regenerate prisma/models/auth.prisma from better-auth config
 bun run import:kytary <url|file.html> [-o dir]   # akordy.kytary.cz sheet → ChordPro
+bun run push:keys [mailto:you@band.cz]           # mint a VAPID key pair for web push (§D21)
 ```
 
 **Importers.** `src/shared/kytary.ts` converts an akordy.kytary.cz ("SmartChords") song page
@@ -154,7 +156,7 @@ A song/chart's **scope** is derived from `organizationId`:
 - No fork endpoint, no search/filter params, no PDF export, no preferences endpoint.
 - Frontend routes are placeholders: `_protected/index` = "Hello {name}", `songs.$slug` / `songs.search`
   = raw data dumps, `song.$slug` = a hardcoded ChordPro editor demo. None of the nine designs are built.
-- `lib/push.ts` is a non-functional stub; no service worker, manifest, or offline cache.
+- ~~`lib/push.ts` is a non-functional stub; no service worker, manifest, or offline cache.~~ (§D7, §D21)
 - Personal scope, member preferences, roles-as-Admin/Writer/Reader, tags, suggestions: not modeled.
 
 ---
@@ -276,8 +278,8 @@ those screens' queries drop to `retry: false` so the honest message arrives at o
 retries. `ImportSongButton` hides *itself* so no call site has to remember. Controls that run purely on the
 device — transpose, capo view, display prefs, theme, prev/next, the offline search — always stay.
 
-v1 stays **read-only offline** (no edit queue or sync — PRD §12 Q5), scoped per setlist. Note: `lib/push.ts`
-(web push) is unrelated to offline and not a v1 must-have — leave it parked.
+v1 stays **read-only offline** (no edit queue or sync — PRD §12 Q5), scoped per setlist. Web push shares the
+worker but nothing else with this — see §D21.
 
 ### D8 — PDF export: server-side via the `chordpro` CLI *(DECIDED — implemented)*
 The Playlist screen exports an ordered, one-song-per-page chord-sheet PDF with a render-mode choice
@@ -661,6 +663,71 @@ timeouts, which this decision already settled. Two things would bite: the render
 `0.0.0.0` (Railway's private network is IPv6-only in environments created before 16 Oct 2025, and
 `0.0.0.0` is simply invisible there), and it needs its own `idleTimeout` — it would otherwise ship with
 the same 10s default that caused §D17, on the one service where every request is slow by definition.
+
+### D21 — A finished export is announced by the OS, because the tab can't be trusted to wait *(implemented)*
+§D20 made the PDF a job, which removed the timeout ceiling but moved the problem to the client: something
+has to notice the job finished. Two things were wrong with what did.
+
+**The poll first — it was the actual bug.** TanStack Query defaults `refetchIntervalInBackground` to false,
+so the interval is suspended the moment the window blurs and only resumes on refocus. The export polls for
+minutes, and those are precisely the minutes the tab spends behind something else. Worse, the job id lived
+in component state, so leaving the setlist or reloading orphaned a render that then completed on the server
+with nobody holding the id. Both are fixed and neither needed push: the poll runs in the background, and
+`lib/pdfExportJob.ts` remembers the id per device, keyed by setlist, dropping it when the job settles (and
+when a remembered job 404s — swept after 24h, or a different account on this device — which would otherwise
+leave the button spinning forever).
+
+**Push is the layer above that, and it is not a workaround for the above.** Even with a background interval,
+Chrome throttles a hidden tab's timers to roughly one a minute after five, then freezes the tab outright; iOS
+suspends it. A phone in a pocket runs nothing at all. Push is delivered by the OS to the service worker, so
+it arrives when our JavaScript isn't running — that is the whole of what it buys, and it is worth having for
+a render measured in minutes.
+
+- **`web-push` does the crypto, and it runs on Bun.** VAPID JWT signing (ES256) and RFC 8291 `aes128gcm`
+  payload encryption both work under Bun's `node:crypto`, verified before committing to it. Hand-rolling
+  either would be the wrong kind of clever. `contentEncoding` is set explicitly: the library's typings still
+  describe the legacy `aesgcm` draft as the default.
+- **Keys are configuration, and their absence is a supported state.** `VAPID_PUBLIC_KEY` /
+  `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` (a `mailto:`/`https:` contact, required by the spec), minted with
+  `bun run push:keys`. Unset — a fresh clone, a preview deploy — push is simply off: `GET /api/push/key`
+  answers `null`, the Preferences section hides itself, and nothing else changes. Malformed keys are caught
+  and disable push rather than throwing out of whichever request touched the module first. **Don't rotate
+  casually**: a subscription is bound to the key that created it, so a new pair silently invalidates every
+  existing one (the client detects this and re-subscribes; the stale server rows die on their next 403).
+- **The subscription belongs to a device, not a session**, so `PushSubscription.endpoint` is unique and
+  writes are upserts on it. A shared laptop signing into a second account *moves* the row — otherwise the
+  first account keeps a live channel to a browser it no longer owns. Dead endpoints (404/410) are deleted on
+  send, never retried; the client re-posts what it holds on every app start, which is what survives the
+  silent endpoint rotation push services do.
+- **Sending is best-effort and never awaited.** The job is already recorded as done before `notify()` fires;
+  a slow or down push service must not hold the drain loop or change the outcome.
+- **The worker shows a notification for every push, without exception.** The subscription is
+  `userVisibleOnly`, and a browser that sees a push produce nothing shows its own "site updated in the
+  background" message and eventually revokes the permission. Hence `parsePushPayload` in
+  `src/shared/pushPayload.ts` (pure, unit-tested): total by construction, so an empty push (services may
+  send one, and Chrome does) or a payload from a newer deploy than the installed worker still shows
+  something. It also refuses any `url` that isn't a same-origin `/app` path — the worker opens that URL with
+  no user gesture behind it.
+- **A click focuses the app rather than reloading it.** The worker posts `bandbro-navigate` to an open
+  window and focuses it; `client.navigate()` would reload the SPA and discard transpose state and scroll
+  position. Only a browser with no app window open gets `openWindow`. Every push is also posted to open
+  windows as `bandbro-push`, so a foreground tab refreshes immediately instead of waiting out its interval.
+- **The notification carries the job id** (`/app/setlists/$id?export=<jobId>`), and `ExportPdfMenu` adopts
+  it. Push reaches *every* device on the account, so the tap often happens on the phone when the export was
+  started on a laptop; without the id in the URL that device would show an idle Export button and the click
+  would lead nowhere.
+- **Opt-in lives in Preferences, behind a real click** — browsers only accept a permission prompt with a
+  user gesture, and asking without one gets an origin permanently blocked. Each unavailable state names its
+  own remedy rather than greying out a switch: **on iOS, web push requires the PWA to be installed to the
+  home screen** (16.4+; in a Safari tab the API is simply absent), a denied permission can only be undone in
+  the browser's site settings, and an unconfigured server needs keys. "Send a test" is there because every
+  link in the chain — VAPID identity, push service, worker, OS — fails independently and silently.
+- **Scope.** One notification, for one event: a setlist PDF settling. No notification model, no read state,
+  no preference matrix. Push is a hint; the job row stays the truth and every flow works with it denied.
+- **Untested on this machine:** the permission → subscribe → deliver round trip needs a real browser with a
+  push service, and the box this was built on had neither Chrome nor a Playwright browser. The server side
+  (key endpoint, auth, config gating, payload) is unit-tested and smoke-tested over HTTP; the browser half
+  is typed and built but was not exercised. That is what the "Send a test" button is for.
 
 ---
 

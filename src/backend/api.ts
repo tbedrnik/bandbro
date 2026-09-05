@@ -21,6 +21,13 @@ import {
 	pdfExportFile,
 	pdfExportRead,
 } from "./services/pdfExports";
+import {
+	pushPublicKey,
+	pushStatus,
+	pushSubscribe,
+	pushTest,
+	pushUnsubscribe,
+} from "./services/push";
 import { HttpError } from "./services/scope";
 import { songbooksCreate } from "./services/songbooksCreate";
 import { songbooksDelete } from "./services/songbooksDelete";
@@ -300,6 +307,62 @@ export const api = new Elysia({ prefix: "/api" })
 				},
 				{ auth: true },
 			),
+	)
+	// Web push (CLAUDE.md §D21). The subscription is a device's, so these are keyed on
+	// the endpoint the browser hands over, not on the session.
+	.group("/push", (group) =>
+		group
+			// Public: it's a public key, and the client needs it before it can subscribe.
+			// `null` means push isn't configured on this deployment — the signal to hide
+			// the opt-in rather than offer a button that can only fail.
+			.get("/key", () => pushPublicKey(), {
+				response: t.Object({ publicKey: t.Nullable(t.String()) }),
+			})
+			.get("/status", ({ user }) => pushStatus({ userId: user.id }), {
+				auth: true,
+				response: t.Object({
+					configured: t.Boolean(),
+					publicKey: t.Nullable(t.String()),
+					devices: t.Integer(),
+				}),
+			})
+			// `/devices`, not `/subscribe`: Eden Treaty reserves `.subscribe()` on the
+			// client for WebSocket routes, so that path is simply not callable from it.
+			.post(
+				"/devices",
+				({ user, body, headers }) =>
+					pushSubscribe({
+						userId: user.id,
+						subscription: body,
+						// Only to tell devices apart in Preferences; never parsed.
+						userAgent: headers["user-agent"],
+					}),
+				{
+					auth: true,
+					body: t.Object({
+						endpoint: t.String(),
+						keys: t.Object({ p256dh: t.String(), auth: t.String() }),
+					}),
+					response: t.Object({ ok: t.Boolean() }),
+				},
+			)
+			.delete(
+				"/devices",
+				({ user, body }) =>
+					pushUnsubscribe({ userId: user.id, endpoint: body.endpoint }),
+				{
+					auth: true,
+					body: t.Object({ endpoint: t.String() }),
+					response: t.Object({ ok: t.Boolean() }),
+				},
+			)
+			// Every link in the chain — VAPID identity, the push service, the worker's
+			// handler, the OS — fails independently and silently. One button that either
+			// buzzes or doesn't says more than any amount of status text.
+			.post("/test", ({ user }) => pushTest({ userId: user.id }), {
+				auth: true,
+				response: t.Object({ sent: t.Integer() }),
+			}),
 	)
 	.group("/live", (group) =>
 		group

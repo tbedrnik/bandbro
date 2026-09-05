@@ -13,7 +13,7 @@ import {
 	IconLoader2,
 } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 /**
  * Setlist PDF export (CLAUDE.md §D20). The render is a job on the server, so this asks
@@ -39,12 +39,26 @@ type Mode = (typeof MODES)[number][0];
 
 export function ExportPdfMenu({
 	songbookId,
+	adoptJobId,
 	disabled,
 }: {
 	songbookId: string;
+	/** A job handed over in the URL by a push notification (§D21). */
+	adoptJobId?: string;
 	disabled?: boolean;
 }) {
 	const [jobId, setJobId] = usePdfExportJob(songbookId);
+
+	// Take over a job this device never started — push reaches every device on the
+	// account, so the notification may well be tapped on the phone while the export was
+	// asked for on a laptop. Once only: clearing the job after a download must not be
+	// undone by a URL that still carries it.
+	const adopted = useRef(false);
+	useEffect(() => {
+		if (adopted.current || !adoptJobId || adoptJobId === jobId) return;
+		adopted.current = true;
+		setJobId(adoptJobId);
+	}, [adoptJobId, jobId, setJobId]);
 
 	const create = useMutation({
 		...api.songbooks({ id: songbookId }).pdf.post.mutationOptions(),

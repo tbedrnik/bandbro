@@ -1,8 +1,10 @@
 import { auth } from "@frontend/auth";
 import { CapoToggle } from "@frontend/components/CapoToggle";
 import { RoleBadge } from "@frontend/components/RoleBadge";
+import { Button } from "@frontend/components/ui/button";
 import { useUser } from "@frontend/contexts/UserContext";
 import { useOnline } from "@frontend/lib/offline";
+import { usePushNotifications } from "@frontend/lib/push";
 import { useScopes } from "@frontend/lib/scopes";
 import { useTheme } from "@frontend/lib/theme";
 import { cn } from "@frontend/lib/utils";
@@ -111,6 +113,8 @@ function PreferencesPage() {
 				</div>
 			</section>
 
+			<PushSection />
+
 			<section className="mt-6 rounded-xl border border-border bg-card p-6">
 				<h2 className="font-display text-lg font-semibold">Band memberships</h2>
 				<div className="mt-4 flex flex-col gap-2">
@@ -128,5 +132,78 @@ function PreferencesPage() {
 				</div>
 			</section>
 		</div>
+	);
+}
+
+/**
+ * Notifications opt-in (CLAUDE.md §D21). One switch and one test button — there is
+ * exactly one thing BandBro notifies about (a finished setlist PDF), so a preference
+ * matrix would be four screens of chrome around a single boolean.
+ *
+ * Every unavailable state says *why*, because they have completely different remedies:
+ * a denied permission can only be undone in the browser's own site settings, an iPhone
+ * needs the app installed to the home screen first, and an unconfigured server needs
+ * VAPID keys. A greyed-out switch would say none of that.
+ */
+function PushSection() {
+	const push = usePushNotifications();
+
+	if (push.support === "unconfigured") return null;
+
+	return (
+		<section className="mt-6 rounded-xl border border-border bg-card p-6">
+			<h2 className="font-display text-lg font-semibold">Notifications</h2>
+			<p className="mt-1 text-sm text-muted-foreground">
+				A setlist PDF takes a few minutes to render, and by then you've usually
+				put the phone down. Let BandBro tell you when it's ready.
+			</p>
+
+			{push.support === "unsupported" ? (
+				<p className="mt-4 text-sm text-muted-foreground">
+					{push.needsInstall
+						? "On iPhone and iPad, notifications only work once BandBro is added to the home screen — open the Share menu and choose “Add to Home Screen”, then come back here."
+						: "This browser doesn't support notifications."}
+				</p>
+			) : push.permission === "denied" ? (
+				<p className="mt-4 text-sm text-muted-foreground">
+					Notifications are blocked for BandBro in this browser. Only its site
+					settings can undo that — look for the icon at the left of the address
+					bar.
+				</p>
+			) : push.subscribed ? (
+				<div className="mt-4 flex flex-wrap items-center gap-3">
+					<span className="font-mono text-xs text-ok">
+						✓ on for this device
+					</span>
+					<Button
+						variant="outline"
+						disabled={push.busy}
+						onClick={() => void push.sendTest()}
+					>
+						Send a test
+					</Button>
+					<Button
+						variant="ghost"
+						disabled={push.busy}
+						onClick={() => void push.disable()}
+					>
+						Turn off
+					</Button>
+				</div>
+			) : (
+				<div className="mt-4">
+					<Button disabled={push.busy} onClick={() => void push.enable()}>
+						Turn on notifications
+					</Button>
+					<p className="mt-2 text-xs text-muted-foreground">
+						Per device — turn it on again on any other phone or laptop you use.
+					</p>
+				</div>
+			)}
+
+			{push.error && (
+				<p className="mt-3 font-mono text-xs text-destructive">{push.error}</p>
+			)}
+		</section>
 	);
 }
