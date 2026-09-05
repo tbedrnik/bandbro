@@ -734,12 +734,29 @@ Two gaps that turned out to be one problem: **Preferences had no link anywhere**
 four nav sections, so the only way in was typing the URL — and the landing page greeted a signed-in
 player with "Log in / Sign up", because it has no way to know better.
 
-- **`UserAvatar`** (initials in an accent circle) is the account's presence in the chrome. In `AppNav` it
-  is a link to `/preferences`, in the bar at *every* width — not tucked into the mobile sheet, since the
-  sheet is "go to a section" and this is "this is you". Measured at 390px: wordmark · section · theme ·
-  avatar · hamburger still fit, `scrollWidth === innerWidth === 390` (the §D16 discipline). Preferences
-  draws the same component instead of its own `name.slice(0, 2)`, which read "TO" for "Tomas Bedrnik";
-  `initials` (in `src/shared`, unit-tested) takes the first and last word and keeps diacritics.
+- **`UserAvatar`** (initials in an accent circle) is the account's presence in the chrome, in the bar at
+  *every* width — not tucked into the mobile sheet, since the sheet answers "which section" and this
+  answers "which account". Measured at 390px: wordmark · section · theme · avatar · hamburger still fit,
+  `scrollWidth === innerWidth === 390` (the §D16 discipline), and the menu opens inside the viewport.
+  Preferences draws the same component instead of its own `name.slice(0, 2)`, which read "TO" for "Tomas
+  Bedrnik"; `initials` (in `src/shared`, unit-tested) takes the first and last word and keeps diacritics.
+- **The avatar opens an account menu** — name + email, "Profile & preferences", and **Sign out**, which
+  until now existed nowhere in the app. Signing out (`lib/signOut.ts`) is four undos, not one, and the
+  order matters because only the server can clear an httpOnly cookie: drop this device's **push
+  subscription** first (§D21 — it is bound to an account, and left behind this laptop keeps buzzing for
+  someone who has walked away; best-effort, since a dead push service must not trap anyone in a session),
+  then the server session, and *only if that succeeded* the **offline session snapshot** (§D7 keeps it
+  through network errors, so an explicit sign-out is one of the few answers allowed to clear it) and the
+  hint cookie above. A failed request leaves everything standing and relabels the item "Couldn't sign out
+  — retry": clearing locally would show a signed-out UI that signs itself back in on reload. It finishes
+  with a **full page load** of `/`, which is the only cheap way to guarantee the query cache and every
+  context are gone before the next person uses the browser. Offline the item is hidden, not disabled (§D7).
+- **The bounced destination now really does survive the login.** §D13 claimed it did; it didn't. The
+  protected layout renders *once more* after its own `<Navigate>` has started, and by then `pathname` is
+  `/login` — so the second render overwrote the parameter and every deep link arrived as
+  `?redirect=/login`. The intended path is now held in a ref that is refreshed only while a session
+  exists, which also gives the better answer when a session expires mid-visit: the page you were on
+  rather than the one you first opened.
 - **The landing (§D18) ships no JavaScript, and that stays true.** The real session cookie is httpOnly, so
   the page cannot read it, and asking the API would cost a round trip plus a visible flash of the wrong
   buttons on the one surface whose entire job is painting immediately. Instead the app writes
@@ -760,9 +777,9 @@ player with "Log in / Sign up", because it has no way to know better.
   avatar (→ Preferences), hero → drops "Sign up free" and the "Already in a band? Log in" note, closing
   CTA → one **Continue to app**. The avatar is a hand-written twin of the React component, in the
   landing's own markup and CSS — the §D19 arrangement, for the same reason.
-- Verified in a real browser (headless Chromium) in both directions, including the sign-out clear and the
-  390px nav. **Not built: signing out.** There is still no sign-out control anywhere in the app — the
-  avatar links to Preferences and nothing else. That's the obvious next thing to hang off it.
+- Verified in a real browser (headless Chromium): both landing states, the sign-out teardown, the account
+  menu at 390px, and the full round trip — deep link while signed out → login → land on the page asked
+  for.
 
 ---
 

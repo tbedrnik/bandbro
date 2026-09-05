@@ -4,15 +4,26 @@ import {
 	DrawerContent,
 	DrawerTitle,
 } from "@frontend/components/ui/drawer";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@frontend/components/ui/dropdown-menu";
 import { useUser } from "@frontend/contexts/UserContext";
+import { useOnline } from "@frontend/lib/offline";
+import { useSignOut } from "@frontend/lib/signOut";
 import { useTheme } from "@frontend/lib/theme";
 import { cn } from "@frontend/lib/utils";
 import {
 	IconHome,
+	IconLogout,
 	IconMenu2,
 	IconMoon,
 	IconMusic,
 	IconPlaylist,
+	IconSettings,
 	IconSun,
 	IconUsers,
 } from "@tabler/icons-react";
@@ -105,19 +116,7 @@ export function AppNav({ section }: { section?: string }) {
 						{theme === "dark" ? "Dark" : "Light"}
 					</span>
 				</button>
-				{/* The account, and the only route to Preferences — which is otherwise
-				    reachable by typing the URL, since it isn't one of the four sections. */}
-				{user && (
-					<Link
-						to="/preferences"
-						title={`${user.name} · preferences`}
-						aria-label="Profile and preferences"
-						className="rounded-full outline-offset-2 transition-opacity hover:opacity-80"
-						activeProps={{ className: "ring-2 ring-primary/40" }}
-					>
-						<UserAvatar name={user.name} />
-					</Link>
-				)}
+				{user && <AccountMenu name={user.name} email={user.email} />}
 				<button
 					type="button"
 					onClick={() => setMenuOpen(true)}
@@ -157,5 +156,67 @@ export function AppNav({ section }: { section?: string }) {
 				</DrawerContent>
 			</Drawer>
 		</header>
+	);
+}
+
+/**
+ * The account menu behind the avatar — the way to Preferences (which isn't one of the
+ * four sections, so it has no other entry point) and the way out.
+ *
+ * A menu rather than a plain link because sign-out has to live somewhere reachable from
+ * every screen, and the avatar is the one piece of chrome that already means "you". It
+ * stays a dropdown at every width instead of joining the mobile sheet of §D16: the sheet
+ * answers "which section", this answers "which account", and two items don't need a
+ * full-width surface.
+ */
+function AccountMenu({ name, email }: { name: string; email: string }) {
+	const online = useOnline();
+	const { signOut, pending, failed } = useSignOut();
+
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger
+				render={
+					<button
+						type="button"
+						aria-label="Account"
+						className="rounded-full transition-opacity hover:opacity-80"
+					>
+						<UserAvatar name={name} />
+					</button>
+				}
+			/>
+			<DropdownMenuContent align="end" className="min-w-56">
+				<div className="flex items-center gap-3 px-2 py-2">
+					<UserAvatar name={name} size="sm" />
+					<div className="min-w-0">
+						<div className="truncate font-display text-sm font-semibold">
+							{name}
+						</div>
+						<div className="truncate text-xs text-muted-foreground">
+							{email}
+						</div>
+					</div>
+				</div>
+				<DropdownMenuSeparator />
+				<DropdownMenuItem render={<Link to="/preferences" />}>
+					<IconSettings className="size-4" /> Profile &amp; preferences
+				</DropdownMenuItem>
+				{/* Only the server can clear an httpOnly session cookie, so offline this
+				    button could not do what it says — hide it rather than lie (§D7). */}
+				{online && (
+					<DropdownMenuItem
+						variant="destructive"
+						disabled={pending}
+						// Keep the menu open on failure so the retry label is actually read.
+						closeOnClick={false}
+						onClick={() => void signOut()}
+					>
+						<IconLogout className="size-4" />
+						{failed ? "Couldn't sign out — retry" : "Sign out"}
+					</DropdownMenuItem>
+				)}
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 }

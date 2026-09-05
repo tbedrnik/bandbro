@@ -174,6 +174,21 @@ async function postSubscription(subscription: PushSubscription): Promise<void> {
 }
 
 /**
+ * Drop this device's subscription, on the server and in the browser.
+ *
+ * Server first: if the local `unsubscribe()` succeeds and the request then fails, the row
+ * is orphaned and the server keeps sending to an endpoint nobody can decrypt. Used both
+ * by the Preferences switch and by signing out — a subscription is bound to an account,
+ * so leaving it behind would keep notifying a device its owner has walked away from.
+ */
+export async function unsubscribeDevice(): Promise<void> {
+	const subscription = await currentSubscription();
+	if (!subscription) return;
+	await apiClient.api.push.devices.delete({ endpoint: subscription.endpoint });
+	await subscription.unsubscribe();
+}
+
+/**
  * The Preferences opt-in. `enable` must be called straight from a click: browsers only
  * accept a permission prompt with a user gesture behind it, and Chrome permanently
  * blocks an origin that asks without one.
@@ -254,16 +269,8 @@ export function usePushNotifications() {
 
 	const disable = useCallback(async () => {
 		setState((s) => ({ ...s, busy: true, error: null }));
-		const subscription = await currentSubscription();
 		try {
-			if (subscription) {
-				// Server first: if the local unsubscribe succeeds and the request then
-				// fails, the row is orphaned and keeps receiving sends nobody can read.
-				await apiClient.api.push.devices.delete({
-					endpoint: subscription.endpoint,
-				});
-				await subscription.unsubscribe();
-			}
+			await unsubscribeDevice();
 			setState((s) => ({ ...s, subscribed: false, busy: false }));
 		} catch {
 			setState((s) => ({
