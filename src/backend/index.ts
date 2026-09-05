@@ -1,6 +1,7 @@
 import frontend from "../frontend/index.html";
 import landing from "../landing/index.html";
 import { api } from "./api";
+import { startPdfExportWorker } from "./services/pdfExports";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -90,6 +91,13 @@ const server = Bun.serve({
 });
 
 console.log(`🐲 Bun is running at http://${server.hostname}:${server.port}`);
+
+// Fail any export left mid-render by a previous process, drop expired ones, and pick up
+// anything still pending (CLAUDE.md §D20). Not awaited: the server should take traffic
+// whether or not the queue is healthy, and a failure here must not stop the boot.
+startPdfExportWorker().catch((error) => {
+	console.error("[PDF] worker failed to start", error);
+});
 
 // Run @tanstack/router-cli watch if in development
 if (isDev) {

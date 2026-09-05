@@ -402,6 +402,7 @@ export const ModelName = {
   Songbook: 'Songbook',
   LiveSession: 'LiveSession',
   SongbookSong: 'SongbookSong',
+  PdfExport: 'PdfExport',
   Suggestion: 'Suggestion'
 } as const
 
@@ -418,7 +419,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "account" | "verification" | "organization" | "member" | "invitation" | "bandInvite" | "bandInviteUse" | "song" | "chart" | "artist" | "credit" | "tag" | "songTag" | "songbook" | "liveSession" | "songbookSong" | "suggestion"
+    modelProps: "user" | "session" | "account" | "verification" | "organization" | "member" | "invitation" | "bandInvite" | "bandInviteUse" | "song" | "chart" | "artist" | "credit" | "tag" | "songTag" | "songbook" | "liveSession" | "songbookSong" | "pdfExport" | "suggestion"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1754,6 +1755,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PdfExport: {
+      payload: Prisma.$PdfExportPayload<ExtArgs>
+      fields: Prisma.PdfExportFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PdfExportFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PdfExportPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PdfExportFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PdfExportPayload>
+        }
+        findFirst: {
+          args: Prisma.PdfExportFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PdfExportPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PdfExportFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PdfExportPayload>
+        }
+        findMany: {
+          args: Prisma.PdfExportFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PdfExportPayload>[]
+        }
+        create: {
+          args: Prisma.PdfExportCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PdfExportPayload>
+        }
+        createMany: {
+          args: Prisma.PdfExportCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PdfExportCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PdfExportPayload>[]
+        }
+        delete: {
+          args: Prisma.PdfExportDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PdfExportPayload>
+        }
+        update: {
+          args: Prisma.PdfExportUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PdfExportPayload>
+        }
+        deleteMany: {
+          args: Prisma.PdfExportDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PdfExportUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PdfExportUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PdfExportPayload>[]
+        }
+        upsert: {
+          args: Prisma.PdfExportUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PdfExportPayload>
+        }
+        aggregate: {
+          args: Prisma.PdfExportAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePdfExport>
+        }
+        groupBy: {
+          args: Prisma.PdfExportGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PdfExportGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PdfExportCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PdfExportCountAggregateOutputType> | number
+        }
+      }
+    }
     Suggestion: {
       payload: Prisma.$SuggestionPayload<ExtArgs>
       fields: Prisma.SuggestionFieldRefs
@@ -2098,6 +2173,25 @@ export const SongbookSongScalarFieldEnum = {
 export type SongbookSongScalarFieldEnum = (typeof SongbookSongScalarFieldEnum)[keyof typeof SongbookSongScalarFieldEnum]
 
 
+export const PdfExportScalarFieldEnum = {
+  id: 'id',
+  songbookId: 'songbookId',
+  requestedById: 'requestedById',
+  mode: 'mode',
+  status: 'status',
+  error: 'error',
+  filePath: 'filePath',
+  filename: 'filename',
+  bytes: 'bytes',
+  songCount: 'songCount',
+  createdAt: 'createdAt',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt'
+} as const
+
+export type PdfExportScalarFieldEnum = (typeof PdfExportScalarFieldEnum)[keyof typeof PdfExportScalarFieldEnum]
+
+
 export const SuggestionScalarFieldEnum = {
   id: 'id',
   chartId: 'chartId',
@@ -2310,6 +2404,7 @@ export type GlobalOmitConfig = {
   songbook?: Prisma.SongbookOmit
   liveSession?: Prisma.LiveSessionOmit
   songbookSong?: Prisma.SongbookSongOmit
+  pdfExport?: Prisma.PdfExportOmit
   suggestion?: Prisma.SuggestionOmit
 }
 

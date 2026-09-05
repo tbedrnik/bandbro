@@ -108,6 +108,11 @@ export type LiveSession = Prisma.LiveSessionModel
  */
 export type SongbookSong = Prisma.SongbookSongModel
 /**
+ * Model PdfExport
+ * 
+ */
+export type PdfExport = Prisma.PdfExportModel
+/**
  * Model Suggestion
  * 
  */

@@ -16,11 +16,15 @@ import {
 	liveSessionPublicRead,
 	liveSessionSetCurrent,
 } from "./services/liveSessions";
+import {
+	pdfExportCreate,
+	pdfExportFile,
+	pdfExportRead,
+} from "./services/pdfExports";
 import { HttpError } from "./services/scope";
 import { songbooksCreate } from "./services/songbooksCreate";
 import { songbooksDelete } from "./services/songbooksDelete";
 import { songbooksList } from "./services/songbooksList";
-import { songbooksPdf } from "./services/songbooksPdf";
 import { songbooksRead } from "./services/songbooksRead";
 import { songbooksUpdate } from "./services/songbooksUpdate";
 import { songsCreate } from "./services/songsCreate";
@@ -36,6 +40,30 @@ import {
 	suggestionsList,
 	suggestionsReject,
 } from "./services/suggestions";
+
+const pdfModeSchema = t.Union([
+	t.Literal("fingered"),
+	t.Literal("concert"),
+	t.Literal("both"),
+]);
+
+const pdfExportSchema = t.Object({
+	id: t.String(),
+	songbookId: t.String(),
+	mode: t.String(),
+	status: t.Union([
+		t.Literal("pending"),
+		t.Literal("running"),
+		t.Literal("done"),
+		t.Literal("failed"),
+	]),
+	error: t.Nullable(t.String()),
+	filename: t.Nullable(t.String()),
+	bytes: t.Nullable(t.Integer()),
+	songCount: t.Nullable(t.Integer()),
+	createdAt: t.String(),
+	finishedAt: t.Nullable(t.String()),
+});
 
 const creditSchema = t.Object({
 	artist: t.Object({ name: t.String() }),
@@ -231,33 +259,46 @@ export const api = new Elysia({ prefix: "/api" })
 					auth: true,
 				},
 			)
-			.get(
+			// Queue a render and return immediately (CLAUDE.md §D20). There is deliberately
+			// no synchronous variant: a render outlives the connection it was asked on.
+			.post(
 				"/:id/pdf",
-				async ({ params, user, query }) => {
-					const { pdf, filename } = await songbooksPdf({
-						id: params.id,
+				({ params, user, body }) =>
+					pdfExportCreate({
+						songbookId: params.id,
 						userId: user.id,
-						mode: query.mode,
+						mode: body?.mode,
+					}),
+				{
+					auth: true,
+					body: t.Optional(t.Object({ mode: t.Optional(pdfModeSchema) })),
+					response: pdfExportSchema,
+				},
+			),
+	)
+	.group("/pdf-exports", (group) =>
+		group
+			.get(
+				"/:jobId",
+				({ params, user }) =>
+					pdfExportRead({ jobId: params.jobId, userId: user.id }),
+				{ auth: true, response: pdfExportSchema },
+			)
+			.get(
+				"/:jobId/download",
+				async ({ params, user }) => {
+					const { path, filename } = await pdfExportFile({
+						jobId: params.jobId,
+						userId: user.id,
 					});
-					return new Response(pdf as unknown as BlobPart, {
+					return new Response(Bun.file(path), {
 						headers: {
 							"content-type": "application/pdf",
 							"content-disposition": `attachment; filename="${filename}"`,
 						},
 					});
 				},
-				{
-					auth: true,
-					query: t.Object({
-						mode: t.Optional(
-							t.Union([
-								t.Literal("fingered"),
-								t.Literal("concert"),
-								t.Literal("both"),
-							]),
-						),
-					}),
-				},
+				{ auth: true },
 			),
 	)
 	.group("/live", (group) =>

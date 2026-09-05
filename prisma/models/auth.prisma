@@ -18,6 +18,7 @@ model User {
   suggestions        Suggestion[]
   bandInvitesCreated BandInvite[]
   bandInviteUses     BandInviteUse[]
+  pdfExports         PdfExport[]
 
   @@unique([email])
   @@map("user")

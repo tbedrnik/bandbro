@@ -20,16 +20,11 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { api } from "@frontend/api";
+import { ExportPdfMenu } from "@frontend/components/ExportPdfMenu";
 import { MetaChip } from "@frontend/components/MetaChip";
 import { OfflinePill } from "@frontend/components/OfflinePill";
 import { ShareWithFansModal } from "@frontend/components/ShareWithFansModal";
 import { Button } from "@frontend/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@frontend/components/ui/dropdown-menu";
 import { Input } from "@frontend/components/ui/input";
 import {
 	downloadSetlist,
@@ -42,7 +37,6 @@ import { cn } from "@frontend/lib/utils";
 import { displayKey } from "@shared/notation";
 import {
 	IconDownload,
-	IconFileTypePdf,
 	IconGripVertical,
 	IconPlayerPlay,
 	IconPlus,
@@ -236,38 +230,7 @@ function SetlistDetail() {
 					{/* PDF is rendered by the server's chordpro CLI, and the fan session is
 					    created on the server — neither exists without a connection. */}
 					{online && (
-						<DropdownMenu>
-							<DropdownMenuTrigger
-								render={
-									<Button variant="outline" disabled={!setlist.songs.length}>
-										<IconFileTypePdf className="size-4" /> Export PDF
-									</Button>
-								}
-							/>
-							<DropdownMenuContent>
-								{(
-									[
-										["both", "As-fingered + concert"],
-										["fingered", "As-fingered only"],
-										["concert", "Concert pitch only"],
-									] as const
-								).map(([mode, label]) => (
-									<DropdownMenuItem
-										key={mode}
-										render={
-											// Server-rendered PDF (chordpro CLI). Same-origin link sends the
-											// session cookie; `download` saves it straight to disk.
-											<a
-												href={`/api/songbooks/${id}/pdf?mode=${mode}`}
-												download
-											/>
-										}
-									>
-										{label}
-									</DropdownMenuItem>
-								))}
-							</DropdownMenuContent>
-						</DropdownMenu>
+						<ExportPdfMenu songbookId={id} disabled={!setlist.songs.length} />
 					)}
 					{online && (
 						<Button

@@ -69,6 +69,7 @@ export const ModelName = {
   Songbook: 'Songbook',
   LiveSession: 'LiveSession',
   SongbookSong: 'SongbookSong',
+  PdfExport: 'PdfExport',
   Suggestion: 'Suggestion'
 } as const
 
@@ -317,6 +318,25 @@ export const SongbookSongScalarFieldEnum = {
 } as const
 
 export type SongbookSongScalarFieldEnum = (typeof SongbookSongScalarFieldEnum)[keyof typeof SongbookSongScalarFieldEnum]
+
+
+export const PdfExportScalarFieldEnum = {
+  id: 'id',
+  songbookId: 'songbookId',
+  requestedById: 'requestedById',
+  mode: 'mode',
+  status: 'status',
+  error: 'error',
+  filePath: 'filePath',
+  filename: 'filename',
+  bytes: 'bytes',
+  songCount: 'songCount',
+  createdAt: 'createdAt',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt'
+} as const
+
+export type PdfExportScalarFieldEnum = (typeof PdfExportScalarFieldEnum)[keyof typeof PdfExportScalarFieldEnum]
 
 
 export const SuggestionScalarFieldEnum = {

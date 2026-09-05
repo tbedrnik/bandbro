@@ -282,7 +282,8 @@ v1 stays **read-only offline** (no edit queue or sync — PRD §12 Q5), scoped p
 ### D8 — PDF export: server-side via the `chordpro` CLI *(DECIDED — implemented)*
 The Playlist screen exports an ordered, one-song-per-page chord-sheet PDF with a render-mode choice
 (as-fingered / concert / both; capo'd songs print twice under "both"). This is rendered **server-side by
-the reference `chordpro` CLI** (`GET /api/songbooks/:id/pdf?mode=…`, `songbooksPdf` service):
+the reference `chordpro` CLI** (`renderSetlistPdf` in `services/songbooksPdf.ts`, driven by the export
+job of §D20):
 - We build one ChordPro document for the whole setlist — songs joined by `{new_song}` so the CLI paginates
   one song per page and auto-generates a table of contents.
 - For **concert** view we rewrite the source (transpose every `[chord]`/`{key}` by the capo amount and drop
@@ -576,10 +577,8 @@ runs on **2 shared vCPU / 2 GB**, which is what turns each of these from theoret
   platform can restart a container that wedges while alive — hence "it froze and needed a rebuild".
   Catching that needs external uptime monitoring or an in-process watchdog; neither is built.
 
-**Still open: the export should be a job, not a request.** Capping the render at 120s under a 255s
-socket timeout buys headroom, it doesn't remove the ceiling — a long enough setlist on a slow enough
-box still runs out of connection. The right shape is `POST` returns a job id, the client polls, the PDF
-lands in storage. Deliberately not built here; this change was scoped to stopping the bleeding.
+**The export is now a job, not a request** — see §D20. Capping the render at 120s under a 255s socket
+timeout bought headroom without removing the ceiling; jobs remove it.
 
 ### D18 — The landing page is static, hand-written, and shares nothing with the SPA *(implemented)*
 `/` is a marketing page (`src/landing/index.html` + `src/landing/styles.css`), not a React route. It
@@ -619,6 +618,49 @@ landing page's own markup (that surface ships no React — D18).
   footer lands at the bottom of a short screen instead of halfway up it. The centred screens
   (login, register, join) traded their own `min-h-dvh` for `flex-1`, which is what keeps their cards
   centred in the space *above* the footer rather than pushing it off-screen.
+
+### D20 — The setlist PDF is a job; the table is the queue *(implemented)*
+§D17 raised the socket timeout so a render could finish, which stopped the 502s but left the export
+bounded by a connection: a long enough setlist on a slow enough box still runs out. `POST
+/api/songbooks/:id/pdf` now creates a `PdfExport` row and returns in ~50ms; the client polls
+`GET /api/pdf-exports/:jobId` and downloads from `/download` when it says `done`. There is deliberately
+**no synchronous variant left** — keeping one would just preserve the ceiling it was built to remove.
+The dependency-free fallback is unchanged: `/app/setlists/$id/print` renders the same content for the
+browser's own print-to-PDF, and needs neither the CLI nor a job.
+
+- **No queue library, no broker, no second service.** A Railway volume can be attached to exactly one
+  service and *"replicas cannot be used with volumes"* — so this app is single-instance by
+  construction, and there is no second worker to coordinate with. The `PdfExport` table is the queue and
+  an in-process drain loop is the whole scheduler. Redis (BullMQ) would mean another Railway service;
+  Temporal would mean a cluster an order of magnitude larger than the one subprocess it orchestrates.
+  Revisit if the DB ever moves to Postgres, which is what would make replicas — and a real broker —
+  possible.
+- **The render gate is per-process** (`renderGate` in `songbooksPdf.ts`), so "one `chordpro` at a time"
+  is a property of the box rather than of a code path — which is what keeps a Perl render from starving
+  Bun's event loop no matter how the render was asked for.
+- **An identical in-flight request returns the same job.** This is what defuses the retry storm §D17
+  traced: a user clicking Export three times, or a client retrying, converges on one render instead of
+  three. The dedupe key is (setlist, mode, requester).
+- **Access is re-checked at render time, not just at request time**, and the setlist is re-read then —
+  songs may have been reordered or edited while the job waited, and a member removed from the band in
+  between must not get a PDF out of it.
+- **Artifacts live beside the database** (`/data/exports/<jobId>.pdf`), derived from `DATABASE_URL` so
+  the two can't drift, with a `PDF_EXPORT_DIR` override. Not in the row: half a megabyte of PDF is not
+  what SQLite is for. A 24h sweep drops rows and files together on boot.
+- **A job left `running` can only be a crash.** Nothing resumes it, so the boot hook fails it with a
+  reason rather than leaving a client polling a status that will never change.
+- **The finished file is offered as a button, not auto-downloaded.** The download becomes available
+  seconds after the click that asked for it, and a programmatic download that far from a user gesture is
+  exactly what browsers block.
+
+**Next: split the renderer into its own service** (design in the D17/D20 thread, not built). The app
+builds the ChordPro document — `buildSetlistChordpro`/`chordproConfig` are already pure and in
+`src/shared` — and POSTs `{doc, config}` to a stateless renderer over the private network, which returns
+bytes. That buys CPU isolation and lets the app image drop Ubuntu + Perl entirely; it buys nothing about
+timeouts, which this decision already settled. Two things would bite: the renderer must bind `::`, not
+`0.0.0.0` (Railway's private network is IPv6-only in environments created before 16 Oct 2025, and
+`0.0.0.0` is simply invisible there), and it needs its own `idleTimeout` — it would otherwise ship with
+the same 10s default that caused §D17, on the one service where every request is slow by definition.
 
 ---
 
