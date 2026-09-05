@@ -1,0 +1,13 @@
+# Railway builds from the git checkout, so these are already absent there — this file is
+# what makes `docker build .` on a developer machine produce the same image. Without it
+# `COPY . .` drops the host's macOS node_modules on top of the ones the image installed
+# for Linux, and bakes the local SQLite files and .env into the layer.
+node_modules
+.git
+.env
+*.db
+coverage
+dist
+.tanstack
+.DS_Store
+**/*.log

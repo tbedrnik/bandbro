@@ -2,6 +2,7 @@ import { serverTiming } from "@elysiajs/server-timing";
 import { Elysia, t } from "elysia";
 import { CreditRole } from "../generated/prisma/enums";
 import { authMiddleware } from "./auth";
+import { prisma } from "./prisma";
 import {
 	bandEmailInviteCancel,
 	bandInvitePreview,
@@ -62,6 +63,22 @@ export const api = new Elysia({ prefix: "/api" })
 			return;
 		}
 	})
+	// Readiness probe for the platform (railway.json `healthcheckPath`). It touches the
+	// database on purpose: the container start now runs `prisma migrate deploy` and the
+	// SQLite file lives on a mounted volume, so "the process is listening" is not the
+	// same as "this deploy can serve". A boot that can't read /data should fail the
+	// deploy rather than take traffic. No auth — the platform has no session.
+	//
+	// Note this is a *deploy-time* gate only: Railway does not poll it afterwards, so it
+	// cannot restart a container that wedges later.
+	.get(
+		"/health",
+		async () => {
+			await prisma.$queryRaw`SELECT 1`;
+			return { ok: true };
+		},
+		{ response: t.Object({ ok: t.Boolean() }) },
+	)
 	.group("/songs", (group) =>
 		group
 			.get("/", ({ user, query }) => songsList({ user, query }), {

@@ -536,6 +536,51 @@ Playwright's `devices["iPhone 13"]`: with `isMobile` emulation Chromium expands 
 overflowing content, so `scrollWidth === innerWidth` passes at `innerWidth = 454` and the page looks fine
 while being broken. Assert `innerWidth === 390` too, or skip the device descriptor.
 
+### D17 — The deploy has to hold a slow request, migrate itself, and prove it booted *(implemented)*
+Three separate production failures on Railway, all of them in the gap between "the code works" and
+"the deployment works". Diagnosed from `railway logs --http` + `railway status --json`; the service
+runs on **2 shared vCPU / 2 GB**, which is what turns each of these from theoretical into daily.
+
+- **`Bun.serve`'s `idleTimeout` defaults to 10 seconds, and a request whose handler is still working
+  counts as idle.** The server-side setlist PDF (§D8) takes tens of seconds there — ~3s for 60 songs on
+  a dev laptop, several times that on two shared cores. So Bun dropped the socket at 10s, Railway's edge
+  read the reset as an upstream failure and **retried the request twice more**, each retry spawning
+  another full `chordpro` render, and finally answered **502 after 36s** — while all three renders went
+  on to succeed, unread, in the background. That is the whole of "PDF export doesn't work in
+  production": the renderer was never broken. `idleTimeout: 255` (Bun's maximum) in
+  `src/backend/index.ts` is the fix; the PDF service caps itself well under it so we answer first.
+- **Renders are now serialized behind a bounded queue** (`src/backend/concurrencyGate.ts`, unit-tested;
+  1 running, 3 waiting, 503 beyond that) with a **120s kill-timeout** on the subprocess. `chordpro` is
+  single-threaded Perl and CPU-bound, so concurrent renders starve Bun's event loop and make every
+  request on the box look hung — and because a failed export is retried by both the user and the edge
+  proxy, the pile-up is the normal case, not the rare one. The gate hands a freed slot *directly* to the
+  next waiter rather than decrementing a counter, so a request arriving in between can't jump the queue
+  and push `active` over the cap. The service logs `waitedMs`/`renderMs`: a render creeping towards the
+  timeout is the early warning that exports are about to start failing again.
+- **Migrations never ran on deploy.** The image's `CMD` was just `bun run src/backend/index.ts`, so the
+  schema silently lagged the code: §D13's `band_invite`/`band_invite_use` tables did not exist in
+  production for the entire life of that deploy and **every `/api/bands/:id/invites` request 500'd**.
+  Start now runs `prisma migrate deploy` before `exec`ing the server (migrations can't run at build
+  time — the SQLite file is on a volume that only exists at runtime), and a failure aborts the boot
+  rather than serving against the wrong schema. That needs Prisma's **schema** engine (the query path
+  doesn't — that's the libsql driver adapter), which `bun install --ignore-scripts` never downloaded:
+  the Dockerfile fetches it at build time and points `PRISMA_SCHEMA_ENGINE_BINARY` at it, reading the
+  commit out of the installed `@prisma/engines-version` so it can't drift from the lockfile. A
+  `.dockerignore` was added at the same time so `docker build .` on a laptop reproduces the image
+  instead of dropping the host's macOS `node_modules` on top of the Linux ones.
+- **`GET /api/health`** (no auth) issues a `SELECT 1` and is wired to `railway.json`'s
+  `healthcheckPath`, so a boot that can't reach `/data` — or a migration that fails — fails the deploy
+  instead of taking traffic. Be clear about what this does *not* buy: Railway calls the healthcheck
+  **only at deploy time** ("Railway does not monitor the healthcheck endpoint after the deployment has
+  gone live"), and `restartPolicyType: ON_FAILURE` only reacts to the process *exiting*. Nothing on the
+  platform can restart a container that wedges while alive — hence "it froze and needed a rebuild".
+  Catching that needs external uptime monitoring or an in-process watchdog; neither is built.
+
+**Still open: the export should be a job, not a request.** Capping the render at 120s under a 255s
+socket timeout buys headroom, it doesn't remove the ceiling — a long enough setlist on a slow enough
+box still runs out of connection. The right shape is `POST` returns a job id, the client polls, the PDF
+lands in storage. Deliberately not built here; this change was scoped to stopping the bleeding.
+
 ---
 
 ## 6. Design system (for building the screens)

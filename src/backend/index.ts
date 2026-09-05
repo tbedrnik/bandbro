@@ -66,6 +66,15 @@ const server = Bun.serve({
 	// process runs but looks like it "never started".
 	hostname: "0.0.0.0",
 	port: Number(process.env.PORT) || 3000,
+	// Bun closes a connection that has carried no data for `idleTimeout` seconds —
+	// and it counts a request whose handler is still working as idle. The default is
+	// 10s, which the server-side setlist PDF (a `chordpro` subprocess, §D8) blows
+	// straight through on a small container: Bun dropped the socket, Railway's edge
+	// read that as an upstream reset, retried the request twice more (spawning a
+	// fresh render each time) and finally answered 502 — while every one of those
+	// renders went on to succeed, unread, in the background. 255 is Bun's maximum.
+	// The PDF service caps its own runtime well under this (see songbooksPdf.ts).
+	idleTimeout: 255,
 	routes: {
 		"/api/*": api.fetch,
 		"/app/sw.js": serveSw,
