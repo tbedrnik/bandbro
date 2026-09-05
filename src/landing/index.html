@@ -1,15 +1,562 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Bandbro</title>
+	<title>BandBro — the shared songbook for your band</title>
+	<meta name="description"
+		content="BandBro is a shared songbook for bands and players: collect chord sheets, transpose them, build setlists, and play them from a stand — on stage, offline, together.">
+	<meta name="theme-color" content="#c2711a" media="(prefers-color-scheme: light)">
+	<meta name="theme-color" content="#16181c" media="(prefers-color-scheme: dark)">
+	<link rel="icon" href="../frontend/public/icon-192.png" type="image/png">
+	<link rel="apple-touch-icon" href="../frontend/public/icon-192.png">
+	<meta property="og:type" content="website">
+	<meta property="og:title" content="BandBro — the shared songbook for your band">
+	<meta property="og:description"
+		content="Collect chord sheets, transpose them, build setlists, and play them from a stand — on stage, offline, together.">
+	<meta property="og:image" content="/app/icon-512.png">
+	<meta name="twitter:card" content="summary">
+	<link rel="stylesheet" href="./styles.css">
 </head>
 
 <body>
-	<h1>Bandbro</h1>
-	<a href="/app/login">Login to app</a>
+	<a class="sr-only" href="#main">Skip to content</a>
+
+	<header class="topbar">
+		<div class="wrap topbar__inner">
+			<a class="wordmark" href="/">Band<span>Bro</span></a>
+			<nav aria-label="Sections">
+				<a href="#songbook">Songbook</a>
+				<a href="#stage">On stage</a>
+				<a href="#offline">Offline</a>
+				<a href="#room">Your audience</a>
+			</nav>
+			<div class="topbar__actions">
+				<a class="btn btn--ghost btn--sm" href="/app/login">Log in</a>
+				<a class="btn btn--primary btn--sm" href="/app/register">Sign up</a>
+			</div>
+		</div>
+	</header>
+
+	<main id="main">
+
+		<!-- ------------------------------------------------------------ hero -->
+		<div class="hero">
+			<div class="wrap hero__inner">
+				<div>
+					<span class="eyebrow"><span class="dot"></span> Works on stage, works offline</span>
+					<h1>The shared songbook<br>your band <em>actually</em> plays from.</h1>
+					<p class="hero__lede">
+						Collect chord sheets in one place, transpose them to anyone's key, build the
+						setlist, and read it off a stand under stage lights — with or without a signal.
+					</p>
+					<div class="hero__cta">
+						<a class="btn btn--primary btn--lg" href="/app">Continue to app</a>
+						<a class="btn btn--outline btn--lg" href="/app/register">Sign up free</a>
+					</div>
+					<p class="hero__note">
+						Already in a band here? <a class="textlink" href="/app/login">Log in</a>
+						· Installs as an app on your phone or tablet
+					</p>
+				</div>
+
+				<div class="hero__media">
+					<div class="sheet">
+						<div class="sheet__bar">
+							<span class="sheet__title">House of the Rising Sun</span>
+							<span class="sheet__chips">
+								<span class="chip chip--accent">Am</span>
+								<span class="chip">Capo 2</span>
+								<span class="chip">6/8</span>
+							</span>
+						</div>
+						<div class="sheet__body">
+							<span class="section-label">Verse 1</span>
+							<div class="line">
+								<span class="seg"><b>Am</b><i>There is a </i></span>
+								<span class="seg"><b>C</b><i>house in </i></span>
+								<span class="seg"><b>D</b><i>New Or-</i></span>
+								<span class="seg"><b>F</b><i>leans</i></span>
+							</div>
+							<div class="line">
+								<span class="seg"><b>Am</b><i>They call the </i></span>
+								<span class="seg"><b>C</b><i>Rising </i></span>
+								<span class="seg"><b>E</b><i>Sun</i></span>
+							</div>
+							<span class="section-label">Riff</span>
+							<div class="line">
+								<span class="seg seg--chordless"><b>Am&nbsp;&nbsp;C&nbsp;&nbsp;D&nbsp;&nbsp;F&nbsp;&nbsp;Am&nbsp;&nbsp;E</b></span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- -------------------------------------------------------- songbook -->
+		<section id="songbook">
+			<div class="wrap">
+				<div class="section-head">
+					<span class="kicker">The songbook</span>
+					<h2>Everything the band plays, in one place everyone can reach.</h2>
+					<p>
+						Browse a curated library, your band's shelf, or your own. Fork any song into
+						your own scope and change whatever you like — the original stays untouched.
+					</p>
+				</div>
+
+				<div class="grid">
+					<article class="card">
+						<div class="card__icon" aria-hidden="true">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+								stroke-linecap="round" stroke-linejoin="round">
+								<path d="M3 19a2 2 0 0 1 2-2h14V4H5a2 2 0 0 0-2 2z" />
+								<path d="M19 17v4H5a2 2 0 0 1-2-2" />
+							</svg>
+						</div>
+						<h3>Curated, band and personal shelves</h3>
+						<p>
+							Three scopes, one browser. Songs you add to a band are shared with the band;
+							your own stay yours. Search by title, artist, key or tag.
+						</p>
+					</article>
+
+					<article class="card">
+						<div class="card__icon" aria-hidden="true">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+								stroke-linecap="round" stroke-linejoin="round">
+								<path d="M7 8V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-3" />
+								<rect x="4" y="8" width="11" height="12" rx="2" />
+							</svg>
+						</div>
+						<h3>Fork, don't fight</h3>
+						<p>
+							Your guitarist wants a different intro? Fork the chart into your band's shelf.
+							BandBro keeps the provenance so you can always see where it came from.
+						</p>
+					</article>
+
+					<article class="card">
+						<div class="card__icon" aria-hidden="true">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+								stroke-linecap="round" stroke-linejoin="round">
+								<path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z" />
+								<path d="M13.5 6.5l3 3" />
+							</svg>
+						</div>
+						<h3>A ChordPro editor with a live preview</h3>
+						<p>
+							Write chords over lyrics in plain ChordPro on the left, watch the finished sheet
+							render on the right. Transpose the source itself when a song is written in the
+							wrong key for everyone.
+						</p>
+					</article>
+
+					<article class="card">
+						<div class="card__icon" aria-hidden="true">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+								stroke-linecap="round" stroke-linejoin="round">
+								<path d="M12 3v13" />
+								<circle cx="9" cy="18" r="3" />
+								<path d="M12 6l7-2v3l-7 2" />
+							</svg>
+						</div>
+						<h3>Import a sheet in one paste</h3>
+						<p>
+							Paste an akordy.kytary.cz link and BandBro converts the page into a proper
+							ChordPro chart — sections, inline chords and all — ready to tidy up.
+						</p>
+					</article>
+
+					<article class="card">
+						<div class="card__icon" aria-hidden="true">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+								stroke-linecap="round" stroke-linejoin="round">
+								<path d="M9 7h6" />
+								<path d="M9 12h6" />
+								<path d="M9 17h4" />
+								<rect x="4" y="3" width="16" height="18" rx="2" />
+							</svg>
+						</div>
+						<h3>H or B — your notation</h3>
+						<p>
+							Chords are stored the international way and shown the way Central Europe reads
+							them: <b>H</b> for B natural, <b>B</b> for B flat. Nobody has to translate
+							in their head at rehearsal.
+						</p>
+					</article>
+
+					<article class="card">
+						<div class="card__icon" aria-hidden="true">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+								stroke-linecap="round" stroke-linejoin="round">
+								<circle cx="9" cy="8" r="3" />
+								<path d="M3 20a6 6 0 0 1 12 0" />
+								<path d="M16 5.5a3 3 0 0 1 0 5" />
+								<path d="M18.5 20a5.5 5.5 0 0 0-3-4.9" />
+							</svg>
+						</div>
+						<h3>Bands, roles and invite links</h3>
+						<p>
+							Admins run the band, writers edit the songs, readers play them. Invite a
+							bandmate with a link or hold up a QR code at rehearsal — no email round trip.
+						</p>
+					</article>
+				</div>
+			</div>
+		</section>
+
+		<!-- ---------------------------------------------------------- capo -->
+		<section class="alt" id="capo">
+			<div class="wrap">
+				<div class="section-head">
+					<span class="kicker">One chart, two views</span>
+					<h2>The capo argument, settled.</h2>
+				</div>
+
+				<div class="split">
+					<div>
+						<h3>Everyone reads what they play.</h3>
+						<p>
+							A song is written once, with the shapes the guitarist fingers and a
+							<code>{capo}</code> line. The keys player flips one toggle and sees the same
+							song at concert pitch. Nobody rewrites anything.
+						</p>
+						<ul class="ticks">
+							<li>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+									stroke-linecap="round" stroke-linejoin="round">
+									<path d="M4 12.5l5 5L20 6.5" />
+								</svg>
+								<span>As-fingered ↔ concert pitch on a single switch.</span>
+							</li>
+							<li>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+									stroke-linecap="round" stroke-linejoin="round">
+									<path d="M4 12.5l5 5L20 6.5" />
+								</svg>
+								<span>Transpose up or down for the singer who's fighting the top note.</span>
+							</li>
+							<li>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+									stroke-linecap="round" stroke-linejoin="round">
+									<path d="M4 12.5l5 5L20 6.5" />
+								</svg>
+								<span>Slash chords and odd spellings survive the trip.</span>
+							</li>
+							<li>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+									stroke-linecap="round" stroke-linejoin="round">
+									<path d="M4 12.5l5 5L20 6.5" />
+								</svg>
+								<span>Pick a default view once in preferences and forget about it.</span>
+							</li>
+						</ul>
+					</div>
+
+					<div class="split__media two-up">
+						<div class="sheet">
+							<div class="sheet__bar">
+								<span class="sheet__title">As fingered</span>
+								<span class="sheet__chips"><span class="chip">Capo 2</span></span>
+							</div>
+							<div class="sheet__body">
+								<span class="section-label">Chorus</span>
+								<div class="line">
+									<span class="seg"><b>G</b><i>Hold on, </i></span>
+									<span class="seg"><b>D</b><i>hold </i></span>
+									<span class="seg"><b>Em</b><i>on</i></span>
+								</div>
+								<div class="line">
+									<span class="seg"><b>C</b><i>we're nearly </i></span>
+									<span class="seg"><b>G</b><i>home</i></span>
+								</div>
+							</div>
+						</div>
+
+						<div class="sheet">
+							<div class="sheet__bar">
+								<span class="sheet__title">Concert</span>
+								<span class="sheet__chips"><span class="chip chip--accent">+2</span></span>
+							</div>
+							<div class="sheet__body">
+								<span class="section-label">Chorus</span>
+								<div class="line">
+									<span class="seg"><b>A</b><i>Hold on, </i></span>
+									<span class="seg"><b>E</b><i>hold </i></span>
+									<span class="seg"><b>F#m</b><i>on</i></span>
+								</div>
+								<div class="line">
+									<span class="seg"><b>D</b><i>we're nearly </i></span>
+									<span class="seg"><b>A</b><i>home</i></span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- --------------------------------------------------------- stage -->
+		<section id="stage">
+			<div class="wrap">
+				<div class="section-head">
+					<span class="kicker">On stage</span>
+					<h2>Live mode is built for a music stand, not a desk.</h2>
+				</div>
+
+				<div class="split split--flip">
+					<div class="split__media">
+						<div class="stage">
+							<span class="section-label">Verse 2</span>
+							<div class="line">
+								<span class="seg"><b>Am</b><i>My mother </i></span>
+								<span class="seg"><b>C</b><i>was a </i></span>
+								<span class="seg"><b>D</b><i>tailor</i></span>
+							</div>
+							<div class="line">
+								<span class="seg"><b>F</b><i>She sewed my </i></span>
+								<span class="seg"><b>Am</b><i>new blue </i></span>
+								<span class="seg"><b>E</b><i>jeans</i></span>
+							</div>
+							<div class="stage__bar">
+								<span>‹ Prev</span>
+								<span>Auto-scroll</span>
+								<span>Next ›</span>
+								<span class="stage__key">3 / 18 · Am</span>
+							</div>
+						</div>
+					</div>
+
+					<div>
+						<h3>Huge chords, no chrome, no fumbling.</h3>
+						<p>
+							Dark stage palette, chords sized to be read at arm's length, and the controls
+							you touch mid-song within thumb reach. Everything else lives one swipe away
+							in a drawer.
+						</p>
+						<ul class="ticks">
+							<li>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+									stroke-linecap="round" stroke-linejoin="round">
+									<path d="M4 12.5l5 5L20 6.5" />
+								</svg>
+								<span>Auto-scroll with a speed you set, prev/next by tap.</span>
+							</li>
+							<li>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+									stroke-linecap="round" stroke-linejoin="round">
+									<path d="M4 12.5l5 5L20 6.5" />
+								</svg>
+								<span>Fit-to-screen sizes the song to your tablet, or lay it out in two or
+									three columns.</span>
+							</li>
+							<li>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+									stroke-linecap="round" stroke-linejoin="round">
+									<path d="M4 12.5l5 5L20 6.5" />
+								</svg>
+								<span>Jump to any song in the set — search by title, artist or a line of
+									the lyric.</span>
+							</li>
+							<li>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+									stroke-linecap="round" stroke-linejoin="round">
+									<path d="M4 12.5l5 5L20 6.5" />
+								</svg>
+								<span>Text size, spacing and theme are per device — your phone and the
+									drummer's iPad each keep their own.</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- ------------------------------------------------------- setlists -->
+		<section class="alt" id="setlists">
+			<div class="wrap">
+				<div class="section-head">
+					<span class="kicker">Setlists</span>
+					<h2>Build the set, print the set, play the set.</h2>
+					<p>
+						Drag songs into order minutes before you go on. Export the whole thing as a
+						proper chord-sheet PDF — one song per page, no page turns mid-chorus, a table of
+						contents at the front, and capo'd songs printed as fingered, at concert pitch,
+						or both.
+					</p>
+				</div>
+
+				<div class="grid">
+					<article class="card">
+						<div class="card__icon" aria-hidden="true">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+								stroke-linecap="round" stroke-linejoin="round">
+								<path d="M8 7h12" />
+								<path d="M8 12h12" />
+								<path d="M8 17h12" />
+								<path d="M4 7h.01M4 12h.01M4 17h.01" />
+							</svg>
+						</div>
+						<h3>Drag to reorder</h3>
+						<p>Grip a row and move it — with a finger, a mouse or the keyboard. The order
+							saves itself.</p>
+					</article>
+
+					<article class="card">
+						<div class="card__icon" aria-hidden="true">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+								stroke-linecap="round" stroke-linejoin="round">
+								<path d="M7 17V9a2 2 0 0 1 2-2h6l4 4v6a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2z" />
+								<path d="M15 7v4h4" />
+								<path d="M5 5v12" />
+							</svg>
+						</div>
+						<h3>PDF that reads like a chart</h3>
+						<p>Rendered server-side by the reference ChordPro engine: two columns when a song
+							needs them, chords in red, nothing spilling over a page break.</p>
+					</article>
+
+					<article class="card">
+						<div class="card__icon" aria-hidden="true">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+								stroke-linecap="round" stroke-linejoin="round">
+								<path d="M12 4v10" />
+								<path d="M8 11l4 4 4-4" />
+								<path d="M4 19h16" />
+							</svg>
+						</div>
+						<h3>Download for the gig</h3>
+						<p>One tap puts the whole setlist on your device, chord sheets and all, ready for
+							a basement with no bars of signal.</p>
+					</article>
+				</div>
+			</div>
+		</section>
+
+		<!-- -------------------------------------------------------- offline -->
+		<section id="offline">
+			<div class="wrap">
+				<div class="split">
+					<div>
+						<span class="kicker">Offline</span>
+						<h3>The venue's wifi is not your problem.</h3>
+						<p>
+							BandBro installs to your home screen and opens signed in with no connection at
+							all. Downloaded setlists play from the device, and the offline shelf searches
+							every one of them — titles, artists <em>and</em> lyrics, accents folded so
+							“sen” still finds “Šeň”.
+						</p>
+						<ul class="ticks">
+							<li>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+									stroke-linecap="round" stroke-linejoin="round">
+									<path d="M4 12.5l5 5L20 6.5" />
+								</svg>
+								<span>Installs as a real app on iOS and Android.</span>
+							</li>
+							<li>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+									stroke-linecap="round" stroke-linejoin="round">
+									<path d="M4 12.5l5 5L20 6.5" />
+								</svg>
+								<span>Live mode runs from the downloaded copy, no requests, no stalls.</span>
+							</li>
+							<li>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+									stroke-linecap="round" stroke-linejoin="round">
+									<path d="M4 12.5l5 5L20 6.5" />
+								</svg>
+								<span>Controls that need the server get out of the way instead of teasing
+									you with a greyed-out button.</span>
+							</li>
+						</ul>
+					</div>
+
+					<div class="split__media">
+						<div class="sheet">
+							<div class="sheet__bar">
+								<span class="sheet__title">Available offline</span>
+								<span class="sheet__chips"><span class="chip">3 setlists</span></span>
+							</div>
+							<div class="sheet__body">
+								<span class="section-label">Saturday · Klub 007</span>
+								<div class="line">
+									<span class="seg"><i>18 songs · downloaded 2 days ago</i></span>
+								</div>
+								<span class="section-label">Wedding — Novákovi</span>
+								<div class="line">
+									<span class="seg"><i>26 songs · downloaded today</i></span>
+								</div>
+								<span class="section-label">Rehearsal shortlist</span>
+								<div class="line">
+									<span class="seg"><i>9 songs · downloaded today</i></span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- ----------------------------------------------------------- room -->
+		<section class="alt" id="room">
+			<div class="wrap">
+				<div class="split split--flip">
+					<div class="split__media">
+						<div class="fancard">
+							<span class="chip chip--accent">Now playing · follow along</span>
+							<span class="code">K7M2Q</span>
+							<p>Fans open the code on their own phones and the lyrics follow the song
+								you're playing.</p>
+						</div>
+					</div>
+
+					<div>
+						<span class="kicker">Your audience</span>
+						<h3>Put the room in the song.</h3>
+						<p>
+							Share a five-character code or a QR from the stage. Anyone can open a
+							read-only live view — no account, no install — and it follows you from song to
+							song. They pick their own text size and theme; nothing they do reaches your
+							screen.
+						</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- ------------------------------------------------------------ cta -->
+		<section>
+			<div class="wrap">
+				<div class="cta">
+					<h2>Bring your songbook to the next rehearsal.</h2>
+					<p>
+						Start on your own, then invite the band with a link when you're ready. Everything
+						you write stays yours.
+					</p>
+					<div class="cta__buttons">
+						<a class="btn btn--primary btn--lg" href="/app/register">Sign up</a>
+						<a class="btn btn--outline btn--lg" href="/app/login">Log in</a>
+						<a class="btn btn--ghost btn--lg" href="/app">Continue to app</a>
+					</div>
+				</div>
+			</div>
+		</section>
+
+	</main>
+
+	<footer class="site-footer">
+		<div class="wrap site-footer__inner">
+			<span>
+				Made with 🧡 by
+				<a href="https://codingfingers.cz" target="_blank" rel="noopener noreferrer">
+					<strong>Coding Fingers</strong>
+				</a>
+			</span>
+		</div>
+	</footer>
 </body>
 
 </html>

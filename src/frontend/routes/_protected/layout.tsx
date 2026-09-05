@@ -1,4 +1,5 @@
 import { AppNav } from "@frontend/components/AppNav";
+import { SiteFooter } from "@frontend/components/SiteFooter";
 import { useSession } from "@frontend/contexts/SessionContext";
 import { useOnline } from "@frontend/lib/offline";
 import { useTheme } from "@frontend/lib/theme";
@@ -45,10 +46,15 @@ function ProtectedLayout() {
 
 	if (fullBleed) return <Outlet />;
 
+	// flex column + a growing main so the footer sits at the bottom of a short
+	// screen rather than halfway up it — and, on a long one, below the content.
 	return (
-		<div className="min-h-dvh bg-background text-foreground">
+		<div className="flex min-h-dvh flex-col bg-background text-foreground">
 			<AppNav section={section} />
-			<Outlet />
+			<main className="flex-1">
+				<Outlet />
+			</main>
+			<SiteFooter />
 		</div>
 	);
 }

@@ -1,3 +1,4 @@
+import { SiteFooter } from "@frontend/components/SiteFooter";
 import { useSession } from "@frontend/contexts/SessionContext";
 import { safeRedirect } from "@frontend/lib/redirect";
 import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
@@ -18,6 +19,15 @@ export const Route = createFileRoute("/_auth")({
 			return <Navigate to={safeRedirect(redirect) as "/"} />;
 		}
 
-		return <Outlet />;
+		// The login/register cards centre themselves in the space above the footer,
+		// so `flex-1` here is what keeps them centred once the footer takes its row.
+		return (
+			<div className="flex min-h-dvh flex-col bg-background text-foreground">
+				<div className="flex flex-1 flex-col">
+					<Outlet />
+				</div>
+				<SiteFooter />
+			</div>
+		);
 	},
 });

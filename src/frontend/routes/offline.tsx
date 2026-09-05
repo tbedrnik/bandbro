@@ -1,6 +1,7 @@
 import { Wordmark } from "@frontend/components/AppNav";
 import { MetaChip } from "@frontend/components/MetaChip";
 import { OfflinePill } from "@frontend/components/OfflinePill";
+import { SiteFooter } from "@frontend/components/SiteFooter";
 import { Button } from "@frontend/components/ui/button";
 import { Input } from "@frontend/components/ui/input";
 import {
@@ -48,7 +49,7 @@ function OfflineShelf() {
 	const results = useMemo(() => searchSongs(q, corpus), [q, corpus]);
 
 	return (
-		<div className="min-h-dvh bg-background text-foreground">
+		<div className="flex min-h-dvh flex-col bg-background text-foreground">
 			<header className="flex h-14 items-center gap-4 border-b border-border px-6">
 				<Wordmark />
 				<span className="font-display text-sm text-muted-foreground">
@@ -68,7 +69,7 @@ function OfflineShelf() {
 				</div>
 			</header>
 
-			<div className="mx-auto max-w-3xl px-6 py-10">
+			<div className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
 				<h1 className="font-display text-3xl font-bold">On this device</h1>
 				<p className="mt-2 max-w-xl text-sm text-muted-foreground">
 					These setlists were downloaded for offline use. They play in Live mode
@@ -140,6 +141,8 @@ function OfflineShelf() {
 					</div>
 				)}
 			</div>
+
+			<SiteFooter />
 		</div>
 	);
 }
