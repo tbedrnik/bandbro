@@ -50,7 +50,7 @@ function RouteComponent() {
 	});
 
 	return (
-		<div className="grid place-items-center min-h-dvh">
+		<div className="grid flex-1 place-items-center px-4 py-10">
 			<div className="flex flex-col gap-4 w-sm max-w-dvw">
 				{mutation.data?.error && (
 					<Alert variant="destructive" className="rounded-xl">

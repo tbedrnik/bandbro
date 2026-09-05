@@ -67,7 +67,7 @@ src/
     index.css           Design tokens (see §6)
   shared/               isomorphic code (currently addNumbers demo) — transpose engine goes here
   generated/            Prisma client + TanStack route tree (do not hand-edit)
-  landing/              marketing page
+  landing/              marketing page — static HTML + hand-written CSS, no React (§D18)
 prisma/
   schema.prisma         generator + datasource only
   models/auth.prisma    better-auth models (User, Session, Account, Verification, Organization, Member, Invitation)
@@ -580,6 +580,45 @@ runs on **2 shared vCPU / 2 GB**, which is what turns each of these from theoret
 socket timeout buys headroom, it doesn't remove the ceiling — a long enough setlist on a slow enough
 box still runs out of connection. The right shape is `POST` returns a job id, the client polls, the PDF
 lands in storage. Deliberately not built here; this change was scoped to stopping the bleeding.
+
+### D18 — The landing page is static, hand-written, and shares nothing with the SPA *(implemented)*
+`/` is a marketing page (`src/landing/index.html` + `src/landing/styles.css`), not a React route. It
+showcases what the app does — the songbook and forking, the ChordPro editor, the capo/concert pair, Live
+mode, setlists + PDF, offline, the fan share, the kytary importer, `H`/`B` notation — and carries the
+three ways in: **Continue to app** (`/app`), **Sign up** (`/app/register`), **Log in** (`/app/login`),
+repeated in the top bar and the closing call.
+- **No React, no Tailwind, no JS at all.** This is the one surface a stranger loads cold, often on venue
+  wifi, and it has to paint before the SPA bundle would have finished downloading. Bun bundles the linked
+  stylesheet through the same HTML entry point, so it is still one build and one deploy. The design
+  tokens are **copied** from `src/frontend/index.css` (§6) rather than shared — that duplication is the
+  price of not pulling the SPA's stylesheet onto the landing page; keep the two palettes in step by hand.
+- **Fonts are subset by hand.** Bun's CSS bundler inlines every `url()` as base64, so each fontsource
+  import is paid for in the stylesheet: the page loads Space Grotesk (variable), IBM Plex Sans latin +
+  latin-ext at 400/600, and IBM Plex Mono **latin only** (everything set in mono here is a chord, a key
+  or a stage code, all ASCII). Only 400 and 600 exist, so a bare `<b>` is pinned to 600 rather than
+  letting the browser synthesise a faux-bold 700.
+- **Icon links must resolve at build time.** `<link rel="icon" href="/app/icon-192.png">` fails the Bun
+  HTML build ("Could not resolve") even though the path is a live server route — the bundler resolves
+  `link`/`script` hrefs as modules. Point it at the file (`../frontend/public/icon-192.png`) and let it
+  be emitted as a hashed asset.
+- Dark mode follows `prefers-color-scheme` only; there is no toggle, because there is no persisted
+  preference to read without JS.
+
+### D19 — The footer is everywhere except where a song is being played *(implemented)*
+"Made with 🧡 by Coding Fingers" (→ codingfingers.cz) is one `SiteFooter` component
+(`src/frontend/components/SiteFooter.tsx`) rendered by the app chrome, plus a hand-written twin in the
+landing page's own markup (that surface ships no React — D18).
+- **Where it renders:** the protected layout (so every authoring screen gets it), the `_auth` layout
+  (login/register), the offline shelf and both join pages.
+- **Where it deliberately does not:** Live mode, the print/PDF route and the fan view. Those are
+  full-bleed performance surfaces where every row of pixels is chart; a credit line under a song being
+  read off a stand at a gig is noise. The protected layout already had the `fullBleed` branch that
+  returns a bare `<Outlet>` — the footer sits in the other branch, so Live mode and print stay exempt by
+  construction rather than by a second list of paths to keep in sync.
+- **Layout.** Each host became `flex min-h-dvh flex-col` with the content in a growing child, so the
+  footer lands at the bottom of a short screen instead of halfway up it. The centred screens
+  (login, register, join) traded their own `min-h-dvh` for `flex-1`, which is what keeps their cards
+  centred in the space *above* the footer rather than pushing it off-screen.
 
 ---
 

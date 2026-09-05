@@ -1,0 +1,783 @@
+/*
+ * BandBro marketing landing (served at "/" by src/backend/index.ts).
+ *
+ * Deliberately hand-written CSS rather than Tailwind + React: this is a static,
+ * JS-free page in front of the app, and the whole point is that it paints on a
+ * phone on venue wifi before the SPA bundle would have finished downloading.
+ * The tokens below mirror src/frontend/index.css (CLAUDE.md §6) so the landing
+ * and the app are recognisably the same product; keep them in step by hand.
+ */
+
+/* Display — Space Grotesk (titles, buttons, labels) */
+@import "@fontsource-variable/space-grotesk";
+
+/* Body — IBM Plex Sans. Latin + latin-ext only (Czech diacritics), two weights:
+   the full fontsource bundles are inlined as base64 by Bun's CSS bundler, so
+   every extra subset is weight on a page that must load fast. */
+@import "@fontsource/ibm-plex-sans/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-ext-400.css";
+@import "@fontsource/ibm-plex-sans/latin-600.css";
+@import "@fontsource/ibm-plex-sans/latin-ext-600.css";
+
+/* Chords / meta — IBM Plex Mono. Latin only: everything set in mono here is a
+   chord, a key or a stage code, all of which are ASCII by construction. */
+@import "@fontsource/ibm-plex-mono/latin-500.css";
+
+:root {
+	--bg: #ffffff;
+	--surface: #f5f7f9;
+	--surface-2: #eef1f5;
+	--ink: #161a1f;
+	--muted: #5b6470;
+	--border: #e6eaef;
+	--accent: #c2711a;
+	--accent-ink: #ffffff;
+	--accent-wash: rgba(194, 113, 26, 0.1);
+	--ok: #3fae7a;
+	--shadow:
+		0 1px 2px rgba(22, 26, 31, 0.04), 0 12px 32px rgba(22, 26, 31, 0.06);
+
+	--font-display:
+		"Space Grotesk Variable", "Space Grotesk", system-ui, sans-serif;
+	--font-sans: "IBM Plex Sans", system-ui, sans-serif;
+	--font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+	--radius: 14px;
+	--page: 1120px;
+
+	color-scheme: light;
+}
+
+/* Dark = the stage palette the app uses for Live mode. */
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #16181c;
+		--surface: #1d2025;
+		--surface-2: #23262c;
+		--ink: #edeef0;
+		--muted: #8b8f96;
+		--border: #2c3037;
+		--accent: #e8a13a;
+		--accent-ink: #16181c;
+		--accent-wash: rgba(232, 161, 58, 0.16);
+		--shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.35);
+
+		color-scheme: dark;
+	}
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+}
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--ink);
+	font-family: var(--font-sans);
+	font-size: 16px;
+	line-height: 1.6;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+a {
+	color: inherit;
+}
+
+/* Only 400 and 600 are loaded — without this a <b> asks for 700 and the browser
+   synthesises a smeared faux-bold instead of using the weight we shipped. */
+strong,
+b {
+	font-weight: 600;
+}
+
+h1,
+h2,
+h3 {
+	font-family: var(--font-display);
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	line-height: 1.15;
+	margin: 0;
+	text-wrap: balance;
+}
+
+p {
+	margin: 0;
+	text-wrap: pretty;
+}
+
+.wrap {
+	width: 100%;
+	max-width: var(--page);
+	margin-inline: auto;
+	padding-inline: 20px;
+}
+
+/* ---------------------------------------------------------------- header */
+
+.topbar {
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	border-bottom: 1px solid var(--border);
+	background: color-mix(in srgb, var(--bg) 88%, transparent);
+	backdrop-filter: blur(10px);
+}
+
+.topbar__inner {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	height: 60px;
+}
+
+.wordmark {
+	font-family: var(--font-display);
+	font-size: 20px;
+	font-weight: 700;
+	letter-spacing: -0.03em;
+	text-decoration: none;
+}
+
+.wordmark span {
+	color: var(--accent);
+}
+
+.topbar nav {
+	display: none;
+	gap: 22px;
+	margin-inline-start: 12px;
+}
+
+.topbar nav a {
+	font-family: var(--font-display);
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--muted);
+	text-decoration: none;
+}
+
+.topbar nav a:hover {
+	color: var(--ink);
+}
+
+.topbar__actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-inline-start: auto;
+}
+
+@media (min-width: 860px) {
+	.topbar nav {
+		display: flex;
+	}
+}
+
+/* --------------------------------------------------------------- buttons */
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	border: 1px solid transparent;
+	border-radius: 999px;
+	padding: 10px 18px;
+	font-family: var(--font-display);
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1;
+	text-decoration: none;
+	white-space: nowrap;
+	cursor: pointer;
+	transition:
+		background-color 0.15s ease,
+		border-color 0.15s ease,
+		transform 0.15s ease;
+}
+
+.btn:active {
+	transform: translateY(1px);
+}
+
+.btn--primary {
+	background: var(--accent);
+	color: var(--accent-ink);
+}
+
+.btn--primary:hover {
+	background: color-mix(in srgb, var(--accent) 88%, var(--ink));
+}
+
+.btn--outline {
+	border-color: var(--border);
+	background: var(--surface);
+	color: var(--ink);
+}
+
+.btn--outline:hover {
+	background: var(--surface-2);
+}
+
+.btn--ghost {
+	color: var(--ink);
+}
+
+.btn--ghost:hover {
+	background: var(--surface-2);
+}
+
+.btn--sm {
+	padding: 8px 14px;
+	font-size: 14px;
+}
+
+.btn--lg {
+	padding: 13px 24px;
+	font-size: 16px;
+}
+
+/* ------------------------------------------------------------------ hero */
+
+.hero {
+	position: relative;
+	overflow: hidden;
+	padding-block: 72px 64px;
+}
+
+/* One soft accent glow, the same device the fan view uses on stage. */
+.hero::before {
+	content: "";
+	position: absolute;
+	inset-inline-start: 50%;
+	top: -320px;
+	width: 900px;
+	height: 620px;
+	transform: translateX(-50%);
+	background: radial-gradient(
+		closest-side,
+		var(--accent-wash),
+		transparent 70%
+	);
+	pointer-events: none;
+}
+
+.hero__inner {
+	position: relative;
+	display: grid;
+	gap: 48px;
+	align-items: center;
+}
+
+@media (min-width: 960px) {
+	.hero {
+		padding-block: 96px 88px;
+	}
+
+	.hero__inner {
+		grid-template-columns: 1.05fr 0.95fr;
+		gap: 56px;
+	}
+}
+
+.eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: var(--surface);
+	padding: 6px 14px;
+	font-family: var(--font-mono);
+	font-size: 12px;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+
+.eyebrow .dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--ok);
+}
+
+.hero h1 {
+	margin-top: 20px;
+	font-size: clamp(38px, 6.2vw, 60px);
+}
+
+.hero h1 em {
+	font-style: normal;
+	color: var(--accent);
+}
+
+.hero__lede {
+	margin-top: 20px;
+	max-width: 34em;
+	font-size: 18px;
+	color: var(--muted);
+}
+
+.hero__cta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-top: 32px;
+}
+
+.hero__note {
+	margin-top: 16px;
+	font-size: 14px;
+	color: var(--muted);
+}
+
+.textlink {
+	color: var(--accent);
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.textlink:hover {
+	text-decoration: underline;
+}
+
+/* ----------------------------------------------------- chord sheet mocks */
+
+.sheet {
+	border: 1px solid var(--border);
+	border-radius: 18px;
+	background: var(--surface);
+	box-shadow: var(--shadow);
+	overflow: hidden;
+}
+
+.sheet__bar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	border-bottom: 1px solid var(--border);
+	padding: 12px 16px;
+}
+
+.sheet__title {
+	font-family: var(--font-display);
+	font-size: 15px;
+	font-weight: 700;
+}
+
+.sheet__chips {
+	display: flex;
+	gap: 6px;
+	margin-inline-start: auto;
+}
+
+.chip {
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: var(--bg);
+	padding: 3px 10px;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	font-weight: 500;
+	color: var(--muted);
+	white-space: nowrap;
+}
+
+.chip--accent {
+	border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+	background: var(--accent-wash);
+	color: var(--accent);
+}
+
+.sheet__body {
+	padding: 18px 16px 22px;
+}
+
+.section-label {
+	font-family: var(--font-display);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+
+.line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	margin-top: 14px;
+}
+
+/* The first line after a section label sits closer to it than to the line above. */
+.section-label + .line {
+	margin-top: 8px;
+}
+
+.line + .section-label {
+	display: block;
+	margin-top: 26px;
+}
+
+/* A lyric run with the chord that starts it sitting above — the app's
+   ChordSheet in miniature: mono accent chord, plex-sans lyric, aligned left. */
+.seg {
+	display: flex;
+	flex-direction: column;
+	white-space: pre;
+}
+
+.seg b {
+	font-family: var(--font-mono);
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1.3;
+	color: var(--accent);
+}
+
+.seg i {
+	font-style: normal;
+	font-size: 17px;
+	line-height: 1.35;
+}
+
+/* A chord with no lyric under it still needs the lyric row's height. */
+.seg--chordless b::after {
+	content: "\00a0";
+}
+
+/* --------------------------------------------------------------- section */
+
+section {
+	padding-block: 64px;
+}
+
+.section-head {
+	max-width: 46em;
+}
+
+.section-head h2 {
+	font-size: clamp(26px, 3.6vw, 34px);
+}
+
+.section-head p {
+	margin-top: 14px;
+	font-size: 17px;
+	color: var(--muted);
+}
+
+.kicker {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	font-weight: 500;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--accent);
+}
+
+.kicker + h2 {
+	margin-top: 10px;
+}
+
+.alt {
+	border-block: 1px solid var(--border);
+	background: var(--surface);
+}
+
+/* ----------------------------------------------------------- feature grid */
+
+.grid {
+	display: grid;
+	gap: 16px;
+	margin-top: 40px;
+	grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+	.grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (min-width: 1000px) {
+	.grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+.card {
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--bg);
+	padding: 22px;
+}
+
+.alt .card {
+	background: var(--bg);
+}
+
+.card__icon {
+	display: grid;
+	place-items: center;
+	width: 38px;
+	height: 38px;
+	border-radius: 11px;
+	background: var(--accent-wash);
+	color: var(--accent);
+}
+
+.card h3 {
+	margin-top: 16px;
+	font-size: 17px;
+}
+
+.card p {
+	margin-top: 8px;
+	font-size: 15px;
+	color: var(--muted);
+}
+
+/* --------------------------------------------------------- split showcase */
+
+.split {
+	display: grid;
+	gap: 40px;
+	align-items: center;
+	margin-top: 44px;
+}
+
+@media (min-width: 960px) {
+	.split {
+		grid-template-columns: 1fr 1fr;
+		gap: 56px;
+	}
+
+	.split--flip .split__media {
+		order: -1;
+	}
+}
+
+.split h3 {
+	font-size: clamp(23px, 3vw, 28px);
+}
+
+.split p {
+	margin-top: 14px;
+	font-size: 17px;
+	color: var(--muted);
+}
+
+.ticks {
+	margin: 22px 0 0;
+	padding: 0;
+	list-style: none;
+	display: grid;
+	gap: 10px;
+}
+
+.ticks li {
+	display: grid;
+	grid-template-columns: 20px 1fr;
+	gap: 10px;
+	align-items: start;
+	font-size: 16px;
+}
+
+.ticks svg {
+	margin-top: 4px;
+	color: var(--accent);
+}
+
+.two-up {
+	display: grid;
+	gap: 14px;
+	grid-template-columns: 1fr;
+}
+
+@media (min-width: 480px) {
+	.two-up {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+/* ------------------------------------------------------------- stage card */
+
+/* Always the stage palette, in both themes — that is the point of the card. In
+   dark mode it would otherwise disappear into the page, so a faint accent ring
+   stands in for the drop shadow that only reads on a light ground. */
+.stage {
+	border-radius: 18px;
+	border: 1px solid #2c3037;
+	background: #16181c;
+	color: #edeef0;
+	padding: 22px 20px 26px;
+	box-shadow:
+		var(--shadow),
+		0 0 0 1px rgba(232, 161, 58, 0.14),
+		0 0 60px rgba(232, 161, 58, 0.07);
+}
+
+.stage .section-label,
+.stage .chip {
+	color: #8b8f96;
+}
+
+.stage .chip {
+	border-color: #2c3037;
+	background: #1d2025;
+}
+
+.stage .seg b {
+	color: #e8a13a;
+	font-size: 15px;
+}
+
+.stage .seg i {
+	font-size: 21px;
+}
+
+.stage__bar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 24px;
+	border-top: 1px solid #2c3037;
+	padding-top: 18px;
+	font-family: var(--font-display);
+	font-size: 13px;
+	color: #8b8f96;
+}
+
+.stage__key {
+	margin-inline-start: auto;
+	font-family: var(--font-mono);
+	color: #e8a13a;
+}
+
+/* --------------------------------------------------------------- fan card */
+
+.fancard {
+	display: grid;
+	gap: 18px;
+	justify-items: center;
+	border: 1px solid var(--border);
+	border-radius: 18px;
+	background: var(--surface);
+	padding: 30px 24px;
+	text-align: center;
+	box-shadow: var(--shadow);
+}
+
+.code {
+	font-family: var(--font-mono);
+	font-size: 34px;
+	font-weight: 500;
+	letter-spacing: 0.22em;
+	color: var(--accent);
+	padding-inline-start: 0.22em; /* letter-spacing trails the last glyph */
+}
+
+.fancard p {
+	font-size: 15px;
+	color: var(--muted);
+}
+
+/* ------------------------------------------------------------ final call */
+
+.cta {
+	border: 1px solid var(--border);
+	border-radius: 20px;
+	background: var(--surface);
+	padding: 48px 24px;
+	text-align: center;
+}
+
+.cta h2 {
+	font-size: clamp(26px, 4vw, 36px);
+}
+
+.cta p {
+	margin: 14px auto 0;
+	max-width: 40em;
+	font-size: 17px;
+	color: var(--muted);
+}
+
+.cta__buttons {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 12px;
+	margin-top: 28px;
+}
+
+/* ----------------------------------------------------------------- footer */
+
+.site-footer {
+	border-top: 1px solid var(--border);
+	padding-block: 28px;
+}
+
+.site-footer__inner {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 8px 18px;
+	font-family: var(--font-display);
+	font-size: 14px;
+	color: var(--muted);
+	text-align: center;
+}
+
+.site-footer a {
+	color: var(--muted);
+	text-decoration: none;
+}
+
+/* biome-ignore lint/style/noDescendingSpecificity: the higher-specificity rule it
+   is compared against is `.topbar nav a:hover`, which can never match an anchor
+   inside the footer — the two selectors have no element in common. */
+.site-footer a:hover {
+	color: var(--ink);
+	text-decoration: underline;
+}
+
+.site-footer strong {
+	font-weight: 600;
+}
+
+/* Visible only to screen readers — used for the skip link and section labels. */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+:where(a, button):focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 3px;
+	border-radius: 6px;
+}
