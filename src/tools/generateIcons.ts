@@ -1,3 +1,5 @@
+import { deflateSync } from "node:zlib";
+
 /**
  * Generator for the committed PWA icons (`bun run src/tools/generateIcons.ts`). Draws the BandBro mark (an amber "B" on the dark
  * stage surface) procedurally and encodes a PNG by hand — no image dependency needed.
@@ -47,7 +49,13 @@ function png(width: number, height: number, rgb: Uint8Array): Uint8Array {
 	v.setUint32(4, height);
 	ihdr[8] = 8; // bit depth
 	ihdr[9] = 2; // colour type: truecolour
-	const idat = Bun.deflateSync(raw);
+	// zlib stream, not a raw DEFLATE one: PNG's IDAT is specified as a zlib datastream
+	// (RFC 1950 — 2-byte header + Adler-32 trailer), and `Bun.deflateSync` returns the
+	// bare RFC 1951 bytes. The result still passes a chunk/CRC check and still reports
+	// its size to `file(1)`, because only IHDR is read to get that far — but no decoder
+	// can inflate it, so Chrome rejected the icons and with them the whole manifest,
+	// which is what stopped Android offering to install the app (§D7).
+	const idat = new Uint8Array(deflateSync(raw));
 	const parts = [
 		new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]),
 		chunk("IHDR", ihdr),
