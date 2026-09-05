@@ -104,12 +104,26 @@ Oh [Am]mother
 		expect(firstSeg).toEqual({ chord: "Am", text: "There is a " });
 	});
 
-	test("{chorus} repeats the last chorus", () => {
+	test("{chorus} recalls the chorus rather than reprinting it", () => {
 		const { blocks } = parseChordpro(
 			"{soc}\nLet it [C]be\n{eoc}\n\nverse line\n\n{chorus}",
 		);
 		const choruses = blocks.filter((b) => b.kind === "chorus");
 		expect(choruses).toHaveLength(2);
+		expect(choruses[0].recall).toBeUndefined();
+		expect(choruses[1]).toEqual({
+			kind: "chorus",
+			label: "Chorus",
+			recall: true,
+			lines: [],
+		});
+	});
+
+	test("a recall keeps the blocks around it in order", () => {
+		const { blocks } = parseChordpro(
+			"{soc}\nLet it [C]be\n{eoc}\n\nverse line\n{chorus}",
+		);
+		expect(blocks.map((b) => b.kind)).toEqual(["chorus", "none", "chorus"]);
 	});
 });
 

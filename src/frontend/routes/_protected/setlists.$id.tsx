@@ -20,7 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { api } from "@frontend/api";
-import { ExportPdfMenu } from "@frontend/components/ExportPdfMenu";
+import { ExportPdfButton } from "@frontend/components/ExportPdfButton";
 import { MetaChip } from "@frontend/components/MetaChip";
 import { OfflinePill } from "@frontend/components/OfflinePill";
 import { ShareWithFansModal } from "@frontend/components/ShareWithFansModal";
@@ -238,7 +238,7 @@ function SetlistDetail() {
 					{/* PDF is rendered by the server's chordpro CLI, and the fan session is
 					    created on the server — neither exists without a connection. */}
 					{online && (
-						<ExportPdfMenu
+						<ExportPdfButton
 							songbookId={id}
 							adoptJobId={exportJobId}
 							disabled={!setlist.songs.length}

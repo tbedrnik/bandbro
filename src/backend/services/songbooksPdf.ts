@@ -3,13 +3,14 @@ import { chordproConfig } from "../../shared/chordproConfig";
 import {
 	buildSetlistChordpro,
 	type PdfMode,
+	type PdfOptions,
 	type PdfSongEntry,
 } from "../../shared/chordproPdf";
 import { slugify } from "../../shared/slug";
 import { createConcurrencyGate, QueueFullError } from "../concurrencyGate";
 import { HttpError } from "./scope";
 
-export type { PdfMode };
+export type { PdfMode, PdfOptions };
 
 /**
  * Rendering is a `chordpro` (Perl) subprocess: single-threaded, CPU-bound, and tens of
@@ -75,10 +76,11 @@ export async function loadSetlistForPdf({
 export async function renderSetlistPdf({
 	entries,
 	mode,
+	collapseChoruses = false,
 }: {
 	entries: PdfSongEntry[];
 	mode: PdfMode;
-}): Promise<Uint8Array> {
+} & PdfOptions): Promise<Uint8Array> {
 	const chordproBin = Bun.which("chordpro");
 	if (!chordproBin) {
 		console.log("[PDF] chordpro bin not found");
@@ -88,7 +90,7 @@ export async function renderSetlistPdf({
 		);
 	}
 
-	const doc = buildSetlistChordpro(entries, mode);
+	const doc = buildSetlistChordpro(entries, mode, { collapseChoruses });
 
 	// Work in a dir of our own; chordpro reads a file and writes the PDF. Unique per
 	// render, so concurrent exports of the same setlist don't clobber each other.
@@ -107,6 +109,7 @@ export async function renderSetlistPdf({
 			console.log("[PDF] rendered", {
 				songs: entries.length,
 				mode,
+				collapseChoruses,
 				bytes: bytes.length,
 				waitedMs: startedAt - queuedAt,
 				renderMs: Date.now() - startedAt,

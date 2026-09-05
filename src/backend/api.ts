@@ -58,6 +58,7 @@ const pdfExportSchema = t.Object({
 	id: t.String(),
 	songbookId: t.String(),
 	mode: t.String(),
+	collapseChoruses: t.Boolean(),
 	status: t.Union([
 		t.Literal("pending"),
 		t.Literal("running"),
@@ -275,10 +276,16 @@ export const api = new Elysia({ prefix: "/api" })
 						songbookId: params.id,
 						userId: user.id,
 						mode: body?.mode,
+						collapseChoruses: body?.collapseChoruses,
 					}),
 				{
 					auth: true,
-					body: t.Optional(t.Object({ mode: t.Optional(pdfModeSchema) })),
+					body: t.Optional(
+						t.Object({
+							mode: t.Optional(pdfModeSchema),
+							collapseChoruses: t.Optional(t.Boolean()),
+						}),
+					),
 					response: pdfExportSchema,
 				},
 			),

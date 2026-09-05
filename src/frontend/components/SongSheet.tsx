@@ -13,6 +13,7 @@ export function SongSheet({
 	capo,
 	view,
 	transpose = 0,
+	collapseChoruses,
 	lyricSize,
 	chordSize,
 	hideChords,
@@ -25,6 +26,8 @@ export function SongSheet({
 	capo?: number | null;
 	view: ChordView;
 	transpose?: number;
+	/** Collapse repeated, identical choruses to a one-line recall (CLAUDE.md §D23). */
+	collapseChoruses?: boolean;
 	lyricSize?: number;
 	chordSize?: number;
 	hideChords?: boolean;
@@ -34,8 +37,8 @@ export function SongSheet({
 	className?: string;
 }) {
 	const { blocks } = useMemo(
-		() => buildSongView({ content, capo, transpose, view }),
-		[content, capo, transpose, view],
+		() => buildSongView({ content, capo, transpose, view, collapseChoruses }),
+		[content, capo, transpose, view, collapseChoruses],
 	);
 	return (
 		<ChordSheet

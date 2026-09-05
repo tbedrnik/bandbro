@@ -14,6 +14,7 @@ import {
 	IconMinus,
 	IconMoon,
 	IconPlus,
+	IconRepeat,
 	IconSun,
 	IconTextSize,
 } from "@tabler/icons-react";
@@ -106,7 +107,7 @@ export function DisplaySettings({
 				/>
 			</Row>
 
-			<div className="flex gap-1 rounded-xl bg-secondary p-1">
+			<div className="mb-2 flex gap-1 rounded-xl bg-secondary p-1">
 				{COLUMN_OPTIONS.map(({ count, Icon }) => (
 					<SegBtn
 						key={count}
@@ -117,6 +118,29 @@ export function DisplaySettings({
 						<Icon className="size-[18px]" /> {count}
 					</SegBtn>
 				))}
+			</div>
+
+			{/* A chorus is usually a song's longest section and usually its most repeated,
+			    so this buys more height than any other control here — and unlike the text
+			    size, it costs nothing in legibility. Off by default: it is a change to
+			    what the sheet says, not to how big it is. */}
+			<div className="flex gap-2">
+				<button
+					type="button"
+					onClick={() =>
+						onChange({ collapseChoruses: !value.collapseChoruses })
+					}
+					aria-pressed={value.collapseChoruses}
+					className={cn(
+						"flex h-10 flex-1 items-center gap-2 rounded-xl px-3 font-display text-[13px] font-semibold transition-colors",
+						value.collapseChoruses
+							? "bg-primary text-primary-foreground"
+							: "bg-secondary text-foreground",
+					)}
+				>
+					<IconRepeat className="size-[18px]" />
+					Shorten repeated choruses
+				</button>
 			</div>
 		</div>
 	);

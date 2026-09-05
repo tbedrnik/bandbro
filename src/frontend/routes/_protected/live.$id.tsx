@@ -133,7 +133,9 @@ function LiveMode() {
 	const fitScale = useFitScale({
 		enabled: display.fit,
 		viewportRef: scrollRef,
-		resetKey: `${id}:${index}:${display.gapIdx}:${display.columns}:${view}:${transpose}`,
+		// Everything that changes the song's rendered height, the chorus collapse
+		// included — it removes whole sections, so the fit must be searched again.
+		resetKey: `${id}:${index}:${display.gapIdx}:${display.columns}:${view}:${transpose}:${display.collapseChoruses}`,
 	});
 	const textScale = display.fit ? fitScale : TEXT_SCALES[display.textIdx];
 
@@ -251,6 +253,7 @@ function LiveMode() {
 					capo={capo}
 					view={view}
 					transpose={transpose}
+					collapseChoruses={display.collapseChoruses}
 					lyricSize={Math.round(LIVE_LYRIC_SIZE * textScale)}
 					chordSize={Math.round(LIVE_CHORD_SIZE * textScale)}
 					gap={GAP_SCALES[display.gapIdx]}
