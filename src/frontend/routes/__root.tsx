@@ -1,6 +1,7 @@
 import { auth } from "@frontend/auth";
 import { SessionProvider } from "@frontend/contexts/SessionContext";
 import { UserProvider } from "@frontend/contexts/UserContext";
+import { clearSessionHint, saveSessionHint } from "@frontend/lib/sessionHint";
 import {
 	clearSessionSnapshot,
 	readSessionSnapshot,
@@ -25,13 +26,18 @@ function RootRoute() {
 
 	// Keep the device's copy in step with the server's answer. A network error is not an
 	// answer — only an explicit "no session" clears it (CLAUDE.md §D7, sessionSnapshot.ts).
+	// The landing page's hint cookie (§D22) follows exactly the same rule: it is written
+	// here because this is the one place that knows, authoritatively, whether there is a
+	// session — and the landing itself ships no JavaScript that could find out.
 	useEffect(() => {
 		if (data?.session && data?.user) {
 			const next = { session: data.session, user: data.user };
 			saveSessionSnapshot(next);
+			saveSessionHint(data.user.name);
 			setSnapshot(next);
 		} else if (!error && !isPending) {
 			clearSessionSnapshot();
+			clearSessionHint();
 			setSnapshot(null);
 		}
 	}, [data, error, isPending]);

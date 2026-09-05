@@ -729,6 +729,41 @@ a render measured in minutes.
   (key endpoint, auth, config gating, payload) is unit-tested and smoke-tested over HTTP; the browser half
   is typed and built but was not exercised. That is what the "Send a test" button is for.
 
+### D22 — The account is an avatar, and the landing page knows you by a cookie hint *(implemented)*
+Two gaps that turned out to be one problem: **Preferences had no link anywhere** — it isn't one of the
+four nav sections, so the only way in was typing the URL — and the landing page greeted a signed-in
+player with "Log in / Sign up", because it has no way to know better.
+
+- **`UserAvatar`** (initials in an accent circle) is the account's presence in the chrome. In `AppNav` it
+  is a link to `/preferences`, in the bar at *every* width — not tucked into the mobile sheet, since the
+  sheet is "go to a section" and this is "this is you". Measured at 390px: wordmark · section · theme ·
+  avatar · hamburger still fit, `scrollWidth === innerWidth === 390` (the §D16 discipline). Preferences
+  draws the same component instead of its own `name.slice(0, 2)`, which read "TO" for "Tomas Bedrnik";
+  `initials` (in `src/shared`, unit-tested) takes the first and last word and keeps diacritics.
+- **The landing (§D18) ships no JavaScript, and that stays true.** The real session cookie is httpOnly, so
+  the page cannot read it, and asking the API would cost a round trip plus a visible flash of the wrong
+  buttons on the one surface whose entire job is painting immediately. Instead the app writes
+  `bandbro_hint` — **two initials, nothing else** (`lib/sessionHint.ts`, written from `__root.tsx`
+  alongside the §D7 session snapshot and under the same rule: a network error is not an answer, only an
+  explicit "no session" clears it). A ~10-line inline `<head>` script reads the cookie synchronously,
+  before the body is parsed, and puts `.is-signed-in` on `<html>`.
+- **It is a hint, not authorization** — readable by script by design, granting nothing, with every `/app`
+  route still checking the real session server-side. Stale (signed out elsewhere, expired) just means
+  "Go to app" lands on the login screen, exactly as a bookmark would.
+- **The CSS only ever hides.** `html:not(.is-signed-in) .only-user` and `html.is-signed-in .only-anon`
+  set `display: none`; the *visible* state is always the element's own display, never a value restored
+  here. That is what lets one pair of classes sit on a flex-row wrapper, on a `.btn`, and on a run of
+  inline text without any of them being redeclared — `display: revert` would have thrown away
+  `.btn { display: inline-flex }`. Wrappers add `.cta-group { display: contents }` so they contribute no
+  box to the flex row they sit in.
+- Signed in, the three call-to-action sites collapse to what's actually useful: topbar → **Go to app** +
+  avatar (→ Preferences), hero → drops "Sign up free" and the "Already in a band? Log in" note, closing
+  CTA → one **Continue to app**. The avatar is a hand-written twin of the React component, in the
+  landing's own markup and CSS — the §D19 arrangement, for the same reason.
+- Verified in a real browser (headless Chromium) in both directions, including the sign-out clear and the
+  390px nav. **Not built: signing out.** There is still no sign-out control anywhere in the app — the
+  avatar links to Preferences and nothing else. That's the obvious next thing to hang off it.
+
 ---
 
 ## 6. Design system (for building the screens)
@@ -804,7 +839,7 @@ unblock most screens — do them first.
 | F8 | **Preferences** | `/app/preferences` | `CapoToggle` as default-view setting + worked example, theme toggle, account + memberships | A3, C6 |
 | F9 | **Home / Dashboard** | `/app` (or `/app/home`) | "Up next" gig + setlist, jump-back-in, recent songs, your bands; Live-mode CTA | C3/C5, C8 |
 | F10 | **Auth** | `/app/login`, `/app/register` | better-auth email/password; style to design (Login.dc.html) | — |
-| F11 | **App shell / nav** | `_protected/layout` | Top bar (BandBro logo, section, theme toggle) + mobile sheet nav (§D16), active-org context, route guards | A1/A2 |
+| F11 | **App shell / nav** | `_protected/layout` | Top bar (BandBro logo, section, theme toggle, account avatar → Preferences §D22) + mobile sheet nav (§D16), active-org context, route guards | A1/A2 |
 
 ### G. Cross-cutting
 - [ ] **G1.** Active-organization (scope) context provider in the frontend, synced to `session.activeOrganizationId`.

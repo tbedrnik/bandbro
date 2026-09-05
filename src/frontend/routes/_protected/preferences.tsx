@@ -1,6 +1,7 @@
 import { auth } from "@frontend/auth";
 import { CapoToggle } from "@frontend/components/CapoToggle";
 import { RoleBadge } from "@frontend/components/RoleBadge";
+import { UserAvatar } from "@frontend/components/UserAvatar";
 import { Button } from "@frontend/components/ui/button";
 import { useUser } from "@frontend/contexts/UserContext";
 import { useOnline } from "@frontend/lib/offline";
@@ -41,9 +42,7 @@ function PreferencesPage() {
 
 			<section className="mt-8 rounded-xl border border-border bg-card p-6">
 				<div className="flex items-center gap-4">
-					<div className="grid size-12 place-items-center rounded-full bg-accent-wash font-display text-lg font-bold text-primary">
-						{user.name.slice(0, 2).toUpperCase()}
-					</div>
+					<UserAvatar name={user.name} size="lg" />
 					<div>
 						<div className="font-display font-semibold">{user.name}</div>
 						<div className="text-sm text-muted-foreground">{user.email}</div>

@@ -188,6 +188,50 @@ p {
 	}
 }
 
+/* ------------------------------------------------- signed-in vs. signed-out
+
+   Which call to action a visitor sees, decided by the `bandbro_hint` cookie the app
+   writes (CLAUDE.md §D22). The <head> script sets `.is-signed-in` on <html> before the
+   body is parsed, so the right buttons are in place at first paint.
+
+   Both rules only ever *hide*: the visible state is the element's own display, never a
+   value restored here — which is what lets the same pair of classes sit on a flex-row
+   wrapper, on a `.btn` and on a run of inline text without any of them being redeclared.
+   `.cta-group` exists so a wrapper adds no box of its own to the flex row it sits in. */
+
+.cta-group {
+	display: contents;
+}
+
+html:not(.is-signed-in) .only-user {
+	display: none;
+}
+
+html.is-signed-in .only-anon {
+	display: none;
+}
+
+/* The account's initials, in the same accent circle the app's nav draws. Hand-written
+   twin of `components/UserAvatar.tsx` — this page ships no React (§D18). */
+.avatar {
+	display: inline-grid;
+	place-items: center;
+	width: 34px;
+	height: 34px;
+	border-radius: 999px;
+	background: var(--accent-wash);
+	color: var(--accent);
+	font-family: var(--font-display);
+	font-size: 13px;
+	font-weight: 700;
+	text-decoration: none;
+	transition: opacity 0.15s ease;
+}
+
+.avatar:hover {
+	opacity: 0.8;
+}
+
 /* --------------------------------------------------------------- buttons */
 
 .btn {

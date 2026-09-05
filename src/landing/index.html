@@ -18,6 +18,31 @@
 	<meta property="og:image" content="/app/icon-512.png">
 	<meta name="twitter:card" content="summary">
 	<link rel="stylesheet" href="./styles.css">
+
+	<!--
+	  Signed-in vs. signed-out chrome, without shipping a bundle (CLAUDE.md §D22).
+
+	  The app writes a `bandbro_hint` cookie holding nothing but the account's initials
+	  (lib/sessionHint.ts); this reads it synchronously, before the body is parsed, and
+	  flips a class on <html>. CSS does the rest, so there is no flash of the wrong
+	  buttons and no network round trip on the one page that must paint immediately.
+
+	  It is a hint, never authorization: everything under /app re-checks the real
+	  httpOnly session server-side. Stale (signed out elsewhere, session expired) just
+	  means "Go to app" leads to the login screen, like any bookmark would.
+	-->
+	<script>
+		(() => {
+			var hint = document.cookie.match(/(?:^|;\s*)bandbro_hint=([^;]*)/);
+			if (!hint || !hint[1]) return;
+			var who = decodeURIComponent(hint[1]).slice(0, 2);
+			document.documentElement.className += " is-signed-in";
+			document.addEventListener("DOMContentLoaded", () => {
+				var slots = document.querySelectorAll("[data-initials]");
+				for (var i = 0; i < slots.length; i++) slots[i].textContent = who;
+			});
+		})();
+	</script>
 </head>
 
 <body>
@@ -33,8 +58,15 @@
 				<a href="#room">Your audience</a>
 			</nav>
 			<div class="topbar__actions">
-				<a class="btn btn--ghost btn--sm" href="/app/login">Log in</a>
-				<a class="btn btn--primary btn--sm" href="/app/register">Sign up</a>
+				<span class="cta-group only-anon">
+					<a class="btn btn--ghost btn--sm" href="/app/login">Log in</a>
+					<a class="btn btn--primary btn--sm" href="/app/register">Sign up</a>
+				</span>
+				<span class="cta-group only-user">
+					<a class="btn btn--primary btn--sm" href="/app">Go to app</a>
+					<a class="avatar" href="/app/preferences" aria-label="Profile and preferences"
+						title="Profile &amp; preferences"><span data-initials></span></a>
+				</span>
 			</div>
 		</div>
 	</header>
@@ -53,11 +85,11 @@
 					</p>
 					<div class="hero__cta">
 						<a class="btn btn--primary btn--lg" href="/app">Continue to app</a>
-						<a class="btn btn--outline btn--lg" href="/app/register">Sign up free</a>
+						<a class="btn btn--outline btn--lg only-anon" href="/app/register">Sign up free</a>
 					</div>
 					<p class="hero__note">
-						Already in a band here? <a class="textlink" href="/app/login">Log in</a>
-						· Installs as an app on your phone or tablet
+						<span class="only-anon">Already in a band here? <a class="textlink" href="/app/login">Log
+								in</a> · </span>Installs as an app on your phone or tablet
 					</p>
 				</div>
 
@@ -537,9 +569,12 @@
 						you write stays yours.
 					</p>
 					<div class="cta__buttons">
-						<a class="btn btn--primary btn--lg" href="/app/register">Sign up</a>
-						<a class="btn btn--outline btn--lg" href="/app/login">Log in</a>
-						<a class="btn btn--ghost btn--lg" href="/app">Continue to app</a>
+						<span class="cta-group only-anon">
+							<a class="btn btn--primary btn--lg" href="/app/register">Sign up</a>
+							<a class="btn btn--outline btn--lg" href="/app/login">Log in</a>
+							<a class="btn btn--ghost btn--lg" href="/app">Continue to app</a>
+						</span>
+						<a class="btn btn--primary btn--lg only-user" href="/app">Continue to app</a>
 					</div>
 				</div>
 			</div>

@@ -1,8 +1,10 @@
+import { UserAvatar } from "@frontend/components/UserAvatar";
 import {
 	Drawer,
 	DrawerContent,
 	DrawerTitle,
 } from "@frontend/components/ui/drawer";
+import { useUser } from "@frontend/contexts/UserContext";
 import { useTheme } from "@frontend/lib/theme";
 import { cn } from "@frontend/lib/utils";
 import {
@@ -49,6 +51,9 @@ const SECTIONS = [
  */
 export function AppNav({ section }: { section?: string }) {
 	const { theme, toggle } = useTheme();
+	// Optional: the layout renders this behind a session guard, but an offline boot runs
+	// on the session snapshot (§D7) and a nav that throws would take the app down with it.
+	const user = useUser({ optional: true });
 	const [menuOpen, setMenuOpen] = useState(false);
 	// No colour in the base class: `text-muted-foreground` and the active
 	// `text-foreground` are the same Tailwind property, so whichever the stylesheet
@@ -100,6 +105,19 @@ export function AppNav({ section }: { section?: string }) {
 						{theme === "dark" ? "Dark" : "Light"}
 					</span>
 				</button>
+				{/* The account, and the only route to Preferences — which is otherwise
+				    reachable by typing the URL, since it isn't one of the four sections. */}
+				{user && (
+					<Link
+						to="/preferences"
+						title={`${user.name} · preferences`}
+						aria-label="Profile and preferences"
+						className="rounded-full outline-offset-2 transition-opacity hover:opacity-80"
+						activeProps={{ className: "ring-2 ring-primary/40" }}
+					>
+						<UserAvatar name={user.name} />
+					</Link>
+				)}
 				<button
 					type="button"
 					onClick={() => setMenuOpen(true)}
