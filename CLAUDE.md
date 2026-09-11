@@ -578,7 +578,12 @@ the pattern the fan view already performs (§D10): a persistent peek bar over a 
 - **The drawer's second tab is the setlist** — the current set in order, current song marked, each row
   tapping to it, with a search box over `searchSongs` (§D15) matching titles, artists *and* lyrics. It is
   built from the payload Live mode already holds, so it works from a downloaded snapshot, and tapping a row
-  moves the index rather than navigating, so transpose, scroll position and auto-scroll all survive. Pure
+  moves the index rather than navigating, so transpose, scroll position and auto-scroll all survive. It
+  **opens centred on the song being played** — song 23 of 40 is otherwise three screens down, and the reason
+  to open this panel mid-gig is "what's around where we are". Only on open: after that the scroll position is
+  the player's, and re-centring under a search query would fight what they just typed. Done by setting the
+  list's own `scrollTop` from the row's offset within it, not `scrollIntoView`, which is free to scroll
+  ancestors — and this list sits inside a portalled drawer that has scrollable ones. Pure
   half in `lib/liveSetlist.ts` (unit-tested); UI in `components/LiveSetlistPanel.tsx`.
 - **`AppNav`** keeps its desktop row unchanged and, below `md`, moves the sections into the same kind of
   bottom sheet behind a hamburger; the wordmark and theme toggle stay in the bar at every width, and the

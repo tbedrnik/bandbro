@@ -14,7 +14,7 @@ import {
 	IconSquare,
 	IconSquareCheckFilled,
 } from "@tabler/icons-react";
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
 /**
  * Tonight's set, inside Live mode — the song list in order, the current one marked, and
@@ -43,6 +43,34 @@ export function LiveSetlistPanel({
 	const [query, setQuery] = useState("");
 	const songs = useMemo(() => liveSetlistSongs(entries), [entries]);
 	const hits = useMemo(() => filterLiveSetlist(query, songs), [query, songs]);
+	const listRef = useRef<HTMLDivElement>(null);
+	const currentRef = useRef<HTMLDivElement>(null);
+
+	// Open the set on the song being played, centred — song 23 of 40 is otherwise three
+	// screens down, and the reason for opening this panel mid-gig is usually "what's around
+	// where we are". Only on mount: once it's open, the scroll position is the player's,
+	// and re-centring under a search query would fight the thing they just typed.
+	//
+	// Scrolling the container by the row's offset *within it* rather than
+	// `scrollIntoView`, which is free to scroll ancestors too — and this list lives inside a
+	// portalled drawer that has scrollable ones. The drawer animates in with a transform, so
+	// the geometry is already final here; if the flex height hasn't resolved yet, one frame
+	// later it has.
+	useLayoutEffect(() => {
+		const centre = () => {
+			const list = listRef.current;
+			const row = currentRef.current;
+			if (!list || !row || list.clientHeight === 0) return false;
+			const listBox = list.getBoundingClientRect();
+			const rowBox = row.getBoundingClientRect();
+			list.scrollTop +=
+				rowBox.top - listBox.top - (listBox.height - rowBox.height) / 2;
+			return true;
+		};
+		if (centre()) return;
+		const frame = requestAnimationFrame(centre);
+		return () => cancelAnimationFrame(frame);
+	}, []);
 
 	return (
 		<div className="flex min-h-0 flex-col">
@@ -66,12 +94,14 @@ export function LiveSetlistPanel({
 				</div>
 			) : (
 				<div
+					ref={listRef}
 					data-vaul-no-drag
 					className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
 				>
 					{hits.map(({ song, snippet }) => (
 						<SongRow
 							key={song.index}
+							rowRef={song.index === currentIndex ? currentRef : undefined}
 							song={song}
 							snippet={snippet}
 							current={song.index === currentIndex}
@@ -87,6 +117,7 @@ export function LiveSetlistPanel({
 }
 
 function SongRow({
+	rowRef,
 	song,
 	snippet,
 	current,
@@ -94,6 +125,8 @@ function SongRow({
 	onSelect,
 	onTogglePlayed,
 }: {
+	/** Set on the current song's row only — what the panel centres on when it opens. */
+	rowRef?: React.Ref<HTMLDivElement>;
 	song: LiveSong;
 	snippet?: string;
 	current: boolean;
@@ -107,6 +140,7 @@ function SongRow({
 	const spent = played && !current;
 	return (
 		<div
+			ref={rowRef}
 			className={cn(
 				"flex items-center border-b border-border pr-1 last:border-0",
 				current ? "bg-secondary" : "hover:bg-secondary/60",
