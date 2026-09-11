@@ -71,14 +71,16 @@ const CONTENTS = [
 		name: "toc",
 		fields: ["songindex"],
 		label: "Table of Contents",
+		columns: 2,
 		line: "%{title}",
 		pageno: "%{page}",
 	},
 	{
-		name: "bytitle",
-		fields: ["title", "artist"],
-		label: "Contents by Title",
-		line: "%{title}%{artist| - %{}}",
+		name: "byartist",
+		fields: ["artist", "title"],
+		label: "Contents by Artist",
+		columns: 2,
+		line: "%{artist|%{} - }%{title}",
 		pageno: "%{page}",
 	},
 ];
@@ -87,6 +89,14 @@ const CONTENTS = [
 export function chordproConfig(): Record<string, unknown> {
 	return {
 		contents: CONTENTS,
+		notes: {
+			system: "custom",
+			sharp: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "H"],
+			flat: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "H"],
+		},
+		settings: {
+			transcode: "custom",
+		},
 		pdf: {
 			papersize: "a4",
 			labels: {
