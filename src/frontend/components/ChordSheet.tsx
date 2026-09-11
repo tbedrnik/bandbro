@@ -14,6 +14,13 @@ type Props = {
 	/** Hide the chord row entirely (fan "Lyrics only" mode). */
 	hideChords?: boolean;
 	/**
+	 * Drop the section captions ("VERSE 1", "BRIDGE", "CHORUS") — a line of screen each,
+	 * and on stage you are following a song you already know rather than navigating it. A
+	 * *recall* keeps its label regardless: it is the whole of its block, so hiding it would
+	 * leave a bare chorus rule with nothing inside.
+	 */
+	hideSectionLabels?: boolean;
+	/**
 	 * Vertical-rhythm multiplier for every gap (between lines, sections and a section
 	 * and its label). `1` is the design's spacing; below that the sheet packs tighter,
 	 * which is how Live mode fits a long song on one screen. Font sizes and the
@@ -48,6 +55,7 @@ export function ChordSheet({
 	lyricSize = 21,
 	chordSize = 15,
 	hideChords = false,
+	hideSectionLabels = false,
 	gap = 1,
 	columns = 1,
 	align = "left",
@@ -55,7 +63,10 @@ export function ChordSheet({
 }: Props) {
 	const showChords = !hideChords;
 	const center = align === "center";
-	const minChord = Math.round(chordSize * 1.4);
+	// The chord row's own height. Tight leading here is nearly free: a chord is one short
+	// line of capitals with no descenders, and a song carries as many chord rows as lyric
+	// rows, so the points saved add up to whole sections.
+	const minChord = Math.round(chordSize * 1.25);
 	// The vertical rhythm is proportional to the type size — the ratios below reproduce the
 	// design's absolute spacing (34 / 12 / 9 / 6) at the default 21px lyric. Keeping it
 	// proportional is what makes shrinking the text actually shrink the sheet: with fixed
@@ -66,6 +77,9 @@ export function ChordSheet({
 	const lineGap = Math.round(lyricSize * (showChords ? 0.43 : 0.24) * gap);
 	const wrapGap = Math.round(lyricSize * 0.29 * gap);
 	const labelSize = Math.max(9, Math.round(lyricSize * 0.57));
+	// A recall stands alone inside the chorus rule, so it reads as a line of the song
+	// rather than a caption over one — and is sized accordingly.
+	const recallSize = Math.max(11, Math.round(lyricSize * 0.72));
 
 	return (
 		<div
@@ -88,7 +102,7 @@ export function ChordSheet({
 							size={chordSize}
 							marginBottom={sectionGap}
 							labelGap={labelGap}
-							labelSize={labelSize}
+							labelSize={hideSectionLabels ? 0 : labelSize}
 						/>
 					)
 				) : (
@@ -106,8 +120,11 @@ export function ChordSheet({
 						{/* A recall (a `{chorus}` directive, or a repeat collapsed by §D23)
 						    carries no lines, so this label is the whole block — a lone
 						    "CHORUS" inside the chorus rule. */}
-						{(block.label || block.recall) && (
-							<SectionLabel marginBottom={labelGap} fontSize={labelSize}>
+						{(block.recall || (block.label && !hideSectionLabels)) && (
+							<SectionLabel
+								marginBottom={block.recall ? 0 : labelGap}
+								fontSize={block.recall ? recallSize : labelSize}
+							>
 								{block.label || "Chorus"}
 							</SectionLabel>
 						)}
@@ -145,7 +162,7 @@ export function ChordSheet({
 												>
 													{showChords && (
 														<b
-															className="whitespace-pre font-mono font-semibold leading-[1.35] text-primary"
+															className="whitespace-pre font-mono font-semibold leading-[1.15] text-primary"
 															style={{
 																fontSize: chordSize,
 																minHeight: minChord,
@@ -279,7 +296,7 @@ function TabSection({
 			className="max-w-full overflow-x-auto last:mb-0"
 			style={{ marginBottom, breakInside: "avoid" }}
 		>
-			{block.label && (
+			{block.label && labelSize > 0 && (
 				<SectionLabel marginBottom={labelGap} fontSize={labelSize}>
 					{block.label}
 				</SectionLabel>

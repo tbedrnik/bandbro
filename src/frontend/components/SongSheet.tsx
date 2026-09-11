@@ -17,6 +17,7 @@ export function SongSheet({
 	lyricSize,
 	chordSize,
 	hideChords,
+	hideSectionLabels,
 	gap,
 	columns,
 	align,
@@ -31,6 +32,8 @@ export function SongSheet({
 	lyricSize?: number;
 	chordSize?: number;
 	hideChords?: boolean;
+	/** Drop the "VERSE 1"/"CHORUS" captions — Live mode, where the screen is the budget. */
+	hideSectionLabels?: boolean;
 	gap?: number;
 	columns?: number;
 	align?: "left" | "center";
@@ -46,6 +49,7 @@ export function SongSheet({
 			lyricSize={lyricSize}
 			chordSize={chordSize}
 			hideChords={hideChords}
+			hideSectionLabels={hideSectionLabels}
 			gap={gap}
 			columns={columns}
 			align={align}

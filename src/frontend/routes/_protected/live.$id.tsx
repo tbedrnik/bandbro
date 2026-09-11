@@ -29,11 +29,11 @@ import {
 	IconChevronLeft,
 	IconChevronRight,
 	IconChevronUp,
-	IconListNumbers,
 	IconMinus,
 	IconPlayerPause,
 	IconPlayerPlay,
 	IconPlus,
+	IconSettings,
 	IconShare3,
 	IconX,
 } from "@tabler/icons-react";
@@ -52,6 +52,10 @@ export const Route = createFileRoute("/_protected/live/$id")({
 	},
 	component: LiveMode,
 });
+
+/** "Leave Live Mode" — two destinations (the setlist needs the network), one button. */
+const LEAVE_CLASS =
+	"inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-secondary px-4 font-display text-[13px] font-semibold transition-colors hover:bg-muted";
 
 /** Which face of the bottom drawer is showing. `null` = closed, only the peek bar. */
 type Panel = "controls" | "setlist";
@@ -171,6 +175,12 @@ function LiveMode() {
 		? displayKey(transposeKey(chart.key, steps))
 		: "";
 	const next = songs[index + 1];
+	// The peek bar is the only place the song is named now, so it names it the way the
+	// library does — title plus whoever wrote or performed it.
+	const artist = (song.credits ?? [])
+		.map((credit) => credit.artist?.name ?? "")
+		.filter(Boolean)
+		.join(", ");
 	const position = `${index + 1}/${songs.length}`;
 	const transposeLabel =
 		displayedKey || (transpose >= 0 ? `+${transpose}` : `${transpose}`);
@@ -184,44 +194,6 @@ function LiveMode() {
 
 	return (
 		<div className="flex h-dvh flex-col bg-background text-foreground">
-			{/* Top bar — deliberately thin: everything actionable moved to the bottom
-			    drawer, within thumb reach, which is also what stopped this row from
-			    overflowing a phone. */}
-			<div className="flex items-center gap-2 border-b border-border px-3 py-2 sm:px-4">
-				<span className="inline-flex flex-none items-center gap-2 rounded-full bg-secondary px-2.5 py-1">
-					<span
-						className="size-2 rounded-full"
-						style={{ background: online ? "var(--ok)" : "#c0392b" }}
-					/>
-					<span className="font-mono text-[11px]">
-						{online ? "Online" : "Offline"}
-					</span>
-				</span>
-				<span className="min-w-0 flex-1 truncate font-display text-sm text-muted-foreground">
-					{setlist.title} · {position}
-				</span>
-				{/* Exiting lands on the setlist screen, which needs the network to load —
-				    with no signal, send the player to the offline shelf instead. */}
-				{online ? (
-					<Link
-						to="/setlists/$id"
-						params={{ id }}
-						className="grid size-8 flex-none place-items-center rounded-lg hover:bg-muted"
-						aria-label="Exit live mode"
-					>
-						<IconX className="size-5" />
-					</Link>
-				) : (
-					<Link
-						to="/offline"
-						className="grid size-8 flex-none place-items-center rounded-lg hover:bg-muted"
-						aria-label="Exit live mode"
-					>
-						<IconX className="size-5" />
-					</Link>
-				)}
-			</div>
-
 			<ShareWithFansModal
 				open={shareOpen}
 				onClose={() => setShareOpen(false)}
@@ -232,28 +204,22 @@ function LiveMode() {
 				watching={fan.watching}
 			/>
 
-			{/* Chart — the hero, scaled up. The song header scrolls away with it rather than
-			    holding a permanent band across the top: on a tablet that row is a line of
-			    lyrics, and the setlist name + position are already in the top bar. */}
+			{/* Chart — the hero, and now the *whole* screen above the peek bar. There is no
+			    top bar and no song header: the title, artist and capo live on the peek bar,
+			    which every player is already looking at to change song, so repeating them
+			    here only cost rows of chart. The top inset padding is what the removed bar
+			    used to absorb on a notched phone. */}
 			<div
 				ref={scrollRef}
-				className="live-scroll min-h-0 flex-1 overflow-auto px-6 py-4"
+				className="live-scroll min-h-0 flex-1 overflow-auto px-6 pb-4 pt-[calc(12px+env(safe-area-inset-top))]"
 			>
-				<div className="mb-3 flex items-baseline gap-3">
-					<h1 className="font-display text-xl font-bold sm:text-2xl">
-						{song.name}
-					</h1>
-					<span className="font-mono text-xs text-muted-foreground">
-						{displayedKey && `KEY ${displayedKey}`}
-						{capo > 0 && ` · CAPO ${capo}`}
-					</span>
-				</div>
 				<SongSheet
 					content={chart.content}
 					capo={capo}
 					view={view}
 					transpose={transpose}
 					collapseChoruses={display.collapseChoruses}
+					hideSectionLabels
 					lyricSize={Math.round(LIVE_LYRIC_SIZE * textScale)}
 					chordSize={Math.round(LIVE_CHORD_SIZE * textScale)}
 					gap={GAP_SCALES[display.gapIdx]}
@@ -262,12 +228,12 @@ function LiveMode() {
 			</div>
 
 			{/* Peek bar — the fan view's pattern (CLAUDE.md §D10), band-facing and in the
-			    app's own theme. What stays out here is what a player touches *mid-song*
-			    with one thumb: prev/next, auto-scroll (a runaway scroll has to be stoppable
-			    instantly) and the jump-to-song list. Everything you set *between* songs —
-			    capo view, transpose, scroll speed, text size, sharing — is one tap away in
-			    the drawer, which is what stopped this row overflowing a 390px phone.
-			    From `lg` up there is room to keep capo + transpose inline as well. */}
+			    app's own theme, and now the only chrome on the screen. What stays out here
+			    is what a player touches *mid-song* with one thumb: prev/next, auto-scroll
+			    (a runaway scroll has to be stoppable instantly) and the song itself, which
+			    doubles as the way into the set. Everything you set *between* songs — capo
+			    view, transpose, scroll speed, text size, sharing, leaving — is one tap away
+			    behind the gear. From `lg` up there is room to keep capo inline as well. */}
 			<div className="flex items-center gap-2 border-t border-border bg-card px-3 pb-[calc(10px+env(safe-area-inset-bottom))] pt-2.5 sm:px-4">
 				<BigBtn
 					label="Previous song"
@@ -277,18 +243,27 @@ function LiveMode() {
 					<IconChevronLeft className="size-7" />
 				</BigBtn>
 
+				{/* What used to be two rows of chrome — the song's title, artist and capo —
+				    is this one button, and tapping it opens the set, because "which song am
+				    I on" and "which song next" are the same question. Capo carries the
+				    accent: it is the one number here a player has to act on. */}
 				<button
 					type="button"
-					onClick={() => setPanel("controls")}
-					aria-label="Show live controls"
+					onClick={() => setPanel("setlist")}
+					aria-label="Setlist and search"
 					aria-expanded={panel !== null}
-					className="flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2 py-1 text-left transition-colors hover:bg-secondary lg:max-w-xs"
+					className="flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2 py-1 text-left transition-colors hover:bg-secondary"
 				>
 					<span className="min-w-0 flex-1">
 						<span className="block truncate font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
 							{position}
-							{displayedKey && ` · KEY ${displayedKey}`}
-							{capo > 0 && ` · CAPO ${capo}`}
+							{artist && ` · ${artist}`}
+							{capo > 0 && (
+								<span className="font-semibold text-primary">
+									{" · "}
+									CAPO {capo}
+								</span>
+							)}
 						</span>
 						<span className="block truncate font-display text-[15px] font-bold leading-tight sm:text-[17px]">
 							{song.name}
@@ -297,17 +272,11 @@ function LiveMode() {
 					<IconChevronUp className="size-4 flex-none text-muted-foreground" />
 				</button>
 
-				{/* Wide screens have room to keep the two between-song controls a player
-				    reaches for most out here as well; they stay in the drawer too, so a
-				    phone loses nothing. */}
-				<span className="hidden flex-1 lg:block" />
+				{/* Wide screens have room to keep the between-song control a player reaches
+				    for most out here as well; it stays in the drawer too, so a phone loses
+				    nothing. */}
 				<div className="hidden items-center gap-2 lg:flex">
 					<CapoToggle value={view} onValueChange={setView} />
-					<TransposeControl
-						label={transposeLabel}
-						onDown={() => setTranspose((t) => t - 1)}
-						onUp={() => setTranspose((t) => t + 1)}
-					/>
 				</div>
 
 				<IconBtn
@@ -322,11 +291,11 @@ function LiveMode() {
 					)}
 				</IconBtn>
 				<IconBtn
-					label="Setlist and search"
-					active={panel === "setlist"}
-					onClick={() => setPanel("setlist")}
+					label="Show live controls"
+					active={panel === "controls"}
+					onClick={() => setPanel("controls")}
 				>
-					<IconListNumbers className="size-5" />
+					<IconSettings className="size-5" />
 				</IconBtn>
 
 				<BigBtn
@@ -463,6 +432,37 @@ function LiveMode() {
 									<IconShare3 className="size-4" /> Share with fans
 								</button>
 							)}
+
+							{/* Leaving is a between-song action if ever there was one, so it
+							    lives here rather than as an X in a bar that no longer exists —
+							    and the online light comes with it, since this is the panel a
+							    player opens when something is not behaving. Exiting lands on the
+							    setlist screen, which needs the network; with no signal, the
+							    offline shelf instead. */}
+							<div className="mt-1 flex items-center gap-2">
+								<span className="inline-flex h-11 flex-none items-center gap-2 rounded-xl bg-secondary px-3">
+									<span
+										className="size-2 rounded-full"
+										style={{ background: online ? "var(--ok)" : "#c0392b" }}
+									/>
+									<span className="font-mono text-[11px]">
+										{online ? "Online" : "Offline"}
+									</span>
+								</span>
+								{online ? (
+									<Link
+										to="/setlists/$id"
+										params={{ id }}
+										className={LEAVE_CLASS}
+									>
+										<IconX className="size-4" /> Leave Live Mode
+									</Link>
+								) : (
+									<Link to="/offline" className={LEAVE_CLASS}>
+										<IconX className="size-4" /> Leave Live Mode
+									</Link>
+								)}
+							</div>
 						</div>
 					)}
 				</DrawerContent>

@@ -343,10 +343,18 @@ job of §D20):
   wider than half the page** — chordpro reflows lyrics but renders verbatim (tab) lines as written, so a wide
   staff would be clipped at the column edge. Both guards are unit-tested.
 - **Tables of contents.** Two, both at the front: *Table of Contents* (setlist order) then *Contents by
-  Title*; the stock third table (by artist) is dropped. They stay at the front because the CLI can only emit
-  them there — **don't** try to lift the by-title pages to the back afterwards (we did, with `pdf-lib`, and
+  Artist*; the stock third table is dropped. They stay at the front because the CLI can only emit
+  them there — **don't** try to lift the by-artist pages to the back afterwards (we did, with `pdf-lib`, and
   reverted): a table's rows are link annotations pointing at page objects, so copying only those pages into
   another document leaves every link dangling. A single-song setlist gets no table at all (the CLI omits it).
+  Both are set in **two columns**, which on a 60-song setlist is four pages of short lines down to two. A
+  `contents` entry has **no `columns` key** — adding one changes nothing and the CLI does not complain, which
+  is exactly how it wastes an afternoon. What it does have is `template`: each table is built as a
+  *pseudo-song* parsed from a ChordPro template, so the column count is the ordinary `{columns}` directive
+  inside it (`TOC_TEMPLATE` in `chordproConfig.ts`, written next to the setlist `.cho` by the render service —
+  a `template` containing a `.` is resolved as a **sibling of the song file**). The template deliberately
+  carries no `{title}`, which is what lets both tables share one file and keep their own `label`. Columns fill
+  top-to-bottom before wrapping, so a table that already fit one page only gets narrower.
 - ChordPro 6 renders Unicode out of the box (Czech diacritics confirmed), so no font config is needed.
   An optional `CHORDPRO_CONFIG` env points the CLI at a JSON config for custom layout/fonts; it is passed
   *after* ours, so a deployment can override any of the above.
@@ -447,8 +455,13 @@ device in localStorage (`lib/liveDisplay.ts`) and never broadcast to fans or ban
   view, transpose) restarts it; a `ResizeObserver` covers rotation and split view. `FIT_MIN` is a **legibility**
   floor, not a fitting one — a song with several tab staves won't fit an iPad at any readable size, and it's better
   to let that one scroll than to shrink it to 8px.
-- The Live song title + key **scroll with the chart** instead of holding a permanent row across the top; the setlist
-  name and position live in the top bar already.
+- **Live mode shows the song and nothing else above the peek bar.** The top bar and the song's own
+  title/key/capo header are both gone (they cost two rows of chart to repeat what the peek bar already says);
+  section captions are dropped too (`hideSectionLabels` on `ChordSheet` — on stage you are following a song
+  you know, not navigating it). A §D23 **recall** keeps its label whatever that setting says, and prints it a
+  little larger: it *is* the whole block, so hiding it would leave an empty chorus rule. Chord rows lost some
+  leading globally (a chord is one short line of capitals with no descenders, and there are as many chord rows
+  as lyric rows).
 
 ### D13 — Joining a band is a link, not an email *(implemented)*
 This deployment has no mail transport, so better-auth's `inviteMember({email})` flow delivered nothing —
@@ -538,11 +551,14 @@ controls and the display button off-screen and cutting off the chart itself. The
 the pattern the fan view already performs (§D10): a persistent peek bar over a `vaul` bottom drawer
 (`components/ui/drawer.tsx`). One interaction vocabulary, no new dependency.
 - **Live mode** splits its controls by *when* a player touches them. **Mid-song** ones stay on the peek row
-  within thumb reach: prev/next, auto-scroll on/off, and the jump-to-song. **Between-song** settings go in
-  the drawer: capo/concert, transpose, scroll speed, the `DisplaySettings` panel and sharing. That split is
-  what keeps the row inside 390px. From `lg` up, capo + transpose are mirrored inline so a tablet or desktop
-  loses nothing. The top bar thinned to status · setlist · exit, which is what stopped "Share with fans"
-  wrapping onto two lines.
+  within thumb reach: prev/next, auto-scroll on/off, and the song itself, whose button is the way into the
+  set. **Between-song** settings go behind the gear, in the drawer: capo/concert, transpose, scroll speed, the
+  `DisplaySettings` panel, sharing, and **Leave Live Mode** with the online/offline light beside it. That
+  split is what keeps the row inside 390px. From `lg` up, capo is mirrored inline so a tablet or desktop loses
+  nothing. The top bar is gone entirely (§D12): its status light, setlist name, position and exit ✕ were
+  either duplicated on the peek bar or belonged in the drawer, and the row it held is now chart. The peek
+  bar's own label became position · artist · **capo in the accent** over the title — capo being the one number
+  there a player has to act on.
 - **The drawer's second tab is the setlist** — the current set in order, current song marked, each row
   tapping to it, with a search box over `searchSongs` (§D15) matching titles, artists *and* lyrics. It is
   built from the payload Live mode already holds, so it works from a downloaded snapshot, and tapping a row
