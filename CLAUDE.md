@@ -888,6 +888,40 @@ repeat with a one-line recall — its label, inside the same chorus rule.
 - Deliberately **not** applied to Song View, the editor preview or the fan view: those show
   a song as it is written.
 
+### D24 — What's been played is a per-device mark, mostly made by a clock *(implemented)*
+A set is rarely performed straight down the list — songs get skipped, pulled forward, or
+played twice by request — and ten songs in, nobody can remember what's been done. Live mode
+now carries a played mark per song: a checkbox on the right of every row in the setlist
+panel, and the same control on the peek bar for the song on screen.
+
+- **The mark is mostly automatic.** A song counts as played once it has been on screen for
+  **60 seconds** (`AUTO_MARK_MS`) — long enough that you were performing it rather than
+  passing through on the way to song 14. Nobody has a free hand to tick a box mid-song, so a
+  feature that depended on it would simply not get used. The checkbox is there to correct
+  the clock, both ways.
+- **The timer is keyed on *this* song's mark, not on the set**, so ticking song 9 off in the
+  panel doesn't restart the clock on the song being played; and it doesn't start at all
+  until the resume prompt below is answered.
+- **Per device, like everything else about a player's evening** (§D12, §D14). Not synced to
+  bandmates: two players skipping a song for different reasons is normal, and a shared list
+  would need a conflict story that a gig has no time for.
+- **Keyed by chart, not by setlist row** (`playedKey`): editing a set rewrites its rows, and
+  losing the evening's marks because someone added a song at the interval is worse than the
+  one case it costs — the same chart twice in one set shares a mark.
+- **Opening a set that still carries marks asks once**: same evening after a break (keep),
+  or a new gig with the same set (clear). Deliberately not inferred from the timestamp — a
+  band playing two sets an hour apart and a band opening last week's set look identical from
+  here. Dismissing without choosing keeps them, the answer that throws nothing away.
+- **Shown as a struck, faded row and nothing else** — no "Played" caption. The panel is read
+  at a glance between songs, and a column of repeated words is what you'd have to read past.
+  The **current** song is never dimmed even once marked (it gets marked while you're still
+  playing it); only its checkbox says so.
+- **Fitting the checkbox on a 390px peek bar cost the chevron and the artist.** Five 44px
+  buttons plus the song left ~84px of title ("Wagon W…"). The drawer affordance chevron went
+  (24px), gaps dropped to 4px, and the artist is now `sm`-and-up only — position and capo
+  always fit, the artist is the line's luxury. Measured at 390: `scrollWidth === 390`, full
+  titles.
+
 ---
 
 ## 6. Design system (for building the screens)

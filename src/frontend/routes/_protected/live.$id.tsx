@@ -1,9 +1,22 @@
 import { api } from "@frontend/api";
 import { CapoToggle } from "@frontend/components/CapoToggle";
 import { DisplaySettings } from "@frontend/components/DisplaySettings";
-import { LiveSetlistPanel } from "@frontend/components/LiveSetlistPanel";
+import {
+	LiveSetlistPanel,
+	PlayedCheckbox,
+} from "@frontend/components/LiveSetlistPanel";
 import { ShareWithFansModal } from "@frontend/components/ShareWithFansModal";
 import { SongSheet } from "@frontend/components/SongSheet";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@frontend/components/ui/alert-dialog";
 import {
 	Drawer,
 	DrawerContent,
@@ -17,6 +30,12 @@ import {
 	TEXT_SCALES,
 	useLiveDisplay,
 } from "@frontend/lib/liveDisplay";
+import {
+	AUTO_MARK_MS,
+	formatPlayedAge,
+	playedKey,
+	usePlayedSongs,
+} from "@frontend/lib/livePlayed";
 import { getOfflineSetlist, useOnline } from "@frontend/lib/offline";
 import { useFanSession } from "@frontend/lib/useFanSession";
 import { useFitScale } from "@frontend/lib/useFitScale";
@@ -28,7 +47,6 @@ import {
 	IconChevronDown,
 	IconChevronLeft,
 	IconChevronRight,
-	IconChevronUp,
 	IconMinus,
 	IconPlayerPause,
 	IconPlayerPlay,
@@ -94,6 +112,8 @@ function LiveMode() {
 	const [panel, setPanel] = useState<Panel | null>(null);
 	const [display, setDisplay] = useLiveDisplay();
 	const scrollRef = useRef<HTMLDivElement>(null);
+	const { played, toggle, markPlayed, resume, keepResumed, startFresh } =
+		usePlayedSongs(id);
 
 	const fan = useFanSession(id);
 
@@ -125,6 +145,21 @@ function LiveMode() {
 		raf = requestAnimationFrame(step);
 		return () => cancelAnimationFrame(raf);
 	}, [scrolling, speed]);
+
+	// A song counts as played once it has been on screen for a minute (CLAUDE.md §D24) —
+	// long enough that you were performing it rather than passing through on the way to
+	// song 14. The timer waits for the resume prompt to be answered, so opening last
+	// month's set and choosing "new gig" can't have already marked song one.
+	const currentKey = playedKey(entry, index);
+	const currentPlayed = played.has(currentKey);
+	const hasEntry = entry !== undefined;
+	useEffect(() => {
+		if (resume || currentPlayed || !hasEntry) return;
+		const timer = setTimeout(() => markPlayed(currentKey), AUTO_MARK_MS);
+		return () => clearTimeout(timer);
+		// Deliberately keyed on *this* song's mark, not on the whole set: ticking song 9
+		// off in the panel must not restart the clock on the song being played.
+	}, [currentKey, currentPlayed, hasEntry, resume, markPlayed]);
 
 	// Reset transpose + scroll when switching songs.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: reset on song change
@@ -194,6 +229,40 @@ function LiveMode() {
 
 	return (
 		<div className="flex h-dvh flex-col bg-background text-foreground">
+			{/* Opening a set that still carries marks is ambiguous in a way only the player
+			    can settle: the same evening after a break, or a new gig with the same set.
+			    Guessing from the timestamp gets it wrong for any band that plays two sets an
+			    hour apart, so we ask — once, and only when there is something to ask about. */}
+			<AlertDialog
+				open={resume !== null}
+				// Dismissing without choosing (Escape) keeps the marks: it is the answer
+				// that throws nothing away, and the checkboxes are there to fix either way.
+				onOpenChange={(open) => {
+					if (!open) keepResumed();
+				}}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Continue this set?</AlertDialogTitle>
+						<AlertDialogDescription>
+							{resume?.ids.length === 1
+								? "1 song is marked as played"
+								: `${resume?.ids.length ?? 0} songs are marked as played`}
+							, last updated {formatPlayedAge(resume?.updatedAt ?? 0)}. Start
+							fresh if this is a new gig.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel onClick={startFresh}>
+							Start fresh
+						</AlertDialogCancel>
+						<AlertDialogAction onClick={keepResumed}>
+							Continue
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+
 			<ShareWithFansModal
 				open={shareOpen}
 				onClose={() => setShareOpen(false)}
@@ -234,7 +303,7 @@ function LiveMode() {
 			    doubles as the way into the set. Everything you set *between* songs — capo
 			    view, transpose, scroll speed, text size, sharing, leaving — is one tap away
 			    behind the gear. From `lg` up there is room to keep capo inline as well. */}
-			<div className="flex items-center gap-1.5 border-t border-border bg-card px-2 pb-[calc(6px+env(safe-area-inset-bottom))] pt-1.5 sm:px-3">
+			<div className="flex items-center gap-1 border-t border-border bg-card px-2 pb-[calc(6px+env(safe-area-inset-bottom))] pt-1.5 sm:gap-1.5 sm:px-3">
 				<IconBtn
 					label="Previous song"
 					disabled={index === 0}
@@ -257,7 +326,9 @@ function LiveMode() {
 					<span className="min-w-0 flex-1">
 						<span className="block truncate font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
 							{position}
-							{artist && ` · ${artist}`}
+							{/* Position and capo always fit; the artist is the line's luxury, and
+							    below `sm` there is no room for it beside five buttons. */}
+							{artist && <span className="hidden sm:inline"> · {artist}</span>}
 							{capo > 0 && (
 								<span className="font-semibold text-primary">
 									{" · "}
@@ -269,7 +340,6 @@ function LiveMode() {
 							{song.name}
 						</span>
 					</span>
-					<IconChevronUp className="size-4 flex-none text-muted-foreground" />
 				</button>
 
 				{/* Wide screens have room to keep the between-song control a player reaches
@@ -278,6 +348,18 @@ function LiveMode() {
 				<div className="hidden items-center gap-2 lg:flex">
 					<CapoToggle value={view} onValueChange={setView} />
 				</div>
+
+				{/* The same checkbox the setlist panel carries, for the song on screen — so
+				    "we've done this one" is one tap, without opening the drawer mid-set. */}
+				<PlayedCheckbox
+					checked={currentPlayed}
+					label={song.name}
+					onToggle={() => toggle(currentKey)}
+					className={cn(
+						"size-11 bg-secondary",
+						currentPlayed && "text-primary",
+					)}
+				/>
 
 				<IconBtn
 					label={scrolling ? "Pause auto-scroll" : "Start auto-scroll"}
@@ -357,6 +439,8 @@ function LiveMode() {
 								entries={songs}
 								currentIndex={index}
 								onSelect={goTo}
+								isPlayed={(at) => played.has(playedKey(songs[at], at))}
+								onTogglePlayed={(at) => toggle(playedKey(songs[at], at))}
 							/>
 						</div>
 					) : (
