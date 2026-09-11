@@ -62,26 +62,46 @@ export function columnWidth(columns: number): number {
 }
 
 /**
- * Setlist order, then an index by title. Both sit at the front — the CLI has no way to put
+ * Filename of the table-of-contents template, written next to the setlist `.cho` by the
+ * render service. A `contents` entry has no `columns` key — the CLI builds each table as a
+ * *pseudo-song* parsed from this template, so the way to set a table in two columns is the
+ * ordinary `{columns}` directive inside it, exactly as for a song. The name carries an
+ * extension on purpose: that is what makes the CLI resolve it as a **sibling of the song
+ * file** rather than as one of its own bundled resources.
+ */
+export const TOC_TEMPLATE_FILE = "toc.cho";
+
+/**
+ * The template itself. No `{title}`: left out, the CLI titles each table with that entry's
+ * own `label`, which is what lets both tables share one file.
+ *
+ * Two columns, because a table of contents is short lines against a wide page — a 60-song
+ * setlist indexed twice spends four pages saying almost nothing. Columns fill top-to-bottom
+ * and only then wrap, so a table that already fits one page is unaffected but for its line
+ * width.
+ */
+export const TOC_TEMPLATE = "{columns: 2}\n";
+
+/**
+ * Setlist order, then an index by artist. Both sit at the front — the CLI has no way to put
  * one at the back, and lifting its pages there afterwards breaks their links to the songs.
- * The stock third table (by artist) is dropped.
  */
 const CONTENTS = [
 	{
 		name: "toc",
 		fields: ["songindex"],
 		label: "Table of Contents",
-		columns: 2,
 		line: "%{title}",
 		pageno: "%{page}",
+		template: TOC_TEMPLATE_FILE,
 	},
 	{
 		name: "byartist",
 		fields: ["artist", "title"],
 		label: "Contents by Artist",
-		columns: 2,
 		line: "%{artist|%{} - }%{title}",
 		pageno: "%{page}",
+		template: TOC_TEMPLATE_FILE,
 	},
 ];
 

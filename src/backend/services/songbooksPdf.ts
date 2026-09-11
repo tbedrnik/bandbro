@@ -1,5 +1,9 @@
 import { prisma } from "@backend/prisma";
-import { chordproConfig } from "../../shared/chordproConfig";
+import {
+	chordproConfig,
+	TOC_TEMPLATE,
+	TOC_TEMPLATE_FILE,
+} from "../../shared/chordproConfig";
 import {
 	buildSetlistChordpro,
 	type PdfMode,
@@ -142,6 +146,9 @@ async function render({
 	const config = `${dir}/config.json`;
 	const output = `${dir}/setlist.pdf`;
 	await Bun.write(config, JSON.stringify(chordproConfig()));
+	// The tables of contents are rendered from this template, which the CLI looks for
+	// beside the song file — hence writing it into the same working dir.
+	await Bun.write(`${dir}/${TOC_TEMPLATE_FILE}`, TOC_TEMPLATE);
 
 	const args = [input, "--config", config, "--output", output];
 	// An optional deployment config (custom fonts, layout) overrides ours — last wins.
