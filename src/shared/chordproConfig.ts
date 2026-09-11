@@ -90,12 +90,12 @@ export function chordproConfig(): Record<string, unknown> {
 	return {
 		contents: CONTENTS,
 		notes: {
-			system: "custom",
+			system: "common",
 			sharp: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "H"],
 			flat: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "H"],
 		},
 		settings: {
-			transcode: "custom",
+			transcode: "common",
 		},
 		pdf: {
 			papersize: "a4",
