@@ -80,6 +80,20 @@ export function ChordSheet({
 	// A recall stands alone inside the chorus rule, so it reads as a line of the song
 	// rather than a caption over one — and is sized accordingly.
 	const recallSize = Math.max(11, Math.round(lyricSize * 0.72));
+	// Optical sizing, by hand. IBM Plex Sans at 400 is a text-weight face: below ~16px its
+	// strokes thin out, and on a stage — dim, at arm's length, glanced at rather than read —
+	// that is exactly where "fit to screen" tends to leave a long song. Stepping the weight
+	// up buys back the contrast the size gave away.
+	//
+	// This can't confuse the fit search (`useFitScale`): the weight is a pure function of
+	// the *rendered* size, so every candidate the search commits is measured with the weight
+	// it will actually paint with, and the search only ever settles on a scale it measured as
+	// fitting. 500 and 600 are real cut fonts here (see index.css), not a synthesised bold.
+	// The steps are placed against the sizes that actually occur: Live mode's "fit to screen"
+	// bottoms out at 14px (0.5 × 28) and its smallest manual step is 17px, while Song View's
+	// 21px, the fan view's smallest 20px and the design sheet's 20px all stay at 400 — so
+	// nothing outside the stage changes weight.
+	const lyricWeight = lyricSize < 15 ? 600 : lyricSize < 20 ? 500 : 400;
 
 	return (
 		<div
@@ -190,6 +204,7 @@ export function ChordSheet({
 														className="whitespace-pre text-foreground"
 														style={{
 															fontSize: lyricSize,
+															fontWeight: lyricWeight,
 															lineHeight: showChords ? 1.3 : 1.5,
 															minHeight: hasLyrics ? lyricLine : undefined,
 														}}

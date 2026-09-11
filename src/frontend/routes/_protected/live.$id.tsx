@@ -234,14 +234,14 @@ function LiveMode() {
 			    doubles as the way into the set. Everything you set *between* songs — capo
 			    view, transpose, scroll speed, text size, sharing, leaving — is one tap away
 			    behind the gear. From `lg` up there is room to keep capo inline as well. */}
-			<div className="flex items-center gap-2 border-t border-border bg-card px-3 pb-[calc(10px+env(safe-area-inset-bottom))] pt-2.5 sm:px-4">
-				<BigBtn
+			<div className="flex items-center gap-1.5 border-t border-border bg-card px-2 pb-[calc(6px+env(safe-area-inset-bottom))] pt-1.5 sm:px-3">
+				<IconBtn
 					label="Previous song"
 					disabled={index === 0}
 					onClick={() => goTo(index - 1)}
 				>
-					<IconChevronLeft className="size-7" />
-				</BigBtn>
+					<IconChevronLeft className="size-6" />
+				</IconBtn>
 
 				{/* What used to be two rows of chrome — the song's title, artist and capo —
 				    is this one button, and tapping it opens the set, because "which song am
@@ -252,7 +252,7 @@ function LiveMode() {
 					onClick={() => setPanel("setlist")}
 					aria-label="Setlist and search"
 					aria-expanded={panel !== null}
-					className="flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2 py-1 text-left transition-colors hover:bg-secondary"
+					className="flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2 py-0.5 text-left transition-colors hover:bg-secondary"
 				>
 					<span className="min-w-0 flex-1">
 						<span className="block truncate font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
@@ -298,13 +298,13 @@ function LiveMode() {
 					<IconSettings className="size-5" />
 				</IconBtn>
 
-				<BigBtn
+				<IconBtn
 					label="Next song"
 					disabled={index >= songs.length - 1}
 					onClick={() => goTo(index + 1)}
 				>
-					<IconChevronRight className="size-7" />
-				</BigBtn>
+					<IconChevronRight className="size-6" />
+				</IconBtn>
 			</div>
 
 			<Drawer
@@ -369,16 +369,18 @@ function LiveMode() {
 								onValueChange={setView}
 								className="w-full"
 							/>
-							{/* One control per row: at phone width a two-up row wraps the speed
-							    readout onto a second line. */}
-							<TransposeControl
-								label={transposeLabel}
-								caption="transpose"
-								onDown={() => setTranspose((t) => t - 1)}
-								onUp={() => setTranspose((t) => t + 1)}
-								className="w-full"
-							/>
-							<div className="flex gap-2">
+							{/* One control per row at phone width — a two-up row there wraps the
+							    speed readout onto a second line. From `sm` up (a tablet in
+							    landscape, a phone on its side) the two share a row, which is one
+							    less row of drawer over the chart. */}
+							<div className="flex flex-col gap-2 sm:flex-row">
+								<TransposeControl
+									label={transposeLabel}
+									caption="transpose"
+									onDown={() => setTranspose((t) => t - 1)}
+									onUp={() => setTranspose((t) => t + 1)}
+									className="w-full sm:flex-1"
+								/>
 								<div className="flex h-[42px] flex-1 items-center gap-1 rounded-xl bg-secondary px-1">
 									<SmallBtn
 										onClick={() => setScrolling((s) => !s)}
@@ -471,40 +473,22 @@ function LiveMode() {
 	);
 }
 
-function BigBtn({
-	children,
-	label,
-	onClick,
-	disabled,
-}: {
-	children: React.ReactNode;
-	label: string;
-	onClick: () => void;
-	disabled?: boolean;
-}) {
-	return (
-		<button
-			type="button"
-			aria-label={label}
-			onClick={onClick}
-			disabled={disabled}
-			className="grid size-12 flex-none place-items-center rounded-2xl bg-secondary shadow-sm transition-colors hover:bg-muted disabled:opacity-30 sm:size-14"
-		>
-			{children}
-		</button>
-	);
-}
-
-/** A square secondary action on the peek bar; `active` marks a running toggle. */
+/**
+ * A square action on the peek bar; `active` marks a running toggle. One size for the whole
+ * row, prev/next included — they used to be a size larger, which set the bar's height for
+ * the sake of two buttons that are no harder to hit at 44px than anything else there.
+ */
 function IconBtn({
 	children,
 	label,
 	active,
+	disabled,
 	onClick,
 }: {
 	children: React.ReactNode;
 	label: string;
 	active?: boolean;
+	disabled?: boolean;
 	onClick: () => void;
 }) {
 	return (
@@ -512,9 +496,10 @@ function IconBtn({
 			type="button"
 			aria-label={label}
 			aria-pressed={active}
+			disabled={disabled}
 			onClick={onClick}
 			className={cn(
-				"grid size-11 flex-none place-items-center rounded-xl transition-colors",
+				"grid size-11 flex-none place-items-center rounded-xl transition-colors disabled:opacity-30",
 				active
 					? "bg-primary text-primary-foreground"
 					: "bg-secondary hover:bg-muted",

@@ -455,6 +455,15 @@ device in localStorage (`lib/liveDisplay.ts`) and never broadcast to fans or ban
   view, transpose) restarts it; a `ResizeObserver` covers rotation and split view. `FIT_MIN` is a **legibility**
   floor, not a fitting one — a song with several tab staves won't fit an iPad at any readable size, and it's better
   to let that one scroll than to shrink it to 8px.
+- **The lyric face gets heavier as it gets smaller** (`lyricWeight` in `ChordSheet`): 400 above 20px, 500
+  from 15, 600 below that. IBM Plex Sans at 400 is a text weight — below ~16px its strokes thin out, which is
+  exactly where fit-to-screen leaves a long song, and a stage is dim and at arm's length. 500/600 are real cut
+  faces (`index.css`), not synthesised bold. This cannot confuse the fit search: the weight is a pure function
+  of the *rendered* size, so every candidate the search commits is measured with the weight it will paint
+  with, and the search only ever settles on a scale it measured as fitting. The steps are placed against the
+  sizes that actually occur, so Song View (21px), the fan view (≥20px) and the design sheet are untouched.
+- **The peek bar's buttons are all one size** (44px): prev/next used to be a size larger and set the bar's
+  height for it. With the padding trimmed with them, the bar went ~68px to ~57px — all of it chart.
 - **Live mode shows the song and nothing else above the peek bar.** The top bar and the song's own
   title/key/capo header are both gone (they cost two rows of chart to repeat what the peek bar already says);
   section captions are dropped too (`hideSectionLabels` on `ChordSheet` — on stage you are following a song
@@ -559,6 +568,13 @@ the pattern the fan view already performs (§D10): a persistent peek bar over a 
   either duplicated on the peek bar or belonged in the drawer, and the row it held is now chart. The peek
   bar's own label became position · artist · **capo in the accent** over the title — capo being the one number
   there a player has to act on.
+- **The drawer pairs its controls up from `sm`.** On a tablet in landscape (1024×768) or a phone on its
+  side, height is the scarce axis and width is not: text size sits beside line spacing, transpose beside the
+  scroll controls, and "Shorten repeated choruses" moves up between "Fit to screen" and the theme toggle —
+  five rows of `DisplaySettings` down to three. Below `sm` every control keeps its own full-width row, which
+  is what the phone layout was measured at (§D16). The chorus toggle is rendered twice, one copy per
+  breakpoint, because it changes row rather than just width; the hidden copy is `display: none`, so it is out
+  of the accessibility tree too.
 - **The drawer's second tab is the setlist** — the current set in order, current song marked, each row
   tapping to it, with a search box over `searchSongs` (§D15) matching titles, artists *and* lyrics. It is
   built from the payload Live mode already holds, so it works from a downloaded snapshot, and tapping a row

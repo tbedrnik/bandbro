@@ -49,21 +49,30 @@ export function DisplaySettings({
 
 	return (
 		<div className="w-full rounded-2xl border border-border p-3">
+			{/* From `sm` up — a tablet in landscape, or a phone on its side, where height is
+			    the scarce axis and width is not — the controls pair up two to a row. The
+			    drawer is what this buys: every row folded here is a row of chart still
+			    visible behind it. Below `sm` each control keeps its own full-width row. */}
 			<Row>
-				<button
-					type="button"
+				<ToggleBtn
+					active={value.fit}
 					onClick={() => onChange({ fit: !value.fit })}
-					aria-pressed={value.fit}
-					className={cn(
-						"flex h-10 flex-1 items-center gap-2 rounded-xl px-3 font-display text-[13px] font-semibold transition-colors",
-						value.fit
-							? "bg-primary text-primary-foreground"
-							: "bg-secondary text-foreground",
-					)}
+					icon={<IconArrowAutofitHeight className="size-[18px]" />}
 				>
-					<IconArrowAutofitHeight className="size-[18px]" />
 					Fit to screen
-				</button>
+				</ToggleBtn>
+				{/* The wide-screen home of the chorus toggle: between "fit to screen", the
+				    other control that changes how much song fits, and the theme switch. */}
+				<ToggleBtn
+					active={value.collapseChoruses}
+					onClick={() =>
+						onChange({ collapseChoruses: !value.collapseChoruses })
+					}
+					icon={<IconRepeat className="size-[18px]" />}
+					className="hidden sm:flex"
+				>
+					Shorten repeated choruses
+				</ToggleBtn>
 				<button
 					type="button"
 					aria-label="Toggle theme"
@@ -78,7 +87,7 @@ export function DisplaySettings({
 				</button>
 			</Row>
 
-			<Row>
+			<div className="mb-2 flex flex-col gap-2 sm:flex-row">
 				<Stepper
 					label="Text size"
 					icon={<IconTextSize className="size-4" />}
@@ -91,9 +100,6 @@ export function DisplaySettings({
 						})
 					}
 				/>
-			</Row>
-
-			<Row>
 				<Stepper
 					label="Line spacing"
 					icon={<IconLineHeight className="size-4" />}
@@ -105,9 +111,9 @@ export function DisplaySettings({
 						})
 					}
 				/>
-			</Row>
+			</div>
 
-			<div className="mb-2 flex gap-1 rounded-xl bg-secondary p-1">
+			<div className="flex gap-1 rounded-xl bg-secondary p-1">
 				{COLUMN_OPTIONS.map(({ count, Icon }) => (
 					<SegBtn
 						key={count}
@@ -123,26 +129,54 @@ export function DisplaySettings({
 			{/* A chorus is usually a song's longest section and usually its most repeated,
 			    so this buys more height than any other control here — and unlike the text
 			    size, it costs nothing in legibility. Off by default: it is a change to
-			    what the sheet says, not to how big it is. */}
-			<div className="flex gap-2">
-				<button
-					type="button"
-					onClick={() =>
-						onChange({ collapseChoruses: !value.collapseChoruses })
-					}
-					aria-pressed={value.collapseChoruses}
-					className={cn(
-						"flex h-10 flex-1 items-center gap-2 rounded-xl px-3 font-display text-[13px] font-semibold transition-colors",
-						value.collapseChoruses
-							? "bg-primary text-primary-foreground"
-							: "bg-secondary text-foreground",
-					)}
-				>
-					<IconRepeat className="size-[18px]" />
-					Shorten repeated choruses
-				</button>
-			</div>
+			    what the sheet says, not to how big it is. Narrow screens only; from `sm`
+			    up it sits in the first row instead. */}
+			<ToggleBtn
+				active={value.collapseChoruses}
+				onClick={() => onChange({ collapseChoruses: !value.collapseChoruses })}
+				icon={<IconRepeat className="size-[18px]" />}
+				className="mt-2 sm:hidden"
+			>
+				Shorten repeated choruses
+			</ToggleBtn>
 		</div>
+	);
+}
+
+/**
+ * A full-width on/off setting. Rendered twice for the chorus toggle — once per
+ * breakpoint — since it changes row between the narrow and wide layouts; the hidden copy
+ * is `display: none`, so it is out of the accessibility tree too.
+ */
+function ToggleBtn({
+	active,
+	onClick,
+	icon,
+	className,
+	children,
+}: {
+	active: boolean;
+	onClick: () => void;
+	icon: React.ReactNode;
+	className?: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<button
+			type="button"
+			onClick={onClick}
+			aria-pressed={active}
+			className={cn(
+				"flex h-10 flex-1 items-center gap-2 rounded-xl px-3 font-display text-[13px] font-semibold transition-colors",
+				active
+					? "bg-primary text-primary-foreground"
+					: "bg-secondary text-foreground",
+				className,
+			)}
+		>
+			{icon}
+			{children}
+		</button>
 	);
 }
 
