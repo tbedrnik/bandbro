@@ -171,6 +171,23 @@ export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedIntNullableFilter<$PrismaModel>
 }
 
+export type EnumProficiencyLevelFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProficiencyLevel | Prisma.EnumProficiencyLevelFieldRefInput<$PrismaModel>
+  in?: $Enums.ProficiencyLevel[]
+  notIn?: $Enums.ProficiencyLevel[]
+  not?: Prisma.NestedEnumProficiencyLevelFilter<$PrismaModel> | $Enums.ProficiencyLevel
+}
+
+export type EnumProficiencyLevelWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProficiencyLevel | Prisma.EnumProficiencyLevelFieldRefInput<$PrismaModel>
+  in?: $Enums.ProficiencyLevel[]
+  notIn?: $Enums.ProficiencyLevel[]
+  not?: Prisma.NestedEnumProficiencyLevelWithAggregatesFilter<$PrismaModel> | $Enums.ProficiencyLevel
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumProficiencyLevelFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumProficiencyLevelFilter<$PrismaModel>
+}
+
 export type EnumCreditRoleFilter<$PrismaModel = never> = {
   equals?: $Enums.CreditRole | Prisma.EnumCreditRoleFieldRefInput<$PrismaModel>
   in?: $Enums.CreditRole[]
@@ -404,6 +421,23 @@ export type NestedFloatNullableFilter<$PrismaModel = never> = {
   gt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   gte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   not?: Prisma.NestedFloatNullableFilter<$PrismaModel> | number | null
+}
+
+export type NestedEnumProficiencyLevelFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProficiencyLevel | Prisma.EnumProficiencyLevelFieldRefInput<$PrismaModel>
+  in?: $Enums.ProficiencyLevel[]
+  notIn?: $Enums.ProficiencyLevel[]
+  not?: Prisma.NestedEnumProficiencyLevelFilter<$PrismaModel> | $Enums.ProficiencyLevel
+}
+
+export type NestedEnumProficiencyLevelWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProficiencyLevel | Prisma.EnumProficiencyLevelFieldRefInput<$PrismaModel>
+  in?: $Enums.ProficiencyLevel[]
+  notIn?: $Enums.ProficiencyLevel[]
+  not?: Prisma.NestedEnumProficiencyLevelWithAggregatesFilter<$PrismaModel> | $Enums.ProficiencyLevel
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumProficiencyLevelFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumProficiencyLevelFilter<$PrismaModel>
 }
 
 export type NestedEnumCreditRoleFilter<$PrismaModel = never> = {

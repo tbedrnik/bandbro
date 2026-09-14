@@ -25,6 +25,7 @@ import { LineupPicker } from "@frontend/components/LineupPicker";
 import { MetaChip } from "@frontend/components/MetaChip";
 import { NamePromptDialog } from "@frontend/components/NamePromptDialog";
 import { OfflinePill } from "@frontend/components/OfflinePill";
+import { ReadinessChip } from "@frontend/components/ReadinessChip";
 import { ShareWithFansModal } from "@frontend/components/ShareWithFansModal";
 import { Button } from "@frontend/components/ui/button";
 import {
@@ -47,6 +48,7 @@ import { useScopes } from "@frontend/lib/scopes";
 import { useFanSession } from "@frontend/lib/useFanSession";
 import { cn } from "@frontend/lib/utils";
 import { displayKey } from "@shared/notation";
+import { readinessRank } from "@shared/proficiency";
 import {
 	IconCopy,
 	IconDotsVertical,
@@ -110,6 +112,7 @@ function SetlistDetail() {
 
 	const { data: setlist, isPending } = useSetlistQuery(id);
 	const setlistOrgId = setlist?.organizationId;
+	const setlistLineupId = setlist?.lineupId;
 
 	const update = useMutation({
 		...api.songbooks({ id }).put.mutationOptions(),
@@ -156,8 +159,14 @@ function SetlistDetail() {
 		setPendingOrder(null);
 	}, [serverOrder]);
 
+	// Asking for the readiness of *this set's lineup* is what turns the search into a
+	// builder: the same library sorts differently for the duo and for the full band,
+	// which is the whole point of marking who can play what (§D26).
 	const { data: searchResults } = useQuery({
-		...api.songs.get.queryOptions(q ? { q } : {}),
+		...api.songs.get.queryOptions({
+			...(q ? { q } : {}),
+			...(setlistLineupId ? { lineupId: setlistLineupId } : {}),
+		}),
 		enabled: adding && online,
 	});
 
@@ -166,10 +175,19 @@ function SetlistDetail() {
 	// so the server rejects it (§D25) — offering it here would only produce failures.
 	// Filtered client-side rather than with the `scope` param, which is an exact match on
 	// one organization and would drop the Curated library with it.
-	const addable = (searchResults ?? []).filter(
-		(song) =>
-			song.organizationId === null || song.organizationId === setlistOrgId,
-	);
+	const addable = (searchResults ?? [])
+		.filter(
+			(song) =>
+				song.organizationId === null || song.organizationId === setlistOrgId,
+		)
+		// Songs this lineup can actually play come first; the ones nobody has been asked
+		// about sink. A stable sort keeps the server's alphabetical order inside each
+		// band, so the list doesn't reshuffle unrecognisably.
+		.sort((a, b) =>
+			a.readiness && b.readiness
+				? readinessRank(a.readiness) - readinessRank(b.readiness)
+				: 0,
+		);
 
 	if (isPending) {
 		return (
@@ -495,11 +513,12 @@ function SetlistDetail() {
 											onClick={() => chartId && add(chartId)}
 											className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left hover:bg-muted disabled:opacity-40"
 										>
-											<span className="font-display text-sm">
+											<span className="flex flex-wrap items-center gap-2 font-display text-sm">
 												{song.name}
-												<span className="ml-2 text-xs text-muted-foreground">
+												<span className="text-xs text-muted-foreground">
 													{song.organization?.name ?? "Curated"}
 												</span>
+												<ReadinessChip readiness={song.readiness} />
 											</span>
 											<span className="text-xs text-muted-foreground">
 												{inList ? "added" : "+ add"}

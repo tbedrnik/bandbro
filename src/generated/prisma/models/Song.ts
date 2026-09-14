@@ -246,6 +246,7 @@ export type SongWhereInput = {
   credits?: Prisma.CreditListRelationFilter
   charts?: Prisma.ChartListRelationFilter
   tags?: Prisma.SongTagListRelationFilter
+  proficiencies?: Prisma.SongProficiencyListRelationFilter
 }
 
 export type SongOrderByWithRelationInput = {
@@ -263,6 +264,7 @@ export type SongOrderByWithRelationInput = {
   credits?: Prisma.CreditOrderByRelationAggregateInput
   charts?: Prisma.ChartOrderByRelationAggregateInput
   tags?: Prisma.SongTagOrderByRelationAggregateInput
+  proficiencies?: Prisma.SongProficiencyOrderByRelationAggregateInput
 }
 
 export type SongWhereUniqueInput = Prisma.AtLeast<{
@@ -283,6 +285,7 @@ export type SongWhereUniqueInput = Prisma.AtLeast<{
   credits?: Prisma.CreditListRelationFilter
   charts?: Prisma.ChartListRelationFilter
   tags?: Prisma.SongTagListRelationFilter
+  proficiencies?: Prisma.SongProficiencyListRelationFilter
 }, "id" | "slug">
 
 export type SongOrderByWithAggregationInput = {
@@ -328,6 +331,7 @@ export type SongCreateInput = {
   credits?: Prisma.CreditCreateNestedManyWithoutSongInput
   charts?: Prisma.ChartCreateNestedManyWithoutSongInput
   tags?: Prisma.SongTagCreateNestedManyWithoutSongInput
+  proficiencies?: Prisma.SongProficiencyCreateNestedManyWithoutSongInput
 }
 
 export type SongUncheckedCreateInput = {
@@ -343,6 +347,7 @@ export type SongUncheckedCreateInput = {
   credits?: Prisma.CreditUncheckedCreateNestedManyWithoutSongInput
   charts?: Prisma.ChartUncheckedCreateNestedManyWithoutSongInput
   tags?: Prisma.SongTagUncheckedCreateNestedManyWithoutSongInput
+  proficiencies?: Prisma.SongProficiencyUncheckedCreateNestedManyWithoutSongInput
 }
 
 export type SongUpdateInput = {
@@ -358,6 +363,7 @@ export type SongUpdateInput = {
   credits?: Prisma.CreditUpdateManyWithoutSongNestedInput
   charts?: Prisma.ChartUpdateManyWithoutSongNestedInput
   tags?: Prisma.SongTagUpdateManyWithoutSongNestedInput
+  proficiencies?: Prisma.SongProficiencyUpdateManyWithoutSongNestedInput
 }
 
 export type SongUncheckedUpdateInput = {
@@ -373,6 +379,7 @@ export type SongUncheckedUpdateInput = {
   credits?: Prisma.CreditUncheckedUpdateManyWithoutSongNestedInput
   charts?: Prisma.ChartUncheckedUpdateManyWithoutSongNestedInput
   tags?: Prisma.SongTagUncheckedUpdateManyWithoutSongNestedInput
+  proficiencies?: Prisma.SongProficiencyUncheckedUpdateManyWithoutSongNestedInput
 }
 
 export type SongCreateManyInput = {
@@ -414,6 +421,11 @@ export type SongListRelationFilter = {
 
 export type SongOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type SongScalarRelationFilter = {
+  is?: Prisma.SongWhereInput
+  isNot?: Prisma.SongWhereInput
 }
 
 export type SongNullableScalarRelationFilter = {
@@ -462,11 +474,6 @@ export type SongSumOrderByAggregateInput = {
   year?: Prisma.SortOrder
 }
 
-export type SongScalarRelationFilter = {
-  is?: Prisma.SongWhereInput
-  isNot?: Prisma.SongWhereInput
-}
-
 export type SongCreateNestedManyWithoutOrganizationInput = {
   create?: Prisma.XOR<Prisma.SongCreateWithoutOrganizationInput, Prisma.SongUncheckedCreateWithoutOrganizationInput> | Prisma.SongCreateWithoutOrganizationInput[] | Prisma.SongUncheckedCreateWithoutOrganizationInput[]
   connectOrCreate?: Prisma.SongCreateOrConnectWithoutOrganizationInput | Prisma.SongCreateOrConnectWithoutOrganizationInput[]
@@ -507,6 +514,20 @@ export type SongUncheckedUpdateManyWithoutOrganizationNestedInput = {
   update?: Prisma.SongUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.SongUpdateWithWhereUniqueWithoutOrganizationInput[]
   updateMany?: Prisma.SongUpdateManyWithWhereWithoutOrganizationInput | Prisma.SongUpdateManyWithWhereWithoutOrganizationInput[]
   deleteMany?: Prisma.SongScalarWhereInput | Prisma.SongScalarWhereInput[]
+}
+
+export type SongCreateNestedOneWithoutProficienciesInput = {
+  create?: Prisma.XOR<Prisma.SongCreateWithoutProficienciesInput, Prisma.SongUncheckedCreateWithoutProficienciesInput>
+  connectOrCreate?: Prisma.SongCreateOrConnectWithoutProficienciesInput
+  connect?: Prisma.SongWhereUniqueInput
+}
+
+export type SongUpdateOneRequiredWithoutProficienciesNestedInput = {
+  create?: Prisma.XOR<Prisma.SongCreateWithoutProficienciesInput, Prisma.SongUncheckedCreateWithoutProficienciesInput>
+  connectOrCreate?: Prisma.SongCreateOrConnectWithoutProficienciesInput
+  upsert?: Prisma.SongUpsertWithoutProficienciesInput
+  connect?: Prisma.SongWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SongUpdateToOneWithWhereWithoutProficienciesInput, Prisma.SongUpdateWithoutProficienciesInput>, Prisma.SongUncheckedUpdateWithoutProficienciesInput>
 }
 
 export type SongCreateNestedOneWithoutForksInput = {
@@ -621,6 +642,7 @@ export type SongCreateWithoutOrganizationInput = {
   credits?: Prisma.CreditCreateNestedManyWithoutSongInput
   charts?: Prisma.ChartCreateNestedManyWithoutSongInput
   tags?: Prisma.SongTagCreateNestedManyWithoutSongInput
+  proficiencies?: Prisma.SongProficiencyCreateNestedManyWithoutSongInput
 }
 
 export type SongUncheckedCreateWithoutOrganizationInput = {
@@ -635,6 +657,7 @@ export type SongUncheckedCreateWithoutOrganizationInput = {
   credits?: Prisma.CreditUncheckedCreateNestedManyWithoutSongInput
   charts?: Prisma.ChartUncheckedCreateNestedManyWithoutSongInput
   tags?: Prisma.SongTagUncheckedCreateNestedManyWithoutSongInput
+  proficiencies?: Prisma.SongProficiencyUncheckedCreateNestedManyWithoutSongInput
 }
 
 export type SongCreateOrConnectWithoutOrganizationInput = {
@@ -676,6 +699,82 @@ export type SongScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Song"> | Date | string
 }
 
+export type SongCreateWithoutProficienciesInput = {
+  id?: string
+  slug: string
+  name: string
+  year?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  organization?: Prisma.OrganizationCreateNestedOneWithoutSongsInput
+  forkedFrom?: Prisma.SongCreateNestedOneWithoutForksInput
+  forks?: Prisma.SongCreateNestedManyWithoutForkedFromInput
+  credits?: Prisma.CreditCreateNestedManyWithoutSongInput
+  charts?: Prisma.ChartCreateNestedManyWithoutSongInput
+  tags?: Prisma.SongTagCreateNestedManyWithoutSongInput
+}
+
+export type SongUncheckedCreateWithoutProficienciesInput = {
+  id?: string
+  slug: string
+  name: string
+  year?: number | null
+  organizationId?: string | null
+  forkedFromId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  forks?: Prisma.SongUncheckedCreateNestedManyWithoutForkedFromInput
+  credits?: Prisma.CreditUncheckedCreateNestedManyWithoutSongInput
+  charts?: Prisma.ChartUncheckedCreateNestedManyWithoutSongInput
+  tags?: Prisma.SongTagUncheckedCreateNestedManyWithoutSongInput
+}
+
+export type SongCreateOrConnectWithoutProficienciesInput = {
+  where: Prisma.SongWhereUniqueInput
+  create: Prisma.XOR<Prisma.SongCreateWithoutProficienciesInput, Prisma.SongUncheckedCreateWithoutProficienciesInput>
+}
+
+export type SongUpsertWithoutProficienciesInput = {
+  update: Prisma.XOR<Prisma.SongUpdateWithoutProficienciesInput, Prisma.SongUncheckedUpdateWithoutProficienciesInput>
+  create: Prisma.XOR<Prisma.SongCreateWithoutProficienciesInput, Prisma.SongUncheckedCreateWithoutProficienciesInput>
+  where?: Prisma.SongWhereInput
+}
+
+export type SongUpdateToOneWithWhereWithoutProficienciesInput = {
+  where?: Prisma.SongWhereInput
+  data: Prisma.XOR<Prisma.SongUpdateWithoutProficienciesInput, Prisma.SongUncheckedUpdateWithoutProficienciesInput>
+}
+
+export type SongUpdateWithoutProficienciesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneWithoutSongsNestedInput
+  forkedFrom?: Prisma.SongUpdateOneWithoutForksNestedInput
+  forks?: Prisma.SongUpdateManyWithoutForkedFromNestedInput
+  credits?: Prisma.CreditUpdateManyWithoutSongNestedInput
+  charts?: Prisma.ChartUpdateManyWithoutSongNestedInput
+  tags?: Prisma.SongTagUpdateManyWithoutSongNestedInput
+}
+
+export type SongUncheckedUpdateWithoutProficienciesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  organizationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  forkedFromId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  forks?: Prisma.SongUncheckedUpdateManyWithoutForkedFromNestedInput
+  credits?: Prisma.CreditUncheckedUpdateManyWithoutSongNestedInput
+  charts?: Prisma.ChartUncheckedUpdateManyWithoutSongNestedInput
+  tags?: Prisma.SongTagUncheckedUpdateManyWithoutSongNestedInput
+}
+
 export type SongCreateWithoutForksInput = {
   id?: string
   slug: string
@@ -688,6 +787,7 @@ export type SongCreateWithoutForksInput = {
   credits?: Prisma.CreditCreateNestedManyWithoutSongInput
   charts?: Prisma.ChartCreateNestedManyWithoutSongInput
   tags?: Prisma.SongTagCreateNestedManyWithoutSongInput
+  proficiencies?: Prisma.SongProficiencyCreateNestedManyWithoutSongInput
 }
 
 export type SongUncheckedCreateWithoutForksInput = {
@@ -702,6 +802,7 @@ export type SongUncheckedCreateWithoutForksInput = {
   credits?: Prisma.CreditUncheckedCreateNestedManyWithoutSongInput
   charts?: Prisma.ChartUncheckedCreateNestedManyWithoutSongInput
   tags?: Prisma.SongTagUncheckedCreateNestedManyWithoutSongInput
+  proficiencies?: Prisma.SongProficiencyUncheckedCreateNestedManyWithoutSongInput
 }
 
 export type SongCreateOrConnectWithoutForksInput = {
@@ -721,6 +822,7 @@ export type SongCreateWithoutForkedFromInput = {
   credits?: Prisma.CreditCreateNestedManyWithoutSongInput
   charts?: Prisma.ChartCreateNestedManyWithoutSongInput
   tags?: Prisma.SongTagCreateNestedManyWithoutSongInput
+  proficiencies?: Prisma.SongProficiencyCreateNestedManyWithoutSongInput
 }
 
 export type SongUncheckedCreateWithoutForkedFromInput = {
@@ -735,6 +837,7 @@ export type SongUncheckedCreateWithoutForkedFromInput = {
   credits?: Prisma.CreditUncheckedCreateNestedManyWithoutSongInput
   charts?: Prisma.ChartUncheckedCreateNestedManyWithoutSongInput
   tags?: Prisma.SongTagUncheckedCreateNestedManyWithoutSongInput
+  proficiencies?: Prisma.SongProficiencyUncheckedCreateNestedManyWithoutSongInput
 }
 
 export type SongCreateOrConnectWithoutForkedFromInput = {
@@ -769,6 +872,7 @@ export type SongUpdateWithoutForksInput = {
   credits?: Prisma.CreditUpdateManyWithoutSongNestedInput
   charts?: Prisma.ChartUpdateManyWithoutSongNestedInput
   tags?: Prisma.SongTagUpdateManyWithoutSongNestedInput
+  proficiencies?: Prisma.SongProficiencyUpdateManyWithoutSongNestedInput
 }
 
 export type SongUncheckedUpdateWithoutForksInput = {
@@ -783,6 +887,7 @@ export type SongUncheckedUpdateWithoutForksInput = {
   credits?: Prisma.CreditUncheckedUpdateManyWithoutSongNestedInput
   charts?: Prisma.ChartUncheckedUpdateManyWithoutSongNestedInput
   tags?: Prisma.SongTagUncheckedUpdateManyWithoutSongNestedInput
+  proficiencies?: Prisma.SongProficiencyUncheckedUpdateManyWithoutSongNestedInput
 }
 
 export type SongUpsertWithWhereUniqueWithoutForkedFromInput = {
@@ -813,6 +918,7 @@ export type SongCreateWithoutChartsInput = {
   forks?: Prisma.SongCreateNestedManyWithoutForkedFromInput
   credits?: Prisma.CreditCreateNestedManyWithoutSongInput
   tags?: Prisma.SongTagCreateNestedManyWithoutSongInput
+  proficiencies?: Prisma.SongProficiencyCreateNestedManyWithoutSongInput
 }
 
 export type SongUncheckedCreateWithoutChartsInput = {
@@ -827,6 +933,7 @@ export type SongUncheckedCreateWithoutChartsInput = {
   forks?: Prisma.SongUncheckedCreateNestedManyWithoutForkedFromInput
   credits?: Prisma.CreditUncheckedCreateNestedManyWithoutSongInput
   tags?: Prisma.SongTagUncheckedCreateNestedManyWithoutSongInput
+  proficiencies?: Prisma.SongProficiencyUncheckedCreateNestedManyWithoutSongInput
 }
 
 export type SongCreateOrConnectWithoutChartsInput = {
@@ -857,6 +964,7 @@ export type SongUpdateWithoutChartsInput = {
   forks?: Prisma.SongUpdateManyWithoutForkedFromNestedInput
   credits?: Prisma.CreditUpdateManyWithoutSongNestedInput
   tags?: Prisma.SongTagUpdateManyWithoutSongNestedInput
+  proficiencies?: Prisma.SongProficiencyUpdateManyWithoutSongNestedInput
 }
 
 export type SongUncheckedUpdateWithoutChartsInput = {
@@ -871,6 +979,7 @@ export type SongUncheckedUpdateWithoutChartsInput = {
   forks?: Prisma.SongUncheckedUpdateManyWithoutForkedFromNestedInput
   credits?: Prisma.CreditUncheckedUpdateManyWithoutSongNestedInput
   tags?: Prisma.SongTagUncheckedUpdateManyWithoutSongNestedInput
+  proficiencies?: Prisma.SongProficiencyUncheckedUpdateManyWithoutSongNestedInput
 }
 
 export type SongCreateWithoutCreditsInput = {
@@ -885,6 +994,7 @@ export type SongCreateWithoutCreditsInput = {
   forks?: Prisma.SongCreateNestedManyWithoutForkedFromInput
   charts?: Prisma.ChartCreateNestedManyWithoutSongInput
   tags?: Prisma.SongTagCreateNestedManyWithoutSongInput
+  proficiencies?: Prisma.SongProficiencyCreateNestedManyWithoutSongInput
 }
 
 export type SongUncheckedCreateWithoutCreditsInput = {
@@ -899,6 +1009,7 @@ export type SongUncheckedCreateWithoutCreditsInput = {
   forks?: Prisma.SongUncheckedCreateNestedManyWithoutForkedFromInput
   charts?: Prisma.ChartUncheckedCreateNestedManyWithoutSongInput
   tags?: Prisma.SongTagUncheckedCreateNestedManyWithoutSongInput
+  proficiencies?: Prisma.SongProficiencyUncheckedCreateNestedManyWithoutSongInput
 }
 
 export type SongCreateOrConnectWithoutCreditsInput = {
@@ -929,6 +1040,7 @@ export type SongUpdateWithoutCreditsInput = {
   forks?: Prisma.SongUpdateManyWithoutForkedFromNestedInput
   charts?: Prisma.ChartUpdateManyWithoutSongNestedInput
   tags?: Prisma.SongTagUpdateManyWithoutSongNestedInput
+  proficiencies?: Prisma.SongProficiencyUpdateManyWithoutSongNestedInput
 }
 
 export type SongUncheckedUpdateWithoutCreditsInput = {
@@ -943,6 +1055,7 @@ export type SongUncheckedUpdateWithoutCreditsInput = {
   forks?: Prisma.SongUncheckedUpdateManyWithoutForkedFromNestedInput
   charts?: Prisma.ChartUncheckedUpdateManyWithoutSongNestedInput
   tags?: Prisma.SongTagUncheckedUpdateManyWithoutSongNestedInput
+  proficiencies?: Prisma.SongProficiencyUncheckedUpdateManyWithoutSongNestedInput
 }
 
 export type SongCreateWithoutTagsInput = {
@@ -957,6 +1070,7 @@ export type SongCreateWithoutTagsInput = {
   forks?: Prisma.SongCreateNestedManyWithoutForkedFromInput
   credits?: Prisma.CreditCreateNestedManyWithoutSongInput
   charts?: Prisma.ChartCreateNestedManyWithoutSongInput
+  proficiencies?: Prisma.SongProficiencyCreateNestedManyWithoutSongInput
 }
 
 export type SongUncheckedCreateWithoutTagsInput = {
@@ -971,6 +1085,7 @@ export type SongUncheckedCreateWithoutTagsInput = {
   forks?: Prisma.SongUncheckedCreateNestedManyWithoutForkedFromInput
   credits?: Prisma.CreditUncheckedCreateNestedManyWithoutSongInput
   charts?: Prisma.ChartUncheckedCreateNestedManyWithoutSongInput
+  proficiencies?: Prisma.SongProficiencyUncheckedCreateNestedManyWithoutSongInput
 }
 
 export type SongCreateOrConnectWithoutTagsInput = {
@@ -1001,6 +1116,7 @@ export type SongUpdateWithoutTagsInput = {
   forks?: Prisma.SongUpdateManyWithoutForkedFromNestedInput
   credits?: Prisma.CreditUpdateManyWithoutSongNestedInput
   charts?: Prisma.ChartUpdateManyWithoutSongNestedInput
+  proficiencies?: Prisma.SongProficiencyUpdateManyWithoutSongNestedInput
 }
 
 export type SongUncheckedUpdateWithoutTagsInput = {
@@ -1015,6 +1131,7 @@ export type SongUncheckedUpdateWithoutTagsInput = {
   forks?: Prisma.SongUncheckedUpdateManyWithoutForkedFromNestedInput
   credits?: Prisma.CreditUncheckedUpdateManyWithoutSongNestedInput
   charts?: Prisma.ChartUncheckedUpdateManyWithoutSongNestedInput
+  proficiencies?: Prisma.SongProficiencyUncheckedUpdateManyWithoutSongNestedInput
 }
 
 export type SongCreateManyOrganizationInput = {
@@ -1039,6 +1156,7 @@ export type SongUpdateWithoutOrganizationInput = {
   credits?: Prisma.CreditUpdateManyWithoutSongNestedInput
   charts?: Prisma.ChartUpdateManyWithoutSongNestedInput
   tags?: Prisma.SongTagUpdateManyWithoutSongNestedInput
+  proficiencies?: Prisma.SongProficiencyUpdateManyWithoutSongNestedInput
 }
 
 export type SongUncheckedUpdateWithoutOrganizationInput = {
@@ -1053,6 +1171,7 @@ export type SongUncheckedUpdateWithoutOrganizationInput = {
   credits?: Prisma.CreditUncheckedUpdateManyWithoutSongNestedInput
   charts?: Prisma.ChartUncheckedUpdateManyWithoutSongNestedInput
   tags?: Prisma.SongTagUncheckedUpdateManyWithoutSongNestedInput
+  proficiencies?: Prisma.SongProficiencyUncheckedUpdateManyWithoutSongNestedInput
 }
 
 export type SongUncheckedUpdateManyWithoutOrganizationInput = {
@@ -1087,6 +1206,7 @@ export type SongUpdateWithoutForkedFromInput = {
   credits?: Prisma.CreditUpdateManyWithoutSongNestedInput
   charts?: Prisma.ChartUpdateManyWithoutSongNestedInput
   tags?: Prisma.SongTagUpdateManyWithoutSongNestedInput
+  proficiencies?: Prisma.SongProficiencyUpdateManyWithoutSongNestedInput
 }
 
 export type SongUncheckedUpdateWithoutForkedFromInput = {
@@ -1101,6 +1221,7 @@ export type SongUncheckedUpdateWithoutForkedFromInput = {
   credits?: Prisma.CreditUncheckedUpdateManyWithoutSongNestedInput
   charts?: Prisma.ChartUncheckedUpdateManyWithoutSongNestedInput
   tags?: Prisma.SongTagUncheckedUpdateManyWithoutSongNestedInput
+  proficiencies?: Prisma.SongProficiencyUncheckedUpdateManyWithoutSongNestedInput
 }
 
 export type SongUncheckedUpdateManyWithoutForkedFromInput = {
@@ -1123,6 +1244,7 @@ export type SongCountOutputType = {
   credits: number
   charts: number
   tags: number
+  proficiencies: number
 }
 
 export type SongCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1130,6 +1252,7 @@ export type SongCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   credits?: boolean | SongCountOutputTypeCountCreditsArgs
   charts?: boolean | SongCountOutputTypeCountChartsArgs
   tags?: boolean | SongCountOutputTypeCountTagsArgs
+  proficiencies?: boolean | SongCountOutputTypeCountProficienciesArgs
 }
 
 /**
@@ -1170,6 +1293,13 @@ export type SongCountOutputTypeCountTagsArgs<ExtArgs extends runtime.Types.Exten
   where?: Prisma.SongTagWhereInput
 }
 
+/**
+ * SongCountOutputType without action
+ */
+export type SongCountOutputTypeCountProficienciesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SongProficiencyWhereInput
+}
+
 
 export type SongSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1186,6 +1316,7 @@ export type SongSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   credits?: boolean | Prisma.Song$creditsArgs<ExtArgs>
   charts?: boolean | Prisma.Song$chartsArgs<ExtArgs>
   tags?: boolean | Prisma.Song$tagsArgs<ExtArgs>
+  proficiencies?: boolean | Prisma.Song$proficienciesArgs<ExtArgs>
   _count?: boolean | Prisma.SongCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["song"]>
 
@@ -1234,6 +1365,7 @@ export type SongInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   credits?: boolean | Prisma.Song$creditsArgs<ExtArgs>
   charts?: boolean | Prisma.Song$chartsArgs<ExtArgs>
   tags?: boolean | Prisma.Song$tagsArgs<ExtArgs>
+  proficiencies?: boolean | Prisma.Song$proficienciesArgs<ExtArgs>
   _count?: boolean | Prisma.SongCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type SongIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1254,6 +1386,7 @@ export type $SongPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     credits: Prisma.$CreditPayload<ExtArgs>[]
     charts: Prisma.$ChartPayload<ExtArgs>[]
     tags: Prisma.$SongTagPayload<ExtArgs>[]
+    proficiencies: Prisma.$SongProficiencyPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1664,6 +1797,7 @@ export interface Prisma__SongClient<T, Null = never, ExtArgs extends runtime.Typ
   credits<T extends Prisma.Song$creditsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Song$creditsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CreditPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   charts<T extends Prisma.Song$chartsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Song$chartsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChartPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   tags<T extends Prisma.Song$tagsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Song$tagsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SongTagPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  proficiencies<T extends Prisma.Song$proficienciesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Song$proficienciesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SongProficiencyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2231,6 +2365,30 @@ export type Song$tagsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   take?: number
   skip?: number
   distinct?: Prisma.SongTagScalarFieldEnum | Prisma.SongTagScalarFieldEnum[]
+}
+
+/**
+ * Song.proficiencies
+ */
+export type Song$proficienciesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SongProficiency
+   */
+  select?: Prisma.SongProficiencySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the SongProficiency
+   */
+  omit?: Prisma.SongProficiencyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SongProficiencyInclude<ExtArgs> | null
+  where?: Prisma.SongProficiencyWhereInput
+  orderBy?: Prisma.SongProficiencyOrderByWithRelationInput | Prisma.SongProficiencyOrderByWithRelationInput[]
+  cursor?: Prisma.SongProficiencyWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SongProficiencyScalarFieldEnum | Prisma.SongProficiencyScalarFieldEnum[]
 }
 
 /**

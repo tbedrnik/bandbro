@@ -1,6 +1,7 @@
 import { api } from "@frontend/api";
 import { CapoToggle } from "@frontend/components/CapoToggle";
 import { MetaChip, Tag } from "@frontend/components/MetaChip";
+import { ProficiencyControl } from "@frontend/components/ProficiencyControl";
 import { SongSheet } from "@frontend/components/SongSheet";
 import { TransposeStepper } from "@frontend/components/TransposeStepper";
 import { Button } from "@frontend/components/ui/button";
@@ -115,6 +116,15 @@ function SongViewPage() {
 
 			{/* Controls */}
 			<aside className="order-1 flex flex-col gap-6 lg:order-2">
+				{/* Any reader can answer this — it's about the player, not the song (§D26).
+				    Offline it's a PUT away from the server, so it's hidden (§D7). */}
+				{online && (
+					<ProficiencyControl
+						slug={song.slug}
+						level={song.myLevel}
+						bandLevels={song.bandLevels}
+					/>
+				)}
 				<div>
 					<div className="mb-2 font-display text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 						Chord view

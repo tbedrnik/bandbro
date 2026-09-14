@@ -1,6 +1,8 @@
 import { prisma } from "@backend/prisma";
+import type { ProficiencyLevel, Readiness } from "@shared/proficiency";
 import type { User } from "better-auth/types";
 import type { Prisma } from "../../generated/prisma/client";
+import { lineupReadinessFor, myLevels } from "./proficiency";
 import { readableScopeWhere } from "./scope";
 
 export type SongsListQuery = {
@@ -14,6 +16,11 @@ export type SongsListQuery = {
 	key?: string;
 	/** Filter by tag slug. */
 	tag?: string;
+	/**
+	 * Annotate each song with how ready this lineup is for it (CLAUDE.md §D26) — what
+	 * the setlist builder sorts on. Without it `readiness` comes back null.
+	 */
+	lineupId?: string;
 };
 
 export async function songsList({
@@ -57,7 +64,7 @@ export async function songsList({
 		and.push({ charts: { some: { key: query.key } } });
 	}
 
-	return prisma.song.findMany({
+	const songs = await prisma.song.findMany({
 		where: { AND: and },
 		orderBy: { name: "asc" },
 		include: {
@@ -73,4 +80,20 @@ export async function songsList({
 			},
 		},
 	});
+
+	// Proficiency rides along on the list rather than sitting behind its own endpoint:
+	// every screen that shows songs wants "can I play this?" next to them, and a second
+	// round-trip per screen buys nothing. Both fields are always present so the
+	// Eden-derived client type stays one shape (CLAUDE.md §D9).
+	const songIds = songs.map((s) => s.id);
+	const mine = user?.id ? await myLevels(user.id, songIds) : new Map();
+	const readiness = query.lineupId
+		? await lineupReadinessFor(query.lineupId, songIds)
+		: new Map<string, Readiness>();
+
+	return songs.map((song) => ({
+		...song,
+		myLevel: (mine.get(song.id) ?? "UNKNOWN") as ProficiencyLevel,
+		readiness: readiness.get(song.id) ?? null,
+	}));
 }

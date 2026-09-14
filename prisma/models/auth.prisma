@@ -21,6 +21,7 @@ model User {
   pdfExports         PdfExport[]
   pushSubscriptions  PushSubscription[]
   lineupMembers      LineupMember[]
+  proficiencies      SongProficiency[]
 
   @@unique([email])
   @@map("user")

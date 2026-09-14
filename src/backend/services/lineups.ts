@@ -18,8 +18,10 @@ import { HttpError, requireMember, requireWrite } from "./scope";
  * so the migration and the running app can never disagree about which lineup is the
  * default one.
  */
+const DEFAULT_PREFIX = "dflt-";
+
 export function defaultLineupId(organizationId: string): string {
-	return `dflt-${organizationId}`;
+	return `${DEFAULT_PREFIX}${organizationId}`;
 }
 
 /**
@@ -74,10 +76,32 @@ const lineupInclude = {
  * write goes through this, so the band's role model stays the single source of truth.
  */
 export async function requireLineupWrite(userId: string, lineupId: string) {
-	const lineup = await prisma.lineup.findUnique({
+	const select = {
+		id: true,
+		name: true,
+		organizationId: true,
+		isDefault: true,
+	} as const;
+
+	let lineup = await prisma.lineup.findUnique({
 		where: { id: lineupId },
-		select: { id: true, name: true, organizationId: true, isDefault: true },
+		select,
 	});
+
+	// A default lineup's id is derived from its band's, so callers can compute one for a
+	// band whose row hasn't been materialised yet (the lazy creation above runs on the
+	// read path). Deriving an id you then can't address would make the derivation a lie,
+	// so materialise it here rather than 404.
+	if (!lineup && lineupId.startsWith(DEFAULT_PREFIX)) {
+		const organizationId = lineupId.slice(DEFAULT_PREFIX.length);
+		if (await prisma.organization.count({ where: { id: organizationId } })) {
+			await ensureDefaultLineup(organizationId);
+			lineup = await prisma.lineup.findUnique({
+				where: { id: lineupId },
+				select,
+			});
+		}
+	}
 	if (!lineup) throw new HttpError(404, "Lineup not found.");
 	const role = await requireWrite(userId, lineup.organizationId);
 	return { lineup, role };

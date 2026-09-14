@@ -16,7 +16,9 @@ import {
 	useRememberedScope,
 	useScopes,
 } from "@frontend/lib/scopes";
+import { cn } from "@frontend/lib/utils";
 import { displayKey } from "@shared/notation";
+import { LEVEL_LABELS, type ProficiencyLevel } from "@shared/proficiency";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -37,6 +39,7 @@ function LibraryPage() {
 	const { scopes, bands, personal, isPending: scopesPending } = useScopes();
 	const [scopeParam, setScopeParam] = useRememberedScope(scopes, scopesPending);
 	const [q, setQ] = useState("");
+	const [mine, setMine] = useState<ProficiencyLevel | "ALL">("ALL");
 	const online = useOnline();
 
 	const active: Scope = scopes.find((s) => s.param === scopeParam) ?? scopes[0];
@@ -49,6 +52,13 @@ function LibraryPage() {
 	});
 
 	const writableScopes = [...bands, ...(personal ? [personal] : [])];
+
+	// "What can't I play yet?" is the question one shared library can answer and three
+	// separate ones can't (§D26) — a bandmate can find the gaps and go learn them
+	// without waiting to be added to a set.
+	const visible = (songs ?? []).filter(
+		(song) => mine === "ALL" || song.myLevel === mine,
+	);
 
 	return (
 		<div className="mx-auto max-w-6xl px-6 py-8">
@@ -77,7 +87,7 @@ function LibraryPage() {
 					</p>
 				</div>
 				<div className="font-mono text-sm text-muted-foreground">
-					{songs?.length ?? 0} songs
+					{visible.length} songs
 				</div>
 			</div>
 
@@ -95,6 +105,31 @@ function LibraryPage() {
 				</div>
 			)}
 
+			{/* Filtering by your own marks is pure client-side work over a list already on
+			    screen, but the list itself is a server read — so offline there is nothing
+			    to filter (§D7). */}
+			{online && (
+				<div className="mt-4 flex flex-wrap gap-2">
+					{(["ALL", "PLAY", "FOLLOW", "LEARNING", "UNKNOWN"] as const).map(
+						(option) => (
+							<button
+								key={option}
+								type="button"
+								onClick={() => setMine(option)}
+								className={cn(
+									"rounded-lg px-3 py-1.5 font-display text-xs font-semibold transition-colors",
+									option === mine
+										? "bg-foreground text-background"
+										: "bg-card text-muted-foreground hover:bg-muted",
+								)}
+							>
+								{option === "ALL" ? "All songs" : LEVEL_LABELS[option]}
+							</button>
+						),
+					)}
+				</div>
+			)}
+
 			<div className="mt-4 overflow-hidden rounded-xl border border-border">
 				<div className="hidden grid-cols-[1fr_180px_70px_70px_160px] items-center gap-4 border-b border-border bg-card px-4 py-2.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground sm:grid">
 					<div>Song</div>
@@ -107,10 +142,14 @@ function LibraryPage() {
 					<div className="px-4 py-10 text-center text-muted-foreground">
 						Loading…
 					</div>
-				) : !songs?.length ? (
+				) : !visible.length ? (
 					<div className="px-4 py-10 text-center text-muted-foreground">
 						{online ? (
-							"No songs here yet."
+							mine === "ALL" ? (
+								"No songs here yet."
+							) : (
+								`Nothing marked “${LEVEL_LABELS[mine]}” here.`
+							)
 						) : (
 							<>
 								You're offline — the library needs a connection.{" "}
@@ -122,7 +161,7 @@ function LibraryPage() {
 						)}
 					</div>
 				) : (
-					songs.map((song) => {
+					visible.map((song) => {
 						const chart = song.charts[0];
 						const artist = song.credits.map((c) => c.artist.name).join(", ");
 						return (

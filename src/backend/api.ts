@@ -1,6 +1,6 @@
 import { serverTiming } from "@elysiajs/server-timing";
 import { Elysia, t } from "elysia";
-import { CreditRole } from "../generated/prisma/enums";
+import { CreditRole, ProficiencyLevel } from "../generated/prisma/enums";
 import { authMiddleware } from "./auth";
 import { prisma } from "./prisma";
 import {
@@ -27,6 +27,7 @@ import {
 	pdfExportFile,
 	pdfExportRead,
 } from "./services/pdfExports";
+import { proficiencySet } from "./services/proficiency";
 import {
 	pushPublicKey,
 	pushStatus,
@@ -127,6 +128,7 @@ export const api = new Elysia({ prefix: "/api" })
 			.get("/", ({ user, query }) => songsList({ user, query }), {
 				auth: true,
 				query: t.Object({
+					lineupId: t.Optional(t.String()),
 					scope: t.Optional(t.String()),
 					q: t.Optional(t.String()),
 					artist: t.Optional(t.String()),
@@ -163,6 +165,21 @@ export const api = new Elysia({ prefix: "/api" })
 			)
 			// Import from an external chord-sheet site (akordy.kytary.cz) → a new song
 			// in the chosen scope. Declared before "/:slug" routes for clarity.
+			// Anyone who can read a song can say whether they can play it — including a
+			// Reader. It is a fact about the player, not an edit to the song (§D26).
+			.put(
+				"/:slug/proficiency",
+				({ params, user, body }) =>
+					proficiencySet({
+						userId: user.id,
+						slug: params.slug,
+						level: body.level,
+					}),
+				{
+					auth: true,
+					body: t.Object({ level: t.Enum(ProficiencyLevel) }),
+				},
+			)
 			.post(
 				"/import",
 				({ user, body }) => songsImport({ userId: user.id, payload: body }),

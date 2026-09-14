@@ -27,6 +27,8 @@ const { songbooksList } = await import("./songbooksList");
 const { songbooksUpdate } = await import("./songbooksUpdate");
 const { defaultLineupId, ensureDefaultLineup, lineupsCreate, lineupsDelete } =
 	await import("./lineups");
+const { lineupReadinessFor, proficiencySet } = await import("./proficiency");
+const { songsList } = await import("./songsList");
 const { foreignChartIds } = await import("./scope");
 
 describe("foreignChartIds", () => {
@@ -374,5 +376,191 @@ describe("lineupsDelete", () => {
 			id: spare.id,
 			deleted: true,
 		});
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Proficiency (§D26). The fixture is exactly the case this is for: Banda is Tomas +
+// Dave, and "Duo Tomi Kohy" is Tomas alone — so the same song is ready for one lineup
+// and not the other, from one shared library.
+// ---------------------------------------------------------------------------
+
+describe("proficiency", () => {
+	test("a mark is per player and needs no write role — a Reader can set one", async () => {
+		const reader = await prisma.user.create({
+			data: {
+				id: "u_reader",
+				name: "Reader",
+				email: "reader@x.cz",
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			},
+		});
+		await prisma.member.create({
+			data: {
+				id: "m_reader",
+				organizationId: ids.banda,
+				userId: reader.id,
+				role: "reader",
+				createdAt: new Date(),
+			},
+		});
+		expect(
+			await proficiencySet({
+				userId: reader.id,
+				slug: "wagon-wheel",
+				level: "FOLLOW",
+			}),
+		).toMatchObject({ level: "FOLLOW" });
+	});
+
+	test("UNKNOWN is stored as the absence of a row, not a row saying UNKNOWN", async () => {
+		await proficiencySet({
+			userId: ids.dave,
+			slug: "wagon-wheel",
+			level: "PLAY",
+		});
+		const song = await prisma.song.findUniqueOrThrow({
+			where: { slug: "wagon-wheel" },
+			select: { id: true },
+		});
+		expect(
+			await prisma.songProficiency.count({
+				where: { userId: ids.dave, songId: song.id },
+			}),
+		).toBe(1);
+
+		await proficiencySet({
+			userId: ids.dave,
+			slug: "wagon-wheel",
+			level: "UNKNOWN",
+		});
+		expect(
+			await prisma.songProficiency.count({
+				where: { userId: ids.dave, songId: song.id },
+			}),
+		).toBe(0);
+	});
+
+	test("a song nobody can read cannot be marked", async () => {
+		await expect(
+			proficiencySet({
+				userId: ids.stranger,
+				slug: "wagon-wheel",
+				level: "PLAY",
+			}),
+		).rejects.toThrow(/not found/i);
+	});
+
+	test("the same song is ready for one lineup and not another", async () => {
+		const song = await prisma.song.findUniqueOrThrow({
+			where: { slug: "wagon-wheel" },
+			select: { id: true },
+		});
+		// Tomas can play it; Dave has not said.
+		await proficiencySet({
+			userId: ids.tomas,
+			slug: "wagon-wheel",
+			level: "PLAY",
+		});
+		await proficiencySet({
+			userId: ids.dave,
+			slug: "wagon-wheel",
+			level: "UNKNOWN",
+		});
+
+		// The duo is Tomas alone, so it is simply ready.
+		const duo = await lineupReadinessFor(duoLineupId, [song.id]);
+		expect(duo.get(song.id)).toEqual({
+			level: "PLAY",
+			unknown: 0,
+			total: 1,
+		});
+
+		// The full band is not — and says why, rather than just scoring lower.
+		const banda = await lineupReadinessFor(defaultLineupId(ids.banda), [
+			song.id,
+		]);
+		const readiness = banda.get(song.id);
+		expect(readiness?.level).toBe("PLAY");
+		expect(readiness?.unknown).toBeGreaterThan(0);
+	});
+
+	test("players with no row still count — the denominator is the lineup", async () => {
+		const curated = await prisma.song.findUniqueOrThrow({
+			where: { slug: "house-of-the-rising-sun" },
+			select: { id: true },
+		});
+		const banda = await lineupReadinessFor(defaultLineupId(ids.banda), [
+			curated.id,
+		]);
+		const readiness = banda.get(curated.id);
+		expect(readiness?.level).toBe("UNKNOWN");
+		expect(readiness?.unknown).toBe(readiness?.total);
+		expect(readiness?.total).toBeGreaterThan(0);
+	});
+
+	test("songsList carries my own mark, and readiness only when asked for a lineup", async () => {
+		const plain = await songsList({
+			user: { id: ids.tomas } as never,
+			query: { q: "Wagon" },
+		});
+		expect(plain[0]?.myLevel).toBe("PLAY");
+		expect(plain[0]?.readiness).toBeNull();
+
+		const forDuo = await songsList({
+			user: { id: ids.tomas } as never,
+			query: { q: "Wagon", lineupId: duoLineupId },
+		});
+		expect(forDuo[0]?.readiness).toEqual({
+			level: "PLAY",
+			unknown: 0,
+			total: 1,
+		});
+	});
+});
+
+describe("requireLineupWrite", () => {
+	test("a derived default-lineup id is addressable before its row exists", async () => {
+		// Deriving an id the caller then can't use would make the derivation a lie: the
+		// row is created lazily on the read path, and a clone may name it first.
+		const fresh = await prisma.organization.create({
+			data: {
+				id: "o_fresh",
+				name: "Fresh Band",
+				slug: "o_fresh",
+				createdAt: new Date(),
+			},
+		});
+		await prisma.member.create({
+			data: {
+				id: "m_fresh",
+				organizationId: fresh.id,
+				userId: ids.tomas,
+				role: "admin",
+				createdAt: new Date(),
+			},
+		});
+		expect(
+			await prisma.lineup.count({ where: { organizationId: fresh.id } }),
+		).toBe(0);
+
+		const clone = await songbooksClone({
+			id: sourceSetlistId,
+			userId: ids.tomas,
+			payload: { targetLineupId: defaultLineupId(fresh.id) },
+		});
+		expect(clone.organizationId).toBe(fresh.id);
+		expect(clone.lineupId).toBe(defaultLineupId(fresh.id));
+	});
+
+	test("an id that isn't a real lineup is still a 404", async () => {
+		await expect(
+			songbooksClone({
+				id: sourceSetlistId,
+				userId: ids.tomas,
+				payload: { targetLineupId: "dflt-no-such-band" },
+			}),
+		).rejects.toThrow(/not found/i);
 	});
 });

@@ -4,7 +4,7 @@
 > This file is the working map of the project — what exists, how it's wired, the decisions still
 > open, and the task breakdown to get from scaffolding to v1.
 
-> **Status (v1 build complete).** The Phase-1 + Phase-2 plan in §7 is implemented: schema +
+> **Status (v1 build complete; lineups + proficiency added — §D25/§D26).** The Phase-1 + Phase-2 plan in §7 is implemented: schema +
 > migration + seed, the shared transpose/capo engine (tested), the full API surface, and all
 > screens (Library, Song View, ChordPro editor, Capo views, Live mode, Setlists, Band management,
 > Preferences, Home) plus offline PWA and PDF export. Decisions D1–D9 are all **decided** (D3 was
@@ -74,6 +74,8 @@ prisma/
   models/songs.prisma    domain models (Song, Chart, Artist, Credit, Songbook, SongbookSong)
   models/bands.prisma    band invite links (BandInvite, BandInviteUse) — see §D13
   models/push.prisma     web push subscriptions (PushSubscription) — see §D21
+  models/lineups.prisma  performing identities within a band (Lineup, LineupMember) — see §D25
+  models/proficiency.prisma  who can play what (SongProficiency) — see §D26
   migrations/
 ```
 
@@ -122,7 +124,9 @@ The PRD's mental model (§5) and how it maps onto the current Prisma schema:
 | **Song** (title, artist, key, tempo, capo, tags + ChordPro) | `Song` (name, year) + `Chart` (content, key, capo) + `Credit`→`Artist` | ⚠️ partial — no tempo/time-sig/tags (D4) |
 | **Chart** (an arrangement) | `Chart` (content, key, capo, forkedFromId) | ✅ |
 | **Fork** | `Chart.forkedFrom` self-relation | ⚠️ granularity + slug uniqueness unresolved (D3) |
-| **Playlist / Setlist** | `Songbook` + `SongbookSong` (order) | ✅ structure; services are stubs |
+| **Lineup** (a name the band performs under) | `Lineup` + `LineupMember`; `Songbook.lineupId` | ✅ §D25 |
+| **Playlist / Setlist** | `Songbook` (per lineup) + `SongbookSong` (order) | ✅ |
+| **Proficiency** ("can I play this?") | `SongProficiency` (user × song × level) | ✅ §D26 |
 | **Role** (Admin/Writer/Reader) | `Member.role: String` (better-auth default `owner`/`admin`/`member`) | ❌ needs Admin/Writer/Reader mapping (D6) |
 | **Member view preference** (capo/concert default) | — | ❌ **not modeled** (D2) |
 | **Suggestion** (propose edit to non-writable song) | — | ❌ not modeled (should-have) |
@@ -137,6 +141,9 @@ A song/chart's **scope** is derived from `organizationId`:
 
 `songsList`/`songsRead` already filter on `organizationId IS NULL OR member-of(org)`. Write paths
 (`songsUpdate`, `songsDelete`, fork target) must additionally enforce the caller's **role** in that org.
+
+**Scope is the band, never the lineup** (§D25). A lineup subdivides *setlists and the name on the
+poster*; it is not a permission boundary and holds no roles of its own. One band = one library.
 
 ---
 
@@ -926,6 +933,94 @@ panel, and the same control on the peek bar for the song on screen.
   (24px), gaps dropped to 4px, and the artist is now `sm`-and-up only — position and capo
   always fit, the artist is the line's luxury. Measured at 390: `scrollWidth === 390`, full
   titles.
+
+
+### D25 — A band is the people and the library; a **lineup** is who's on the poster *(implemented)*
+Three friends who play as "Duo Tomi Kohy" (Tomas+Martin), "Thomas Davidson" (Tomas+Dave) and
+"Banda" (all three) had to fork every chart three times, because `Organization` was doing three
+jobs at once: the membership/permission boundary, the song-library boundary (`Song.organizationId`),
+and the performing identity that owns setlists. Those three groups differ only on the third and
+partly the first; on the second they are identical. So the third is split out.
+
+- **Model.** `Lineup` (name, `organizationId`, `isDefault`) + `LineupMember` in
+  `prisma/models/lineups.prisma`; `Songbook` gains a non-null `lineupId`. The band keeps
+  membership, roles, §D13 invite links and **one shared song library**.
+- **`Songbook.organizationId` stays**, denormalized from `lineup.organizationId` — the same
+  pattern `LiveSession` already uses. It is what every membership/role guard reads, so adding
+  lineups left the entire authorization surface untouched, which is what you want in a change
+  that also closes security holes. It cannot drift: the write paths derive it *from* the lineup
+  and never accept it from the caller (`POST /songbooks` takes `lineupId`, not `organizationId`).
+- **The default lineup's id is derived from its band's** (`dflt-<orgId>`, `defaultLineupId()`).
+  That makes "ensure the default exists" a single idempotent upsert with no read-then-write race,
+  lets the backfill migration compute the same ids in plain SQL, and makes the id addressable
+  before the row exists — `requireLineupWrite` materialises it on a miss, since deriving an id the
+  caller then can't use would make the derivation a lie. Created lazily on the read path rather
+  than in a better-auth hook: a band can appear from the org plugin, the seed script or a
+  migration, and one lazy upsert covers all three.
+- **Cloning a setlist** (`POST /songbooks/:id/clone`) is the feature this started from. Within a
+  band it copies **rows only** — both sets point at the same charts, so fixing a typo fixes it
+  everywhere, which is what one shared library is *for*. Across bands it **forks** every chart
+  that isn't usable in the target (§D3), because a reference would leave two bands silently
+  editing one chart. Curated charts are referenced either way: read-only, so they cannot drift.
+  The foreign-chart mapping runs for same-band clones too, so a setlist still holding a foreign
+  chart from before these were validated doesn't spread it.
+- **Genuine per-lineup arrangement differences need no forking at all.** A `Song` has many
+  `Chart`s and `SongbookSong` references a *Chart*, so "Banda plays it in D because Dave sings
+  it" is a second chart on the same song, labelled with `Chart.description`. Surfacing that in the
+  UI (`songsCreate` still makes exactly one, the Library renders `charts[0]`) is the remaining
+  work, and it is what replaces forking-within-your-own-band.
+- **Invisible until needed.** A band whose only lineup is the default shows *no* lineup UI
+  anywhere — one rule, `hasMultipleLineups` in `src/shared/lineups.ts`, rather than a condition
+  repeated on six screens. Someone who only plays under one name never learns the concept exists.
+- **Rejected: "friends + shared setlists".** A friend graph has no container, so every setlist
+  needs its own ACL, "who can edit this song" becomes a graph walk, and better-auth's org plugin
+  (invites, roles, the membership checks live/PDF/export all lean on) would have to be rebuilt.
+  It also doesn't answer the actual question — *where does a song live?*
+- **Rejected: clone-copies-charts plus a cross-band "push this edit too?" diff.** That is
+  distributed version control — per-chart lineage, three-way merge, conflict UI — built to repair
+  a divergence we would be choosing to create. With one library there is nothing to sync.
+- **Three authorization holes closed on the way.** `songbooksCreate`/`songbooksUpdate` never
+  validated `chartIds`, so a setlist could reference another band's chart — and
+  `liveSessionPublicRead`, which has no auth, then served its full content. The `scope` query
+  param in `songsList`/`songbooksList` was used as the *whole* filter, so a foreign org id
+  enumerated that band's library. And `readableScopeWhere(undefined)` degenerated to "any org with
+  any member", because Prisma reads `{some: {userId: undefined}}` as no condition at all.
+
+### D26 — What a lineup can play is derived from who's in it, not from separate libraries *(implemented)*
+The reason three lineups of the same friends have three repertoires is not that they keep three
+libraries — it is that **different people can play different things**. §D25 gives them one library;
+this models the cause, so the setlist builder can derive the difference instead of it being
+maintained by hand.
+
+- **Model.** `SongProficiency(userId, songId, level)` with
+  `ProficiencyLevel { UNKNOWN LEARNING FOLLOW PLAY }`. Attached to the **Song**, not the Chart:
+  "I can play Wagon Wheel" is a fact about the song, and per-chart marks would fragment across a
+  band's arrangements of it.
+- **`UNKNOWN` is the absence of a row, and deliberately not "can't play".** A 200-song library
+  would otherwise read as entirely unplayable on day one — a lie about songs nobody has been
+  asked about — and the one genuinely useful signal (*someone is learning this*) would be lost in
+  the noise. Setting a mark back to UNKNOWN deletes the row, so "never asked" and "no longer sure"
+  can't look different while meaning the same thing.
+- **Readiness is the weakest link, with unknowns reported beside it, never folded in**
+  (`lineupReadiness` in `src/shared/proficiency.ts`, pure + unit-tested). One player still learning
+  a song and one who simply hasn't been asked are different situations with different fixes —
+  rehearse it, or go and ask — and a single collapsed score would hide whichever it ranked lower.
+  Every player in the lineup is in the denominator, including those with no row, which is the only
+  way the unknown count means anything.
+- **A mark is never role-gated.** Anyone who can *read* a song can say whether they can play it,
+  including a Reader: it is a fact about the player, not an edit to the song.
+- **Readiness rides along on `songsList`** behind a `lineupId` query param, rather than sitting
+  behind its own endpoint — every screen showing songs wants "can I play this?" beside them, and a
+  second round-trip per screen buys nothing. `myLevel` and `readiness` are *always* present (the
+  latter null without a lineup) so the Eden-derived client type stays one shape (§D9).
+- **Where it shows.** The setlist's add-song search asks for the readiness of *that set's lineup*
+  and sorts by it, which is what turns a search into a builder: the same library sorts differently
+  for the duo and for the full band. The Library filters by your own mark — "what can't I play
+  yet?" is the question one shared library can answer and three separate ones can't, and it lets a
+  bandmate find the gaps and go learn them without waiting to be added to a set.
+- **The risk is data entry, not modelling.** Three people × 200 songs is 600 marks nobody will sit
+  down and fill in. Mitigations not yet built: seed marks from §D24's played history ("you've
+  played this — can you play it?"), and bulk-marking from the Library list.
 
 ---
 

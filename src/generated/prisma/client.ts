@@ -97,6 +97,11 @@ export type Lineup = Prisma.LineupModel
  */
 export type LineupMember = Prisma.LineupMemberModel
 /**
+ * Model SongProficiency
+ * 
+ */
+export type SongProficiency = Prisma.SongProficiencyModel
+/**
  * Model PushSubscription
  * 
  */

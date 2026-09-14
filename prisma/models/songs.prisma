@@ -18,6 +18,7 @@ model Song {
 	credits Credit[]
 	charts  Chart[]
 	tags    SongTag[]
+	proficiencies SongProficiency[]
 
 	// Potential future Album relation:
 	// albums Album[]

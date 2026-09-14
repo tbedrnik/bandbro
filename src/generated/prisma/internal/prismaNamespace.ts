@@ -395,6 +395,7 @@ export const ModelName = {
   BandInviteUse: 'BandInviteUse',
   Lineup: 'Lineup',
   LineupMember: 'LineupMember',
+  SongProficiency: 'SongProficiency',
   PushSubscription: 'PushSubscription',
   Song: 'Song',
   Chart: 'Chart',
@@ -422,7 +423,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "account" | "verification" | "organization" | "member" | "invitation" | "bandInvite" | "bandInviteUse" | "lineup" | "lineupMember" | "pushSubscription" | "song" | "chart" | "artist" | "credit" | "tag" | "songTag" | "songbook" | "liveSession" | "songbookSong" | "pdfExport" | "suggestion"
+    modelProps: "user" | "session" | "account" | "verification" | "organization" | "member" | "invitation" | "bandInvite" | "bandInviteUse" | "lineup" | "lineupMember" | "songProficiency" | "pushSubscription" | "song" | "chart" | "artist" | "credit" | "tag" | "songTag" | "songbook" | "liveSession" | "songbookSong" | "pdfExport" | "suggestion"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1237,6 +1238,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.LineupMemberCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.LineupMemberCountAggregateOutputType> | number
+        }
+      }
+    }
+    SongProficiency: {
+      payload: Prisma.$SongProficiencyPayload<ExtArgs>
+      fields: Prisma.SongProficiencyFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SongProficiencyFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongProficiencyPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SongProficiencyFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongProficiencyPayload>
+        }
+        findFirst: {
+          args: Prisma.SongProficiencyFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongProficiencyPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SongProficiencyFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongProficiencyPayload>
+        }
+        findMany: {
+          args: Prisma.SongProficiencyFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongProficiencyPayload>[]
+        }
+        create: {
+          args: Prisma.SongProficiencyCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongProficiencyPayload>
+        }
+        createMany: {
+          args: Prisma.SongProficiencyCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SongProficiencyCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongProficiencyPayload>[]
+        }
+        delete: {
+          args: Prisma.SongProficiencyDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongProficiencyPayload>
+        }
+        update: {
+          args: Prisma.SongProficiencyUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongProficiencyPayload>
+        }
+        deleteMany: {
+          args: Prisma.SongProficiencyDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SongProficiencyUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SongProficiencyUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongProficiencyPayload>[]
+        }
+        upsert: {
+          args: Prisma.SongProficiencyUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SongProficiencyPayload>
+        }
+        aggregate: {
+          args: Prisma.SongProficiencyAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSongProficiency>
+        }
+        groupBy: {
+          args: Prisma.SongProficiencyGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SongProficiencyGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SongProficiencyCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SongProficiencyCountAggregateOutputType> | number
         }
       }
     }
@@ -2308,6 +2383,17 @@ export const LineupMemberScalarFieldEnum = {
 export type LineupMemberScalarFieldEnum = (typeof LineupMemberScalarFieldEnum)[keyof typeof LineupMemberScalarFieldEnum]
 
 
+export const SongProficiencyScalarFieldEnum = {
+  userId: 'userId',
+  songId: 'songId',
+  level: 'level',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SongProficiencyScalarFieldEnum = (typeof SongProficiencyScalarFieldEnum)[keyof typeof SongProficiencyScalarFieldEnum]
+
+
 export const PushSubscriptionScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -2519,6 +2605,13 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
 
 
 /**
+ * Reference to a field of type 'ProficiencyLevel'
+ */
+export type EnumProficiencyLevelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProficiencyLevel'>
+    
+
+
+/**
  * Reference to a field of type 'CreditRole'
  */
 export type EnumCreditRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CreditRole'>
@@ -2659,6 +2752,7 @@ export type GlobalOmitConfig = {
   bandInviteUse?: Prisma.BandInviteUseOmit
   lineup?: Prisma.LineupOmit
   lineupMember?: Prisma.LineupMemberOmit
+  songProficiency?: Prisma.SongProficiencyOmit
   pushSubscription?: Prisma.PushSubscriptionOmit
   song?: Prisma.SongOmit
   chart?: Prisma.ChartOmit
