@@ -1,5 +1,6 @@
 import { prisma } from "@backend/prisma";
 import { parseChordproMeta } from "@shared/chordpro";
+import { lineupLabel } from "@shared/lineups";
 import { getMemberRole, HttpError } from "./scope";
 
 /**
@@ -144,6 +145,7 @@ export async function liveSessionPublicRead({
 			songbook: {
 				include: {
 					organization: { select: { name: true } },
+					lineup: { select: { name: true, isDefault: true } },
 					songs: {
 						orderBy: { order: "asc" },
 						include: {
@@ -186,7 +188,12 @@ export async function liveSessionPublicRead({
 	return {
 		code: normalized,
 		title: session.songbook.title,
-		band: session.songbook.organization.name,
+		// The name the room sees is the *performing* one (§D25): a set played as
+		// "Duo Tomi Kohy" should not announce itself as the whole band.
+		band: lineupLabel(
+			session.songbook.lineup,
+			session.songbook.organization.name,
+		),
 		currentSongIndex,
 		songCount: count,
 		watching: countWatching(normalized),

@@ -27,14 +27,14 @@ class MemoryStorage implements Storage {
 	}
 }
 
-// Install only if nothing is there: another test file in the same run may already have
-// put its own stand-in on the global, and redefining a non-configurable property throws.
-if (!("localStorage" in globalThis)) {
-	Object.defineProperty(globalThis, "localStorage", {
-		value: new MemoryStorage(),
-		configurable: true,
-	});
-}
+// Always install this file's own stand-in. Deferring to whatever another test file left
+// on the global looks safe but isn't: offline.test.ts's store carries a `quota` its own
+// tests shrink, so these tests were running against a storage that rejected ordinary
+// writes. Every stand-in is `configurable`, so each file can claim the global in turn.
+Object.defineProperty(globalThis, "localStorage", {
+	value: new MemoryStorage(),
+	configurable: true,
+});
 
 const { clearPlayed, formatPlayedAge, playedKey, readPlayed, writePlayed } =
 	await import("./livePlayed");

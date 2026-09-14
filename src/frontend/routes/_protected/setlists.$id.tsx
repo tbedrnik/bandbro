@@ -39,6 +39,8 @@ import {
 	downloadSetlist,
 	getOfflineSetlist,
 	isDownloaded,
+	removeOfflineSetlist,
+	useOfflineSync,
 	useOnline,
 } from "@frontend/lib/offline";
 import { useScopes } from "@frontend/lib/scopes";
@@ -136,6 +138,12 @@ function SetlistDetail() {
 			coordinateGetter: sortableKeyboardCoordinates,
 		}),
 	);
+
+	// A set downloaded last week and edited at rehearsal since is the offline feature's
+	// real failure mode — you find out at the venue, with no signal. While the fresh
+	// payload is on screen there is nothing to ask about, so the copy is refreshed from
+	// it silently; only a refresh that *fails* needs the player (§D7).
+	const syncStatus = useOfflineSync(id, online ? setlist : undefined);
 
 	const ownLineupId = setlist?.lineupId;
 	useEffect(() => {
@@ -281,7 +289,16 @@ function SetlistDetail() {
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
 					{downloaded ? (
-						<OfflinePill label="Offline" detail="setlist downloaded" />
+						<OfflinePill
+							label="Offline"
+							detail={
+								syncStatus === "updated"
+									? "copy just updated"
+									: syncStatus === "failed"
+										? "copy is out of date"
+										: "setlist downloaded"
+							}
+						/>
 					) : (
 						online && (
 							<Button variant="outline" onClick={onDownload}>
@@ -379,6 +396,25 @@ function SetlistDetail() {
 					onChange={setCloneTarget}
 				/>
 			</NamePromptDialog>
+
+			{syncStatus === "failed" && (
+				<div className="mt-4 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm">
+					<p className="text-destructive">
+						This set has changed since you downloaded it, and the copy on this
+						device couldn't be updated — storage is full or blocked.
+					</p>
+					<Button
+						variant="outline"
+						className="mt-2"
+						onClick={() => {
+							removeOfflineSetlist(id);
+							setDownloaded(false);
+						}}
+					>
+						Remove the old copy
+					</Button>
+				</div>
+			)}
 
 			<ShareWithFansModal
 				open={shareOpen}

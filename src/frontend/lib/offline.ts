@@ -1,3 +1,7 @@
+import {
+	type FingerprintableSetlist,
+	isSnapshotStale,
+} from "@shared/setlistFingerprint";
 import { useCallback, useEffect, useState } from "react";
 
 /**
@@ -271,4 +275,44 @@ export function useOnline(): boolean {
 		};
 	}, []);
 	return online;
+}
+
+/**
+ * How this device's copy of a setlist stands against the server.
+ *
+ * - `none`    — not downloaded, so there is nothing to keep fresh.
+ * - `current` — the copy matches what the server just returned.
+ * - `updated` — it had gone stale and has just been refreshed from that response.
+ * - `failed`  — it is stale and the refresh could not be written (quota, blocked storage).
+ */
+export type OfflineSyncStatus = "none" | "current" | "updated" | "failed";
+
+/**
+ * Keep a downloaded setlist in step with the server while the player is looking at it.
+ *
+ * A stale snapshot is the offline feature's real failure mode: the set was downloaded at
+ * home, three songs changed at rehearsal, and nobody finds out until there is no signal
+ * at the venue. Whenever the fresh payload is already in hand there is nothing to ask
+ * about — the refresh is the same data the screen is rendering — so it is written
+ * silently and reported afterwards. Only a refresh that *fails* needs the player.
+ */
+export function useOfflineSync(
+	id: string,
+	payload: FingerprintableSetlist,
+): OfflineSyncStatus {
+	const [status, setStatus] = useState<OfflineSyncStatus>("none");
+
+	useEffect(() => {
+		if (!payload || !isDownloaded(id)) {
+			setStatus("none");
+			return;
+		}
+		if (!isSnapshotStale(getOfflineSetlist(id), payload)) {
+			setStatus("current");
+			return;
+		}
+		setStatus(downloadSetlist(id, payload) ? "updated" : "failed");
+	}, [id, payload]);
+
+	return status;
 }

@@ -29,7 +29,13 @@ class MemoryStorage implements Storage {
 }
 
 const store = new MemoryStorage();
-Object.defineProperty(globalThis, "localStorage", { value: store });
+// `configurable` matters: without it the first test file to run owns the global for
+// the whole process, and the next one's stand-in is silently ignored — which had
+// livePlayed.test.ts running against offline.test.ts's quota-limited store.
+Object.defineProperty(globalThis, "localStorage", {
+	value: store,
+	configurable: true,
+});
 
 const {
 	downloadSetlist,

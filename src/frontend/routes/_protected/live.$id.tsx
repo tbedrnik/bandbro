@@ -36,7 +36,11 @@ import {
 	playedKey,
 	usePlayedSongs,
 } from "@frontend/lib/livePlayed";
-import { getOfflineSetlist, useOnline } from "@frontend/lib/offline";
+import {
+	getOfflineSetlist,
+	useOfflineSync,
+	useOnline,
+} from "@frontend/lib/offline";
 import { useFanSession } from "@frontend/lib/useFanSession";
 import { useFitScale } from "@frontend/lib/useFitScale";
 import { cn } from "@frontend/lib/utils";
@@ -90,6 +94,10 @@ function useLiveSetlist(id: string) {
 		retry: false,
 		refetchOnWindowFocus: false,
 	});
+	// Opening a set on stage while there is still signal is the last chance to refresh
+	// what this device will fall back to when the signal goes (§D7). Silent: the fresh
+	// payload is what Live mode is already rendering, so there is nothing to confirm.
+	useOfflineSync(id, online ? query.data : undefined);
 	return { ...query, online };
 }
 
