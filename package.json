@@ -15,6 +15,7 @@
 		"db:seed": "bun run prisma/seed.ts",
 		"import:kytary": "bun run src/tools/importKytary.ts",
 		"repair:markers": "bun run src/tools/repairSectionMarkers.ts",
+		"repair:setlists": "bun run src/tools/repairSetlistScope.ts",
 		"push:keys": "bun run src/tools/generateVapidKeys.ts"
 	},
 	"dependencies": {

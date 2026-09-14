@@ -120,6 +120,10 @@ function SetlistDetail() {
 			queryClient.invalidateQueries(api.songbooks.get.queryFilter()),
 		onError: () => setPendingOrder(null),
 	});
+	// The API sets a status with no body on purpose (a body would widen every route's Eden
+	// success type — see api.ts), so the reason is written here from the status. Without
+	// this a refused change is completely silent: the dragged row just slides back.
+	const updateStatus = (update.error as { status?: number } | null)?.status;
 
 	const { data: lineups } = useLineups();
 	const { bands, personal } = useScopes();
@@ -414,6 +418,16 @@ function SetlistDetail() {
 					onChange={setCloneTarget}
 				/>
 			</NamePromptDialog>
+
+			{update.isError && (
+				<p className="mt-4 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+					{updateStatus === 403
+						? "That change wasn't saved: this set contains a song from another band, which has to be forked into this one first. An admin can fix it with `bun run repair:setlists`."
+						: updateStatus === 404
+							? "That change wasn't saved — the setlist or one of its songs no longer exists. Reload to see the current set."
+							: "That change wasn't saved. Check your connection and try again."}
+				</p>
+			)}
 
 			{syncStatus === "failed" && (
 				<div className="mt-4 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm">

@@ -985,6 +985,26 @@ partly the first; on the second they are identical. So the third is split out.
   param in `songsList`/`songbooksList` was used as the *whole* filter, so a foreign org id
   enumerated that band's library. And `readableScopeWhere(undefined)` degenerated to "any org with
   any member", because Prisma reads `{some: {userId: undefined}}` as no condition at all.
+- **Closing the first of those strands existing rows, which is what `repair:setlists` is for.**
+  Add, remove and drag-reorder all persist by PUTing the *whole* chart-id array, rebuilt from the
+  set's current contents — so on a setlist that already held a foreign chart, every one of them
+  shipped the offending id back and was refused, including edits with nothing to do with it. The
+  set was frozen, and silently: the API sets a status with no body by design, so the dragged row
+  simply slid back. `src/tools/repairSetlistScope.ts` (`bun run repair:setlists`, dry by default,
+  `--write` to apply) forks each foreign chart into the setlist's own band and repoints the row —
+  the same resolution `songbooksClone` performs, which is why that path deliberately runs it for
+  same-band clones too. Three things it gets right and a naive version wouldn't: **Curated charts
+  are left alone** (read-only, so they cannot drift — forking them would explode the curated
+  library into per-band copies); **forks are deduped on (chart, band)**, since ten setlists sharing
+  one foreign chart would otherwise mint ten forked songs with ten collision-suffixed slugs; and
+  the row is **deleted and recreated**, because `chartId` is half of `SongbookSong`'s primary key.
+  The decision half is `src/tools/setlistScopePlan.ts` — pure and unit-tested, so the plan a dry
+  run prints is provably the plan `--write` executes rather than a second implementation of the
+  dedupe. It is a script and not a migration because a fork needs `uniqueSongSlug`'s collision loop
+  against a globally unique column, `slugify`'s Unicode handling (a SQLite reimplementation would
+  diverge on Czech titles), and client-generated cuids — none of which raw SQL can do, and none of
+  which should run unattended with no preview. The refusal is also no longer silent: the setlist
+  screen now names the cause when a write is rejected.
 
 ### D26 — What a lineup can play is derived from who's in it, not from separate libraries *(implemented)*
 The reason three lineups of the same friends have three repertoires is not that they keep three

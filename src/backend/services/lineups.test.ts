@@ -27,6 +27,7 @@ const { songbooksList } = await import("./songbooksList");
 const { songbooksUpdate } = await import("./songbooksUpdate");
 const { defaultLineupId, ensureDefaultLineup, lineupsCreate, lineupsDelete } =
 	await import("./lineups");
+const { forkChartInto } = await import("./forkChart");
 const { lineupReadinessFor, proficiencySet } = await import("./proficiency");
 const { songsList } = await import("./songsList");
 const { foreignChartIds } = await import("./scope");
@@ -562,5 +563,129 @@ describe("requireLineupWrite", () => {
 				payload: { targetLineupId: "dflt-no-such-band" },
 			}),
 		).rejects.toThrow(/not found/i);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// The legacy-data hazard the repair tool exists for (§D25). Setlists saved before
+// `assertChartsUsableIn` could reference another band's chart; the guard then refuses
+// every write to that set, because add/remove/reorder all PUT the *whole* chart-id array.
+// ---------------------------------------------------------------------------
+
+describe("a setlist holding another band's chart", () => {
+	let strandedSetlistId: string;
+	let foreignChartId: string;
+	let ownChartId: string;
+
+	beforeAll(async () => {
+		const theirs = await prisma.song.create({
+			data: {
+				name: "Hallelujah",
+				slug: "hallelujah",
+				organizationId: ids.other,
+				charts: {
+					create: {
+						content: "[C]I heard there was",
+						organizationId: ids.other,
+					},
+				},
+			},
+			include: { charts: true },
+		});
+		foreignChartId = theirs.charts[0]!.id;
+
+		const mine = await prisma.song.create({
+			data: {
+				name: "Country Roads",
+				slug: "country-roads",
+				organizationId: ids.banda,
+				charts: {
+					create: { content: "[A]Almost heaven", organizationId: ids.banda },
+				},
+			},
+			include: { charts: true },
+		});
+		ownChartId = mine.charts[0]!.id;
+
+		// Written straight to the database, the way a pre-guard save would have left it.
+		const stranded = await prisma.songbook.create({
+			data: {
+				title: "Stranded set",
+				lineupId: defaultLineupId(ids.banda),
+				organizationId: ids.banda,
+				songs: {
+					create: [
+						{ chartId: ownChartId, order: 0 },
+						{ chartId: foreignChartId, order: 1 },
+					],
+				},
+			},
+		});
+		strandedSetlistId = stranded.id;
+	});
+
+	test("reordering it is refused — the offending id rides along in the array", async () => {
+		await expect(
+			songbooksUpdate({
+				id: strandedSetlistId,
+				userId: ids.tomas,
+				payload: { chartIds: [foreignChartId, ownChartId] },
+			}),
+		).rejects.toThrow(/another band/i);
+	});
+
+	test("even removing an unrelated song is refused", async () => {
+		// The client rebuilds the array from the set's current contents, so a write that
+		// has nothing to do with the foreign chart still carries it.
+		await expect(
+			songbooksUpdate({
+				id: strandedSetlistId,
+				userId: ids.tomas,
+				payload: { chartIds: [foreignChartId] },
+			}),
+		).rejects.toThrow(/another band/i);
+	});
+
+	test("renaming it still works — no chartIds, so nothing to validate", async () => {
+		const renamed = await songbooksUpdate({
+			id: strandedSetlistId,
+			userId: ids.tomas,
+			payload: { title: "Stranded set (still editable)" },
+		});
+		expect(renamed.title).toBe("Stranded set (still editable)");
+	});
+
+	test("repointing the row at a fork makes the set editable again", async () => {
+		// What `repair:setlists` does: fork the foreign chart into this band, then swap the
+		// row over. The PK is (songbookId, chartId), so that is a delete + create.
+		const replacement = await forkChartInto(foreignChartId, ids.banda);
+		await prisma.songbookSong.delete({
+			where: {
+				songbookId_chartId: {
+					songbookId: strandedSetlistId,
+					chartId: foreignChartId,
+				},
+			},
+		});
+		await prisma.songbookSong.create({
+			data: { songbookId: strandedSetlistId, chartId: replacement, order: 1 },
+		});
+
+		const reordered = await songbooksUpdate({
+			id: strandedSetlistId,
+			userId: ids.tomas,
+			payload: { chartIds: [replacement, ownChartId] },
+		});
+		expect(reordered.songs.map((s) => s.chartId)).toEqual([
+			replacement,
+			ownChartId,
+		]);
+
+		// And the other band's original is untouched by any of it.
+		const original = await prisma.chart.findUniqueOrThrow({
+			where: { id: foreignChartId },
+		});
+		expect(original.content).toBe("[C]I heard there was");
+		expect(original.organizationId).toBe(ids.other);
 	});
 });
