@@ -21,23 +21,36 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { api } from "@frontend/api";
 import { ExportPdfButton } from "@frontend/components/ExportPdfButton";
+import { LineupPicker } from "@frontend/components/LineupPicker";
 import { MetaChip } from "@frontend/components/MetaChip";
+import { NamePromptDialog } from "@frontend/components/NamePromptDialog";
 import { OfflinePill } from "@frontend/components/OfflinePill";
 import { ShareWithFansModal } from "@frontend/components/ShareWithFansModal";
 import { Button } from "@frontend/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@frontend/components/ui/dropdown-menu";
 import { Input } from "@frontend/components/ui/input";
+import { lineupLabel, useLineups } from "@frontend/lib/lineups";
 import {
 	downloadSetlist,
 	getOfflineSetlist,
 	isDownloaded,
 	useOnline,
 } from "@frontend/lib/offline";
+import { useScopes } from "@frontend/lib/scopes";
 import { useFanSession } from "@frontend/lib/useFanSession";
 import { cn } from "@frontend/lib/utils";
 import { displayKey } from "@shared/notation";
 import {
+	IconCopy,
+	IconDotsVertical,
 	IconDownload,
 	IconGripVertical,
+	IconPencil,
 	IconPlayerPlay,
 	IconPlus,
 	IconShare3,
@@ -78,11 +91,15 @@ function SetlistDetail() {
 	const { id } = Route.useParams();
 	const { export: exportJobId } = Route.useSearch();
 	const queryClient = useQueryClient();
+	const navigate = Route.useNavigate();
 	const online = useOnline();
 	const [adding, setAdding] = useState(false);
 	const [q, setQ] = useState("");
 	const [downloaded, setDownloaded] = useState(() => isDownloaded(id));
 	const [shareOpen, setShareOpen] = useState(false);
+	const [renameOpen, setRenameOpen] = useState(false);
+	const [cloneOpen, setCloneOpen] = useState(false);
+	const [cloneTarget, setCloneTarget] = useState<string | null>(null);
 	// Order shown while a reorder is in flight, so a dragged row doesn't snap back to
 	// its old position for the length of the PUT + refetch. Cleared as soon as the
 	// server's own order changes (it caught up, or a song was added/removed).
@@ -90,12 +107,25 @@ function SetlistDetail() {
 	const fan = useFanSession(id);
 
 	const { data: setlist, isPending } = useSetlistQuery(id);
+	const setlistOrgId = setlist?.organizationId;
 
 	const update = useMutation({
 		...api.songbooks({ id }).put.mutationOptions(),
 		onSuccess: () =>
 			queryClient.invalidateQueries(api.songbooks.get.queryFilter()),
 		onError: () => setPendingOrder(null),
+	});
+
+	const { data: lineups } = useLineups();
+	const { bands, personal } = useScopes();
+	const clone = useMutation({
+		...api.songbooks({ id }).clone.post.mutationOptions(),
+		onSuccess: (created) => {
+			queryClient.invalidateQueries(api.songbooks.get.queryFilter());
+			setCloneOpen(false);
+			if (created?.id)
+				navigate({ to: "/setlists/$id", params: { id: created.id } });
+		},
 	});
 
 	// Pointer drags start after a few px so a tap on the handle still behaves like a
@@ -107,6 +137,11 @@ function SetlistDetail() {
 		}),
 	);
 
+	const ownLineupId = setlist?.lineupId;
+	useEffect(() => {
+		if (!cloneTarget && ownLineupId) setCloneTarget(ownLineupId);
+	}, [cloneTarget, ownLineupId]);
+
 	const serverOrder = (setlist?.songs ?? []).map((s) => s.chartId).join(",");
 	// biome-ignore lint/correctness/useExhaustiveDependencies: the server order string is the trigger
 	useEffect(() => {
@@ -117,6 +152,16 @@ function SetlistDetail() {
 		...api.songs.get.queryOptions(q ? { q } : {}),
 		enabled: adding && online,
 	});
+
+	// Only this band's own songs and Curated ones can go into the set. A chart owned by
+	// another band would be a *reference*, leaving two bands silently editing one chart,
+	// so the server rejects it (§D25) — offering it here would only produce failures.
+	// Filtered client-side rather than with the `scope` param, which is an exact match on
+	// one organization and would drop the Curated library with it.
+	const addable = (searchResults ?? []).filter(
+		(song) =>
+			song.organizationId === null || song.organizationId === setlistOrgId,
+	);
 
 	if (isPending) {
 		return (
@@ -147,6 +192,14 @@ function SetlistDetail() {
 			</div>
 		);
 	}
+
+	// Every lineup this set could be duplicated onto, each carrying its band's name for
+	// the picker's "Banda · Duo Tomi Kohy" label.
+	const writableScopes = [...bands, ...(personal ? [personal] : [])];
+	const cloneOptions = (lineups ?? []).flatMap((lineup) => {
+		const band = writableScopes.find((s) => s.id === lineup.organizationId);
+		return band ? [{ ...lineup, bandName: band.name }] : [];
+	});
 
 	const chartIds = pendingOrder ?? setlist.songs.map((s) => s.chartId);
 	const byChartId = new Map(setlist.songs.map((s) => [s.chartId, s]));
@@ -222,7 +275,8 @@ function SetlistDetail() {
 				<div>
 					<h1 className="font-display text-3xl font-bold">{setlist.title}</h1>
 					<div className="mt-1 font-mono text-xs text-muted-foreground">
-						{setlist.songs.length} songs · {setlist.organization?.name}
+						{setlist.songs.length} songs ·{" "}
+						{lineupLabel(setlist.lineup, setlist.organization?.name)}
 					</div>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
@@ -262,8 +316,69 @@ function SetlistDetail() {
 					>
 						<IconPlayerPlay className="size-4" /> Live mode
 					</Button>
+					{/* Renaming and cloning are both writes — nothing to offer offline (§D7). */}
+					{online && (
+						<DropdownMenu>
+							<DropdownMenuTrigger
+								render={
+									<Button variant="outline" aria-label="More setlist actions" />
+								}
+							>
+								<IconDotsVertical className="size-4" />
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end" className="min-w-52">
+								<DropdownMenuItem onClick={() => setRenameOpen(true)}>
+									<IconPencil className="size-4" /> Rename setlist
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => setCloneOpen(true)}>
+									<IconCopy className="size-4" /> Duplicate to…
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					)}
 				</div>
 			</div>
+
+			<NamePromptDialog
+				open={renameOpen}
+				onOpenChange={setRenameOpen}
+				title="Rename setlist"
+				label="Setlist name"
+				defaultValue={setlist.title}
+				submitLabel="Save"
+				pending={update.isPending}
+				onSubmit={(title) => {
+					update.mutate({ title });
+					setRenameOpen(false);
+				}}
+			/>
+
+			{/* Duplicating into another lineup of the same band shares the charts; into a
+			    different band it forks them, so neither can edit the other's (§D25). */}
+			<NamePromptDialog
+				open={cloneOpen}
+				onOpenChange={setCloneOpen}
+				title="Duplicate setlist"
+				description="Same songs, a separate set you can change on its own."
+				label="New setlist name"
+				defaultValue={`${setlist.title} (copy)`}
+				submitLabel="Duplicate"
+				pending={clone.isPending}
+				onSubmit={(title) =>
+					cloneTarget && clone.mutate({ targetLineupId: cloneTarget, title })
+				}
+			>
+				<LineupPicker
+					label="Duplicate to"
+					lineups={cloneOptions}
+					bandName={(orgId) =>
+						cloneOptions.find((l) => l.organizationId === orgId)?.bandName ??
+						"Band"
+					}
+					value={cloneTarget}
+					onChange={setCloneTarget}
+				/>
+			</NamePromptDialog>
 
 			<ShareWithFansModal
 				open={shareOpen}
@@ -318,7 +433,7 @@ function SetlistDetail() {
 								<Input
 									value={q}
 									onChange={(e) => setQ(e.target.value)}
-									placeholder="Search songs across your libraries"
+									placeholder="Search this band's songs and the curated library"
 									autoFocus
 								/>
 								<Button variant="ghost" onClick={() => setAdding(false)}>
@@ -326,7 +441,14 @@ function SetlistDetail() {
 								</Button>
 							</div>
 							<div className="mt-3 max-h-72 overflow-auto">
-								{searchResults?.map((song) => {
+								{!addable.length && (
+									<p className="px-3 py-6 text-center text-sm text-muted-foreground">
+										{q
+											? "Nothing here — songs from your other bands have to be forked into this one first."
+											: "No songs in this band's library yet."}
+									</p>
+								)}
+								{addable.map((song) => {
 									const chartId = song.charts[0]?.id;
 									const inList = chartId && chartIds.includes(chartId);
 									return (

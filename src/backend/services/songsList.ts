@@ -23,11 +23,19 @@ export async function songsList({
 	user?: User;
 	query?: SongsListQuery;
 }) {
+	// A scope filter narrows what the caller may already read — it never widens it.
+	// `{organizationId: query.scope}` used to be the whole filter, so passing the id of
+	// a band you don't belong to enumerated its library.
 	const scopeFilter: Prisma.SongWhereInput =
 		query.scope === "curated"
 			? { organizationId: null }
 			: query.scope
-				? { organizationId: query.scope }
+				? {
+						AND: [
+							{ organizationId: query.scope },
+							readableScopeWhere(user?.id),
+						],
+					}
 				: readableScopeWhere(user?.id);
 
 	const and: Prisma.SongWhereInput[] = [scopeFilter];

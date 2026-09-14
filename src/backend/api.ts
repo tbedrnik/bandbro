@@ -12,6 +12,12 @@ import {
 	bandInvitesList,
 } from "./services/bandInvites";
 import {
+	lineupsCreate,
+	lineupsDelete,
+	lineupsList,
+	lineupsUpdate,
+} from "./services/lineups";
+import {
 	liveSessionCreate,
 	liveSessionPublicRead,
 	liveSessionSetCurrent,
@@ -29,6 +35,7 @@ import {
 	pushUnsubscribe,
 } from "./services/push";
 import { HttpError } from "./services/scope";
+import { songbooksClone } from "./services/songbooksClone";
 import { songbooksCreate } from "./services/songbooksCreate";
 import { songbooksDelete } from "./services/songbooksDelete";
 import { songbooksList } from "./services/songbooksList";
@@ -223,7 +230,10 @@ export const api = new Elysia({ prefix: "/api" })
 				({ user, query }) => songbooksList({ userId: user.id, query }),
 				{
 					auth: true,
-					query: t.Object({ scope: t.Optional(t.String()) }),
+					query: t.Object({
+						scope: t.Optional(t.String()),
+						lineupId: t.Optional(t.String()),
+					}),
 				},
 			)
 			.get(
@@ -241,7 +251,8 @@ export const api = new Elysia({ prefix: "/api" })
 					body: t.Object({
 						title: t.String({ minLength: 1 }),
 						description: t.Optional(t.String()),
-						organizationId: t.String(),
+						// The lineup owns the setlist; the band is derived from it (§D25).
+						lineupId: t.String(),
 						chartIds: t.Optional(t.Array(t.String())),
 					}),
 				},
@@ -253,8 +264,10 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						title: t.Optional(t.String()),
+						title: t.Optional(t.String({ minLength: 1 })),
 						description: t.Optional(t.String()),
+						// Move the set to another lineup of the same band.
+						lineupId: t.Optional(t.String()),
 						chartIds: t.Optional(t.Array(t.String())),
 					}),
 				},
@@ -265,6 +278,21 @@ export const api = new Elysia({ prefix: "/api" })
 					songbooksDelete({ id: params.id, userId: user.id }),
 				{
 					auth: true,
+				},
+			)
+			// Copy a setlist onto another lineup (§D25). Within a band this copies rows
+			// only; across bands it forks the charts, so the two can never edit each
+			// other's.
+			.post(
+				"/:id/clone",
+				({ params, user, body }) =>
+					songbooksClone({ id: params.id, userId: user.id, payload: body }),
+				{
+					auth: true,
+					body: t.Object({
+						targetLineupId: t.String(),
+						title: t.Optional(t.String()),
+					}),
 				},
 			)
 			// Queue a render and return immediately (CLAUDE.md §D20). There is deliberately
@@ -288,6 +316,44 @@ export const api = new Elysia({ prefix: "/api" })
 					),
 					response: pdfExportSchema,
 				},
+			),
+	)
+	// Lineups — the performing identities inside a band (CLAUDE.md §D25). Permission is
+	// the band's, so there are no lineup-level roles here.
+	.group("/lineups", (group) =>
+		group
+			.get("/", ({ user, query }) => lineupsList({ userId: user.id, query }), {
+				auth: true,
+				query: t.Object({ organizationId: t.Optional(t.String()) }),
+			})
+			.post(
+				"/",
+				({ user, body }) => lineupsCreate({ userId: user.id, payload: body }),
+				{
+					auth: true,
+					body: t.Object({
+						name: t.String({ minLength: 1 }),
+						organizationId: t.String(),
+						memberIds: t.Optional(t.Array(t.String())),
+					}),
+				},
+			)
+			.put(
+				"/:id",
+				({ params, user, body }) =>
+					lineupsUpdate({ id: params.id, userId: user.id, payload: body }),
+				{
+					auth: true,
+					body: t.Object({
+						name: t.Optional(t.String({ minLength: 1 })),
+						memberIds: t.Optional(t.Array(t.String())),
+					}),
+				},
+			)
+			.delete(
+				"/:id",
+				({ params, user }) => lineupsDelete({ id: params.id, userId: user.id }),
+				{ auth: true },
 			),
 	)
 	.group("/pdf-exports", (group) =>

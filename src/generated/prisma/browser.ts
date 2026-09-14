@@ -63,6 +63,16 @@ export type BandInvite = Prisma.BandInviteModel
  */
 export type BandInviteUse = Prisma.BandInviteUseModel
 /**
+ * Model Lineup
+ * 
+ */
+export type Lineup = Prisma.LineupModel
+/**
+ * Model LineupMember
+ * 
+ */
+export type LineupMember = Prisma.LineupMemberModel
+/**
  * Model PushSubscription
  * 
  */

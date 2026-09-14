@@ -393,6 +393,8 @@ export const ModelName = {
   Invitation: 'Invitation',
   BandInvite: 'BandInvite',
   BandInviteUse: 'BandInviteUse',
+  Lineup: 'Lineup',
+  LineupMember: 'LineupMember',
   PushSubscription: 'PushSubscription',
   Song: 'Song',
   Chart: 'Chart',
@@ -420,7 +422,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "account" | "verification" | "organization" | "member" | "invitation" | "bandInvite" | "bandInviteUse" | "pushSubscription" | "song" | "chart" | "artist" | "credit" | "tag" | "songTag" | "songbook" | "liveSession" | "songbookSong" | "pdfExport" | "suggestion"
+    modelProps: "user" | "session" | "account" | "verification" | "organization" | "member" | "invitation" | "bandInvite" | "bandInviteUse" | "lineup" | "lineupMember" | "pushSubscription" | "song" | "chart" | "artist" | "credit" | "tag" | "songTag" | "songbook" | "liveSession" | "songbookSong" | "pdfExport" | "suggestion"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1087,6 +1089,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.BandInviteUseCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.BandInviteUseCountAggregateOutputType> | number
+        }
+      }
+    }
+    Lineup: {
+      payload: Prisma.$LineupPayload<ExtArgs>
+      fields: Prisma.LineupFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LineupFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LineupFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupPayload>
+        }
+        findFirst: {
+          args: Prisma.LineupFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LineupFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupPayload>
+        }
+        findMany: {
+          args: Prisma.LineupFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupPayload>[]
+        }
+        create: {
+          args: Prisma.LineupCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupPayload>
+        }
+        createMany: {
+          args: Prisma.LineupCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LineupCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupPayload>[]
+        }
+        delete: {
+          args: Prisma.LineupDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupPayload>
+        }
+        update: {
+          args: Prisma.LineupUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupPayload>
+        }
+        deleteMany: {
+          args: Prisma.LineupDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LineupUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LineupUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupPayload>[]
+        }
+        upsert: {
+          args: Prisma.LineupUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupPayload>
+        }
+        aggregate: {
+          args: Prisma.LineupAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLineup>
+        }
+        groupBy: {
+          args: Prisma.LineupGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LineupGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LineupCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LineupCountAggregateOutputType> | number
+        }
+      }
+    }
+    LineupMember: {
+      payload: Prisma.$LineupMemberPayload<ExtArgs>
+      fields: Prisma.LineupMemberFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LineupMemberFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupMemberPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LineupMemberFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupMemberPayload>
+        }
+        findFirst: {
+          args: Prisma.LineupMemberFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupMemberPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LineupMemberFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupMemberPayload>
+        }
+        findMany: {
+          args: Prisma.LineupMemberFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupMemberPayload>[]
+        }
+        create: {
+          args: Prisma.LineupMemberCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupMemberPayload>
+        }
+        createMany: {
+          args: Prisma.LineupMemberCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LineupMemberCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupMemberPayload>[]
+        }
+        delete: {
+          args: Prisma.LineupMemberDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupMemberPayload>
+        }
+        update: {
+          args: Prisma.LineupMemberUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupMemberPayload>
+        }
+        deleteMany: {
+          args: Prisma.LineupMemberDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LineupMemberUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LineupMemberUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupMemberPayload>[]
+        }
+        upsert: {
+          args: Prisma.LineupMemberUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LineupMemberPayload>
+        }
+        aggregate: {
+          args: Prisma.LineupMemberAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLineupMember>
+        }
+        groupBy: {
+          args: Prisma.LineupMemberGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LineupMemberGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LineupMemberCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LineupMemberCountAggregateOutputType> | number
         }
       }
     }
@@ -2137,6 +2287,27 @@ export const BandInviteUseScalarFieldEnum = {
 export type BandInviteUseScalarFieldEnum = (typeof BandInviteUseScalarFieldEnum)[keyof typeof BandInviteUseScalarFieldEnum]
 
 
+export const LineupScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  organizationId: 'organizationId',
+  isDefault: 'isDefault',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LineupScalarFieldEnum = (typeof LineupScalarFieldEnum)[keyof typeof LineupScalarFieldEnum]
+
+
+export const LineupMemberScalarFieldEnum = {
+  lineupId: 'lineupId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type LineupMemberScalarFieldEnum = (typeof LineupMemberScalarFieldEnum)[keyof typeof LineupMemberScalarFieldEnum]
+
+
 export const PushSubscriptionScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -2229,6 +2400,7 @@ export const SongbookScalarFieldEnum = {
   id: 'id',
   title: 'title',
   description: 'description',
+  lineupId: 'lineupId',
   organizationId: 'organizationId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -2485,6 +2657,8 @@ export type GlobalOmitConfig = {
   invitation?: Prisma.InvitationOmit
   bandInvite?: Prisma.BandInviteOmit
   bandInviteUse?: Prisma.BandInviteUseOmit
+  lineup?: Prisma.LineupOmit
+  lineupMember?: Prisma.LineupMemberOmit
   pushSubscription?: Prisma.PushSubscriptionOmit
   song?: Prisma.SongOmit
   chart?: Prisma.ChartOmit

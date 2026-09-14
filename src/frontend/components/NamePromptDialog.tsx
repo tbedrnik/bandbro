@@ -1,12 +1,16 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { Button } from "@frontend/components/ui/button";
 import { Input } from "@frontend/components/ui/input";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 /**
  * A small designed dialog for naming a new thing (band, setlist…), replacing the
  * native window.prompt. Reuses the design tokens + Input/Button so it matches the
  * rest of the app. Submits on Enter; the action is disabled while empty or pending.
+ *
+ * `children` is an optional slot under the field, for the one extra choice a creation
+ * sometimes needs (which lineup a setlist belongs to, say) without growing a second
+ * near-identical dialog.
  */
 export function NamePromptDialog({
 	open,
@@ -19,6 +23,7 @@ export function NamePromptDialog({
 	defaultValue = "",
 	pending = false,
 	onSubmit,
+	children,
 }: {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
@@ -30,6 +35,7 @@ export function NamePromptDialog({
 	defaultValue?: string;
 	pending?: boolean;
 	onSubmit: (name: string) => void;
+	children?: ReactNode;
 }) {
 	const [value, setValue] = useState(defaultValue);
 
@@ -74,6 +80,7 @@ export function NamePromptDialog({
 								placeholder={placeholder}
 							/>
 						</label>
+						{children}
 						<div className="mt-5 flex justify-end gap-2">
 							<Button
 								type="button"

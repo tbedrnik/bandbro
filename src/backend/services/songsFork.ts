@@ -1,4 +1,5 @@
 import { prisma } from "@backend/prisma";
+import { copySongWithChart } from "./forkChart";
 import {
 	HttpError,
 	readableScopeWhere,
@@ -40,35 +41,10 @@ export async function songsFork({
 	const chart = source.charts.find((c) => c.id === chartId) ?? source.charts[0];
 	if (!chart) throw new HttpError(400, "This song has no chart to fork.");
 
-	const newSlug = await uniqueSongSlug(source.name);
-
-	return prisma.song.create({
-		data: {
-			name: source.name,
-			slug: newSlug,
-			year: source.year,
-			organizationId: targetOrganizationId,
-			forkedFromId: source.id,
-			credits: {
-				create: source.credits.map((c) => ({
-					artistId: c.artistId,
-					role: c.role,
-				})),
-			},
-			tags: { create: source.tags.map((t) => ({ tagId: t.tagId })) },
-			charts: {
-				create: {
-					organizationId: targetOrganizationId,
-					forkedFromId: chart.id,
-					content: chart.content,
-					description: chart.description,
-					key: chart.key,
-					capo: chart.capo,
-					tempo: chart.tempo,
-					timeSignature: chart.timeSignature,
-				},
-			},
-		},
-		include: { charts: true },
+	return copySongWithChart({
+		song: source,
+		chart,
+		targetOrganizationId,
+		slug: await uniqueSongSlug(source.name),
 	});
 }

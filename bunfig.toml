@@ -1,2 +1,6 @@
 [serve.static]
 plugins = ["bun-plugin-tailwind"]
+
+[test]
+# Fixes DATABASE_URL before any module loads — see test/setup.ts.
+preload = ["./test/setup.ts"]
