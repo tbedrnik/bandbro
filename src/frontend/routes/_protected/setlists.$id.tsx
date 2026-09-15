@@ -257,9 +257,15 @@ function SetlistDetail() {
 		update.mutate({ chartIds: [...chartIds, chartId] });
 	};
 
+	const [downloadFailed, setDownloadFailed] = useState(false);
 	const onDownload = () => {
-		downloadSetlist(id, setlist);
-		setDownloaded(true);
+		// `downloadSetlist` returns whether the write survived, and that return value is
+		// the whole point of it: discarding it marked the set "Offline · downloaded" after
+		// a quota failure, so a player found out at the venue, with no signal — precisely
+		// the failure the offline feature exists to prevent (§D7, §D27).
+		const ok = downloadSetlist(id, setlist);
+		setDownloaded(ok);
+		setDownloadFailed(!ok);
 	};
 
 	const rows = ordered.map((entry, i) =>
@@ -418,6 +424,17 @@ function SetlistDetail() {
 					onChange={setCloneTarget}
 				/>
 			</NamePromptDialog>
+
+			{downloadFailed && (
+				<p
+					role="alert"
+					className="mt-4 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+				>
+					This device is out of storage, so the set was <b>not</b> downloaded —
+					even after clearing older ones. Remove some sets from your offline
+					shelf and try again.
+				</p>
+			)}
 
 			{update.isError && (
 				<p className="mt-4 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive">

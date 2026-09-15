@@ -6,6 +6,11 @@ import { beforeEach, describe, expect, test } from "bun:test";
  */
 class MemoryStorage implements Storage {
 	private map = new Map<string, string>();
+	/**
+	 * Budget for *everything stored*, not per item — which is how a real origin's quota
+	 * behaves, and the only way to exercise eviction: making room means deleting some
+	 * other key, which a per-item limit can never reward.
+	 */
 	quota = Number.POSITIVE_INFINITY;
 	get length() {
 		return this.map.size;
@@ -16,8 +21,16 @@ class MemoryStorage implements Storage {
 	getItem(k: string) {
 		return this.map.get(k) ?? null;
 	}
+	private used(except?: string) {
+		let total = 0;
+		for (const [k, v] of this.map) if (k !== except) total += v.length;
+		return total;
+	}
 	setItem(k: string, v: string) {
-		if (v.length > this.quota) throw new Error("QuotaExceededError");
+		// Replacing a key frees what it held, so it isn't counted against the budget.
+		if (this.used(k) + v.length > this.quota) {
+			throw new Error("QuotaExceededError");
+		}
 		this.map.set(k, v);
 	}
 	removeItem(k: string) {
@@ -42,6 +55,7 @@ const {
 	getOfflineSetlist,
 	isDownloaded,
 	listOfflineSetlists,
+	offlineBytesUsed,
 	removeOfflineSetlist,
 } = await import("./offline");
 
@@ -125,5 +139,68 @@ describe("offline setlist store", () => {
 		expect(downloadSetlist("sb1", setlist("Too big", 40))).toBe(false);
 		expect(isDownloaded("sb1")).toBe(false);
 		expect(listOfflineSetlists()).toEqual([]);
+	});
+});
+
+describe("quota", () => {
+	test("evicts the oldest download to make room, and says it succeeded", () => {
+		store.clear();
+		store.quota = Number.POSITIVE_INFINITY;
+		const big = (title: string) => ({
+			title,
+			songs: [],
+			filler: "y".repeat(400),
+		});
+		downloadSetlist("old", big("old"));
+		downloadSetlist("newer", big("newer"));
+		const twoSets = offlineBytesUsed() / 2; // bytes are UTF-16, chars are half
+
+		// Room for about two sets and the index — so tonight's needs one to go.
+		store.quota = twoSets + 200;
+		expect(downloadSetlist("tonight", big("tonight"))).toBe(true);
+
+		expect(isDownloaded("tonight")).toBe(true);
+		expect(isDownloaded("old")).toBe(false); // the oldest made way
+		expect(isDownloaded("newer")).toBe(true); // the newer one survived
+		store.quota = Number.POSITIVE_INFINITY;
+	});
+
+	test("reports failure rather than evicting everything for a set that can never fit", () => {
+		store.clear();
+		store.quota = Number.POSITIVE_INFINITY;
+		downloadSetlist("keep", { title: "keep", songs: [] });
+
+		store.quota = 10; // nothing of a useful size fits
+		expect(
+			downloadSetlist("huge", {
+				title: "huge",
+				songs: [],
+				filler: "z".repeat(500),
+			}),
+		).toBe(false);
+		expect(isDownloaded("huge")).toBe(false);
+		store.quota = Number.POSITIVE_INFINITY;
+	});
+
+	test("the set being downloaded is never evicted to make room for itself", () => {
+		store.clear();
+		store.quota = Number.POSITIVE_INFINITY;
+		downloadSetlist("only", { title: "only", songs: [] });
+		expect(downloadSetlist("only", { title: "only v2", songs: [] })).toBe(true);
+		expect(getOfflineSetlist<{ title: string }>("only")?.title).toBe("only v2");
+	});
+});
+
+describe("offlineBytesUsed", () => {
+	test("counts the downloaded payloads and nothing else", () => {
+		store.clear();
+		expect(offlineBytesUsed()).toBe(0);
+		downloadSetlist("a", { title: "a", songs: [] });
+		const withOne = offlineBytesUsed();
+		expect(withOne).toBeGreaterThan(0);
+		downloadSetlist("b", { title: "b", songs: [] });
+		expect(offlineBytesUsed()).toBeGreaterThan(withOne);
+		removeOfflineSetlist("b");
+		expect(offlineBytesUsed()).toBe(withOne);
 	});
 });

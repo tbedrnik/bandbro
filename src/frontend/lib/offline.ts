@@ -87,18 +87,68 @@ function deriveMeta(
 export function downloadSetlist(id: string, payload: unknown): boolean {
 	const store = storage();
 	if (!store) return false;
+	const body = JSON.stringify(payload);
+
+	if (!write(store, PREFIX + id, body)) {
+		// Out of room. Rather than just failing, make room the way a cache should: drop
+		// the least recently downloaded *other* set and try again. A player whose phone
+		// is full usually wants tonight's set more than one from three months ago, and
+		// the shelf already tracks `downloadedAt`, so the ordering is free.
+		for (const stale of evictionOrder(id)) {
+			removeOfflineSetlist(stale);
+			if (write(store, PREFIX + id, body)) {
+				notify();
+				return finish(id, payload);
+			}
+		}
+		return false;
+	}
+	return finish(id, payload);
+}
+
+function write(store: Storage, key: string, body: string): boolean {
 	try {
-		store.setItem(PREFIX + id, JSON.stringify(payload));
+		store.setItem(key, body);
+		return true;
 	} catch {
 		// Quota exceeded, or storage unavailable.
 		return false;
 	}
+}
+
+function finish(id: string, payload: unknown): boolean {
 	writeMetaIndex({
 		...readMetaIndex(),
 		[id]: deriveMeta(id, payload, Date.now()),
 	});
 	notify();
 	return true;
+}
+
+/** Downloaded sets other than `keep`, oldest download first. */
+function evictionOrder(keep: string): string[] {
+	return listOfflineSetlists()
+		.filter((m) => m.id !== keep)
+		.sort((a, b) => a.downloadedAt - b.downloadedAt)
+		.map((m) => m.id);
+}
+
+/** Roughly how much room this device's downloads take, in bytes. */
+export function offlineBytesUsed(): number {
+	const store = storage();
+	if (!store) return 0;
+	let total = 0;
+	try {
+		for (let i = 0; i < store.length; i++) {
+			const key = store.key(i);
+			if (!key?.startsWith(PREFIX)) continue;
+			// UTF-16 code units are the unit browsers actually budget in.
+			total += (store.getItem(key)?.length ?? 0) * 2;
+		}
+	} catch {
+		return total;
+	}
+	return total;
 }
 
 export function getOfflineSetlist<T = unknown>(id: string): T | null {

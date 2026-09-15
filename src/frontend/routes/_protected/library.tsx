@@ -10,6 +10,7 @@ import {
 	DropdownMenuTrigger,
 } from "@frontend/components/ui/dropdown-menu";
 import { Input } from "@frontend/components/ui/input";
+import { mutationErrorMessage } from "@frontend/lib/mutationError";
 import { useOnline } from "@frontend/lib/offline";
 import {
 	type Scope,
@@ -272,8 +273,20 @@ function ForkButton({
 		<DropdownMenu>
 			<DropdownMenuTrigger
 				render={
-					<Button size="sm" variant="solid" disabled={fork.isPending}>
-						Fork
+					// A table row has nowhere to put a sentence, so the control itself
+					// carries the failure rather than the click doing nothing (§D27).
+					<Button
+						size="sm"
+						variant={fork.isError ? "outline" : "solid"}
+						disabled={fork.isPending}
+						title={
+							fork.isError
+								? mutationErrorMessage(fork.error, "The fork")
+								: undefined
+						}
+						className={fork.isError ? "text-destructive" : undefined}
+					>
+						{fork.isError ? "Retry fork" : "Fork"}
 					</Button>
 				}
 			/>

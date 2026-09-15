@@ -1,4 +1,5 @@
 import { api } from "@frontend/api";
+import { ErrorNote } from "@frontend/components/ErrorNote";
 import { LineupPicker } from "@frontend/components/LineupPicker";
 import { NamePromptDialog } from "@frontend/components/NamePromptDialog";
 import { Button } from "@frontend/components/ui/button";
@@ -177,6 +178,11 @@ function SetlistsIndex() {
 					bandName={bandName}
 					value={target}
 					onChange={setTarget}
+				/>
+				<ErrorNote
+					error={create.error}
+					when={create.isError}
+					subject="The setlist"
 				/>
 			</NamePromptDialog>
 		</div>

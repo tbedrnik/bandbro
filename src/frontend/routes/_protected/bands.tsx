@@ -1,5 +1,6 @@
 import { api, apiClient } from "@frontend/api";
 import { auth } from "@frontend/auth";
+import { ErrorNote } from "@frontend/components/ErrorNote";
 import { InviteLinkPanel } from "@frontend/components/InviteLinkPanel";
 import { NamePromptDialog } from "@frontend/components/NamePromptDialog";
 import { RoleBadge, roleLabel } from "@frontend/components/RoleBadge";
@@ -297,6 +298,12 @@ function InvitesSection({ organizationId }: { organizationId: string }) {
 					</Button>
 				</div>
 
+				<ErrorNote
+					error={create.error}
+					when={create.isError}
+					subject="The invite link"
+				/>
+
 				{fresh && (
 					<div className="mt-4">
 						<InviteLinkPanel code={fresh} />
@@ -439,6 +446,12 @@ function InviteRow({
 				</div>
 			)}
 
+			<ErrorNote
+				error={revoke.error}
+				when={revoke.isError}
+				subject="The revoke"
+			/>
+
 			{showQr && (
 				<div className="mt-3">
 					<InviteLinkPanel code={invite.code} />
@@ -486,6 +499,12 @@ function EmailInviteRow({
 			>
 				Cancel
 			</Button>
+			<ErrorNote
+				error={cancel.error}
+				when={cancel.isError}
+				subject="The cancel"
+				className="w-full"
+			/>
 		</div>
 	);
 }
@@ -700,7 +719,13 @@ function LineupsSection({
 				submitLabel="Add lineup"
 				pending={create.isPending}
 				onSubmit={(name) => create.mutate({ name, organizationId })}
-			/>
+			>
+				<ErrorNote
+					error={create.error}
+					when={create.isError}
+					subject="The lineup"
+				/>
+			</NamePromptDialog>
 		</section>
 	);
 }
@@ -763,6 +788,12 @@ function LineupMembers({
 					{save.isPending ? "Saving…" : "Save players"}
 				</Button>
 			</div>
+			<ErrorNote
+				error={save.error}
+				when={save.isError}
+				subject="The lineup"
+				className="text-right"
+			/>
 		</div>
 	);
 }

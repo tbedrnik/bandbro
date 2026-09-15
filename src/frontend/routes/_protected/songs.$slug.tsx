@@ -1,5 +1,6 @@
 import { api } from "@frontend/api";
 import { CapoToggle } from "@frontend/components/CapoToggle";
+import { ErrorNote } from "@frontend/components/ErrorNote";
 import { MetaChip, Tag } from "@frontend/components/MetaChip";
 import { ProficiencyControl } from "@frontend/components/ProficiencyControl";
 import { SongSheet } from "@frontend/components/SongSheet";
@@ -187,6 +188,12 @@ function SongViewPage() {
 								))}
 							</DropdownMenuContent>
 						</DropdownMenu>
+						<ErrorNote
+							error={fork.error}
+							when={fork.isError}
+							subject="The fork"
+							className="mt-0"
+						/>
 
 						{song.viewerCanWrite ? (
 							<Button

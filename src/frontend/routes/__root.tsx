@@ -1,4 +1,6 @@
 import { auth } from "@frontend/auth";
+import { AppError } from "@frontend/components/AppError";
+import { Button } from "@frontend/components/ui/button";
 import { SessionProvider } from "@frontend/contexts/SessionContext";
 import { UserProvider } from "@frontend/contexts/UserContext";
 import { clearSessionHint, saveSessionHint } from "@frontend/lib/sessionHint";
@@ -9,13 +11,32 @@ import {
 	saveSessionSnapshot,
 } from "@frontend/lib/sessionSnapshot";
 import { useStore } from "@nanostores/react";
-import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 export const Route = createRootRoute({
-	notFoundComponent: () => <div>404 Not Found</div>,
+	notFoundComponent: NotFound,
+	errorComponent: AppError,
 	component: RootRoute,
 });
+
+function NotFound() {
+	return (
+		<div className="grid min-h-dvh place-items-center bg-background px-6 text-center">
+			<div>
+				<h1 className="font-display text-xl font-bold text-foreground">
+					That page isn't here
+				</h1>
+				<p className="mt-2 max-w-sm text-sm text-muted-foreground">
+					The link may be old, or the song or setlist may have been removed.
+				</p>
+				<Button className="mt-5" render={<Link to="/" />}>
+					Go home
+				</Button>
+			</div>
+		</div>
+	);
+}
 
 function RootRoute() {
 	const { data, error, isPending } = useStore(auth.useSession);

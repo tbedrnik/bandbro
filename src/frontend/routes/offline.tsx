@@ -7,6 +7,7 @@ import { Input } from "@frontend/components/ui/input";
 import {
 	listOfflineSongs,
 	type OfflineSong,
+	offlineBytesUsed,
 	removeOfflineSetlist,
 	useOfflineSetlists,
 	useOnline,
@@ -24,6 +25,20 @@ import {
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
+/**
+ * What browsers typically allow per origin. Not a number we can read — the Storage API's
+ * `estimate()` reports the whole origin quota, which localStorage is only a slice of — so
+ * it is stated as "about", and the eviction in `downloadSetlist` is what actually handles
+ * running out.
+ */
+const OFFLINE_BUDGET = 5 * 1024 * 1024;
+
+function formatBytes(bytes: number): string {
+	if (bytes < 1024) return `${bytes} B`;
+	if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export const Route = createFileRoute("/offline")({
 	component: OfflineShelf,
 });
@@ -40,6 +55,8 @@ function OfflineShelf() {
 	useTheme();
 	const online = useOnline();
 	const setlists = useOfflineSetlists();
+	// Recomputed whenever the shelf changes, which is the only time it can move.
+	const used = useMemo(() => offlineBytesUsed(), [setlists]);
 	const [q, setQ] = useState("");
 
 	// The corpus is parsed out of the stored payloads, so it is rebuilt when the shelf
@@ -76,6 +93,22 @@ function OfflineShelf() {
 					with no signal — chords, keys, capo and transpose all work from the
 					copy stored here.
 				</p>
+				{/* Browser storage is a cliff you otherwise walk off in the dark: there is
+				    no warning, the write just fails. Showing the number turns the limit
+				    into something a player can act on before a gig, not after. */}
+				{setlists.length > 0 && (
+					<p className="mt-2 font-mono text-xs text-muted-foreground">
+						{setlists.length} set{setlists.length === 1 ? "" : "s"} ·{" "}
+						{formatBytes(used)} of about {formatBytes(OFFLINE_BUDGET)} used
+						{used > OFFLINE_BUDGET * 0.8 && (
+							<span className="text-destructive">
+								{" "}
+								— nearly full. The oldest set is dropped automatically to make
+								room.
+							</span>
+						)}
+					</p>
+				)}
 
 				{setlists.length > 0 && (
 					<div className="relative mt-6">
