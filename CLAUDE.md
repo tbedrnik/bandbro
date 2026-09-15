@@ -4,13 +4,16 @@
 > This file is the working map of the project — what exists, how it's wired, the decisions still
 > open, and the task breakdown to get from scaffolding to v1.
 
-> **Status (v1 build complete; lineups + proficiency added — §D25/§D26).** The Phase-1 + Phase-2 plan in §7 is implemented: schema +
-> migration + seed, the shared transpose/capo engine (tested), the full API surface, and all
-> screens (Library, Song View, ChordPro editor, Capo views, Live mode, Setlists, Band management,
-> Preferences, Home) plus offline PWA and PDF export. Decisions D1–D9 are all **decided** (D3 was
-> adjusted — see below). Remaining/next: richer drag-reorder, member role-editing UI, suggestion
-> review UI, and the polish items in §7/G. Build & verify locally with `bun test`, `bunx biome check`,
-> and `bun build ./src/frontend/index.html`.
+> **Status: v1 is built and every task in §7 is ticked.** Schema, migrations and seed; the shared
+> transpose/capo engine; the whole API surface; all eleven screens; offline PWA; the PDF export job;
+> lineups (§D25) and proficiency (§D26); and the audit pass of §D27, which closed a cross-tenant
+> write and several ways the app could lose a player's work silently. **§4 lists what is genuinely
+> still missing** — read that rather than assuming from §7. The first item there is that **there are
+> no backups** ([`docs/backup-and-restore.md`](docs/backup-and-restore.md)); it is the only failure
+> in the app that cannot be undone afterwards.
+>
+> Verify locally with `bun test`, `bun run typecheck`, `bunx biome ci .` (CI fails on formatting, so
+> run `bunx biome check --write` first) and `bun build ./src/frontend/index.html`.
 >
 > **Prisma in a sandboxed/offline env:** the Prisma CLI downloads its schema-engine from
 > `binaries.prisma.sh`, which some sandboxes block for Node's fetch. If `prisma generate`/`migrate`
@@ -20,6 +23,8 @@
 **Read alongside:**
 - [`docs/BandBro-PRD.md`](docs/BandBro-PRD.md) — product scope, personas, fork model, roles, MoSCoW, phasing.
 - [`docs/BandBro-Design-Briefs.md`](docs/BandBro-Design-Briefs.md) — per-screen design briefs.
+- [`docs/backup-and-restore.md`](docs/backup-and-restore.md) — what is at risk, the options, and the restore steps.
+- [`docs/offline-live-sync.md`](docs/offline-live-sync.md) — why band-internal Live sync needs a server (§D15).
 - The nine designed screens (Claude Design exports): Home, Login, Library, Song View, ChordPro Editor,
   Live Mode, Playlist, Band Management, Preferences, plus the Design System sheet.
 
@@ -55,17 +60,23 @@ src/
     index.ts            Bun.serve — routes / → landing, /app → SPA, /api → Elysia
     api.ts              Elysia app + route definitions + response schemas (exports `Api` type)
     auth.ts             better-auth config + `auth`/`authOptional` Elysia macros
-    prisma.ts           Prisma client singleton
-    services/           one file per operation (songs*, songbooks*) — pure functions, take {user,…}
+    prisma.ts           Prisma client singleton (PRISMA_LOG_QUERIES=1 traces statements)
+    permissions.ts      Admin/Writer/Reader access control (§D6)
+    watchdog.ts         exits on a sustained database failure so the restart policy fires (§D27)
+    concurrencyGate.ts  bounded queue in front of the `chordpro` subprocess (§D17)
+    services/           one file per operation (songs*, songbooks*, lineups, proficiency, …) —
+                        take {user,…}; scope.ts holds requireWrite/requireAdmin (§D6)
   frontend/
-    routes/             TanStack file-based routes (_auth/*, _protected/*, design.tsx)
+    routes/             TanStack file-based routes (_auth/*, _protected/*, public: s.$code, join.$code, offline)
     components/         ChordSheet, CapoToggle, TransposeStepper, RoleBadge, OfflinePill, MetaChip,
                         SongEditor, SongPreview, + ui/ (shadcn primitives)
     contexts/           SessionContext, UserContext
-    lib/                utils (cn), push (web push opt-in + SW bridge, §D21)
+    lib/                per-device state (theme, liveDisplay, livePlayed, offline), roles,
+                        mutationError, useWakeLock, useSongNavigation, push (§D21)
     api.ts / auth.ts    Eden client + better-auth React client
     index.css           Design tokens (see §6)
-  shared/               isomorphic code (currently addNumbers demo) — transpose engine goes here
+  shared/               isomorphic, dependency-free, unit-tested: chordpro parse/transpose, notation
+                        (§D11), chorusCollapse, songSearch, proficiency, datetime, pagination, …
   generated/            Prisma client + TanStack route tree (do not hand-edit)
   landing/              marketing page — static HTML + hand-written CSS, no React (§D18)
 prisma/
@@ -118,18 +129,18 @@ The PRD's mental model (§5) and how it maps onto the current Prisma schema:
 | Concept (PRD) | Schema today | Status |
 |---|---|---|
 | **User** | `User` (better-auth) | ✅ |
-| **Band (workspace)** | `Organization` + `Member` + `Invitation` (org plugin) | ✅ structure; roles need config (§5, D6) |
-| **Personal scope** ("one-man-band") | — | ❌ **not modeled** (D1) |
+| **Band (workspace)** | `Organization` + `Member` + `BandInvite` (org plugin) | ✅ roles configured in `permissions.ts` (§D6) |
+| **Personal scope** ("one-man-band") | a hidden `Organization` with `metadata {personal:true}`, created on signup | ✅ §D1 |
 | **Curated/public scope** | `Song.organizationId = null` / `Chart.organizationId = null` | ✅ convention exists |
-| **Song** (title, artist, key, tempo, capo, tags + ChordPro) | `Song` (name, year) + `Chart` (content, key, capo) + `Credit`→`Artist` | ⚠️ partial — no tempo/time-sig/tags (D4) |
+| **Song** (title, artist, key, tempo, capo, tags + ChordPro) | `Song` (name, year) + `Chart` (content, key, capo, tempo, timeSignature) + `Credit`→`Artist` + `Tag`/`SongTag` | ✅ §D4 — denormalized from the ChordPro on write |
 | **Chart** (an arrangement) | `Chart` (content, key, capo, forkedFromId) | ✅ |
-| **Fork** | `Chart.forkedFrom` self-relation | ⚠️ granularity + slug uniqueness unresolved (D3) |
+| **Fork** | `Song.forkedFrom` + `Chart.forkedFrom` self-relations; `uniqueSongSlug` collision suffix | ✅ §D3 |
 | **Lineup** (a name the band performs under) | `Lineup` + `LineupMember`; `Songbook.lineupId` | ✅ §D25 |
 | **Playlist / Setlist** | `Songbook` (per lineup) + `SongbookSong` (order) | ✅ |
 | **Proficiency** ("can I play this?") | `SongProficiency` (user × song × level) | ✅ §D26 |
-| **Role** (Admin/Writer/Reader) | `Member.role: String` (better-auth default `owner`/`admin`/`member`) | ❌ needs Admin/Writer/Reader mapping (D6) |
-| **Member view preference** (capo/concert default) | — | ❌ **not modeled** (D2) |
-| **Suggestion** (propose edit to non-writable song) | — | ❌ not modeled (should-have) |
+| **Role** (Admin/Writer/Reader) | `Member.role: String`, mapped in `src/backend/permissions.ts` and enforced by `requireWrite`/`requireAdmin` | ✅ §D6 |
+| **Member view preference** (capo/concert default) | `User.defaultChordView` (better-auth `additionalFields`) | ✅ §D2 — account-level, not per band |
+| **Suggestion** (propose edit to non-writable song) | `Suggestion` (chart, proposedContent, proposer, status) | ✅ create + review + accept/reject (§D27) |
 | **Invite** (join a band) | `BandInvite` + `BandInviteUse` (link/QR); legacy `Invitation` (email) | ✅ §D13 |
 
 ### Scope model (the load-bearing convention)
@@ -147,24 +158,58 @@ poster*; it is not a permission boundary and holds no roles of its own. One band
 
 ---
 
-## 4. Current state — scaffolded vs. stubbed
+## 4. Current state — what's built, and what genuinely isn't
 
-**Built / ported:**
-- Auth wiring (email+password, org plugin), `auth`/`authOptional` macros, protected route layout.
-- `songsList`, `songsRead` (scope-filtered), `songsCreate` (name + single chart only — ignores credits/metadata).
-- Design system in code: tokens, fonts, and ported components — `ChordSheet`, `CapoToggle`,
-  `TransposeStepper`, `RoleBadge`, `OfflinePill`, `MetaChip`, `SongEditor` (CodeMirror), `SongSheet`
-  (renders the shared engine's blocks). Showcased at the `/app/design` route.
-- Prisma schema for Song/Chart/Artist/Credit/Songbook/SongbookSong + better-auth models; 3 migrations.
+> This section was, for a long time, the most misleading page in the repo: it described
+> the scaffolding of the very first commit ("`songsUpdate` → empty function", "no fork
+> endpoint, no PDF export", "personal scope, roles, tags, suggestions: not modeled")
+> long after every one of those had shipped. It is the first thing a new contributor or
+> agent reads, so it is now written as claims you can check against a named file — and
+> it should be rewritten again the moment it stops being true.
 
-**Stubbed / missing:**
-- `songsUpdate`, `songsDelete` → empty functions.
-- **All** songbook services (`songbooksList/Read/Create/Update/Delete`) → empty.
-- No fork endpoint, no search/filter params, no PDF export, no preferences endpoint.
-- Frontend routes are placeholders: `_protected/index` = "Hello {name}", `songs.$slug` / `songs.search`
-  = raw data dumps, `song.$slug` = a hardcoded ChordPro editor demo. None of the nine designs are built.
-- ~~`lib/push.ts` is a non-functional stub; no service worker, manifest, or offline cache.~~ (§D7, §D21)
-- Personal scope, member preferences, roles-as-Admin/Writer/Reader, tags, suggestions: not modeled.
+**Built.** The v1 surface in §7 is implemented end to end, and §§D1–D27 are the record of
+*why* each piece is shaped the way it is. In one list, with where to look:
+
+- **Auth & scope.** Email/password + the org plugin (`backend/auth.ts`), a hidden personal
+  Organization per user (§D1), Admin/Writer/Reader mapped in `backend/permissions.ts`
+  (§D6) and enforced by `requireWrite`/`requireAdmin` in `services/scope.ts` — the two
+  files every write in the app passes through.
+- **Songs.** `songsList` (scope + `q`/`artist`/`key`/`tag`/`lineupId` filters, paged),
+  `songsRead`, `songsCreate` (metadata, credits, tags), `songsUpdate`, `songsDelete`
+  (with an impact count first), `songsFork` (§D3) and `songsImport` (akordy.kytary.cz, §2).
+- **Setlists.** `songbooks*` list/read/create/update/delete, `songbooksClone` (§D25) and
+  the PDF export, which is a job with its own queue and worker (§D8, §D20).
+- **Bands.** Invite links + QR (§D13), lineups (§D25), proficiency marks (§D26),
+  per-band role reads (`bandMemberships.ts`), suggestions create → review → accept (§D27).
+- **Stage.** Live mode with per-device display prefs and fit-to-screen (§D12), played
+  marks (§D24), chorus recall (§D23), keyboard/pedal/swipe navigation and a screen wake
+  lock (§D27), the public fan view with a split poll and expiring session codes (§D10,
+  §D27).
+- **Offline.** Root-scoped service worker, shell precache, per-setlist snapshots with LRU
+  eviction, local search over downloaded sets, session snapshot (§D7, §D15).
+- **Frontend.** All of F1–F11 in §7; the design-system sheet is at `/app/design` (behind
+  the protected layout since §D27).
+
+**Genuinely missing, in the order it is worth doing:**
+
+1. **Backups. There are none** — see [`docs/backup-and-restore.md`](docs/backup-and-restore.md).
+   Every band's library is one SQLite file on one Railway volume with no copy anywhere.
+   This is the only loss in the app that cannot be undone afterwards.
+2. **Arrangements in the UI.** The model already supports several `Chart`s per `Song`
+   (which is what replaces forking inside your own band, §D25), but `songsCreate` makes
+   exactly one and the Library renders `charts[0]`. Agreed shape: reuse
+   `Chart.description` as the label, clear the "Imported from…" strings, expand the
+   setlist add-flow into one row per arrangement.
+3. **i18n.** There is none of any kind — no library, no catalogue, no locale context, and
+   every string in every route and component is an English literal, for a Czech band
+   (§D27). Dates and note names are locale-aware; nothing else is. A from-scratch job
+   whose cost only grows.
+4. **Code splitting.** Not possible in the current serving model — measured, see §D27.
+   Would need a real build step and owning the asset layout §D7 depends on.
+5. **Security headers on the HTML surfaces**, for the same shape of reason (§D27).
+6. **Offline writes.** v1 is read-only offline by decision (§D7); no edit queue, no sync.
+7. **A gig/date model.** Considered and dropped by the product owner; §D24's "same
+   evening, or a new gig?" prompt is the visible cost of not having one.
 
 ---
 
@@ -645,7 +690,9 @@ runs on **2 shared vCPU / 2 GB**, which is what turns each of these from theoret
   **only at deploy time** ("Railway does not monitor the healthcheck endpoint after the deployment has
   gone live"), and `restartPolicyType: ON_FAILURE` only reacts to the process *exiting*. Nothing on the
   platform can restart a container that wedges while alive — hence "it froze and needed a rebuild".
-  Catching that needs external uptime monitoring or an in-process watchdog; neither is built.
+  Catching that needs external uptime monitoring or an in-process watchdog. The watchdog is built
+  (`src/backend/watchdog.ts`, §D27); the external check is five minutes of console work and is
+  written up in [`docs/backup-and-restore.md`](docs/backup-and-restore.md).
 
 **The export is now a job, not a request** — see §D20. Capping the render at 120s under a 255s socket
 timeout bought headroom without removing the ceiling; jobs remove it.
@@ -1042,6 +1089,128 @@ maintained by hand.
   down and fill in. Mitigations not yet built: seed marks from §D24's played history ("you've
   played this — can you play it?"), and bulk-marking from the Library list.
 
+
+### D27 — An app on a stage must not lie, must not sleep, and must not be trusted to wait *(implemented)*
+
+A read-only audit of the whole app after §D25/§D26 found no sloppiness — no TODOs, dense
+"why" comments — but four recurring *shapes* of defect and one live security hole. This is
+the record of that pass. It is one decision because the items share a premise: **the app is
+read off a stand, at a gig, by someone who cannot debug it**, so a failure it hides is worse
+than a feature it lacks.
+
+**The hole, first.** `songsUpdate` checked `requireWrite` against the *song's* organization
+and then updated whatever `chart.id` the client sent, unchecked. Every user has a personal
+Organization they administer, and `GET /api/songs` returns every Curated chart's id to any
+signed-in user — so one `PUT` rewrote any curated chart. That is worse than a permission
+slip: `foreignChartIds` (`services/scope.ts`) deliberately lets setlists in every band hold
+**references** to curated charts, on the stated grounds that they are read-only and cannot
+drift. They could, and one rewrite would propagate to every band's setlist, every PDF and
+the unauthenticated fan view. The chart is now resolved *through* the song.
+
+**Failure must be visible.**
+- An error that was neither `HttpError` nor a known Prisma error fell out of `api.ts`'s
+  handler as `undefined`, which Elysia serializes as **200 with an empty body** — a genuine
+  500 read as a successful write, caches invalidated, the UI navigated. `onError` now has a
+  `set.status = 500` default.
+- Sixteen of twenty-two mutation call sites swallowed failure entirely, including every one
+  in the editor: a failed save silently discarded the edit. `lib/mutationError.ts` maps a
+  status to a sentence and `components/ErrorNote.tsx` renders it (and renders nothing
+  without an error), so the pattern is one import. Where a row has no space for a sentence —
+  the Library's Fork button — the control itself carries it.
+- There was no error boundary anywhere, so any render throw unmounted the app to a white
+  screen with no way back. `components/AppError.tsx` is the router's `defaultErrorComponent`.
+- `downloadSetlist` returns a boolean *"so a quota failure is visible rather than silently
+  pretending the set is on the device"*, and the one call site where a user presses Download
+  threw it away. That is the exact failure offline exists to prevent: download the sets the
+  night before, the 19th fails, arrive at a venue with no signal to an empty Live mode. It
+  is honoured now, and a quota failure evicts the least recently used set and retries.
+- **Input has caps.** `api.ts` had 0 `maxLength`, 0 `maxItems` and 52 bare `t.String()`.
+  Nothing stopped a 50 MB chart, which is then read back in full by `songbooksRead`,
+  `liveSessionPublicRead`, the PDF loader and the offline snapshot. `chartIds` also flows
+  into an `IN (…)` and a `createMany`, where SQLite has a hard parameter ceiling.
+
+**The app must not state things that are false.** Preferences hardcoded `<RoleBadge role="Admin">`
+for every band, so a Reader was told they could manage it — `services/bandMemberships.ts` and
+`lib/roles.ts` now read the real role, and `canWriteIn` gates the controls (§G2). A Reader was
+handed the full editor and lost the work to a silent 403. `{artist:}` and `{year:}` edits were
+dropped on every save after creation. "Tip the band" was a `<button>` with no handler, in front
+of a room. And **suggestions were a dead end**: the backend was finished and gated, the frontend
+had one button and zero callers for list/accept/reject, so a Reader's suggestion was written to
+the table and unreachable by any human, forever — while the UI promised it reached the band's
+writers. Worse, accept wrote `content` without re-deriving `key`/`capo`/`tempo`, so the first
+accepted suggestion silently corrupted the denormalized metadata of §D4. **That was fixed before
+the reviewer UI was built**, which is the right order: a reviewer UI over a corrupting accept
+just corrupts faster.
+
+**A delete that cascades must say what it will take.** `Song → Chart → SongbookSong` means
+deleting a song removes it from **every setlist in every band** that references the chart. Both
+delete endpoints existed and nothing called them; they are wired now behind
+`components/ConfirmDelete.tsx`, and `GET /songs/:slug/delete-impact` supplies the count — the
+API answers with a status and no body by design (§D9), so the number needs its own endpoint
+rather than being parsed out of an error.
+
+**The stage owns the device.** There was no wake lock anywhere, in an app whose premise is a
+phone on a music stand: both Live mode and the fan view let the screen sleep mid-song
+(`lib/useWakeLock.ts`, re-acquired on `visibilitychange`). There was no keyboard handling and no
+touch handling either, though the design brief asks for both — arrow keys and PageUp/PageDown are
+free and are exactly what every Bluetooth page-turner pedal sends (`lib/useSongNavigation.ts`).
+
+**A public code is a credential, and a credential has a lifetime.** Nothing in the codebase ever
+wrote `active: false`, so every setlist ever shared stayed readable at a five-character code
+forever, and last month's QR still said "Following live". Live sessions now expire (`SESSION_TTL_MS`)
+and can be ended explicitly from the same place they were shared. Creating one and moving the room's
+current song are *publishing* actions, so they need the write role, not mere membership.
+
+**A feature's success must not be its own load.** `GET /live/:code` returned every song's complete
+ChordPro on every poll — ~80–100 KB, every 4s per fan — and the band's own phone hit that same heavy
+endpoint every 5s purely to display a watcher count. At 100 fans that is two shared vCPUs saturated
+by a QR code working too well, on the box also serving the band. The poll is now `GET /live/:code/now`
+(49 bytes measured), and the songs are fetched once. In the fan view itself: a returning-early effect
+left `prevIndex` pinned, so a fan's transpose was yanked back to 0 every few seconds; and
+`useFanSession` recorded `lastSynced` *before* the request, so one dropped packet on venue wifi meant
+the room silently skipped that song for the rest of the set.
+
+**Weight, and what could not be fixed.**
+- `lineupsList` called `ensureDefaultLineup` in a sequential loop: measured at 32 statements per
+  request for a user in four bands, now 5, with the membership invariant kept.
+  `PRISMA_LOG_QUERIES=1` is how that was measured and stays for the next time.
+- `songsList` had no `take` at all and the Library fired it per keystroke. Paged
+  (`src/shared/pagination.ts`) and debounced; a full page says so rather than truncating silently.
+- `/app/design` sat outside `_protected`, publicly enumerable; `shadcn` (a CLI with zero imports)
+  shipped ~6.5 MB into the production image as a runtime dependency.
+- **Code splitting is not achievable here, and that was measured, not assumed.** Production is
+  served by `Bun.serve` bundling the HTML import on the fly, and its bundler has splitting off with
+  no switch (no `ServeOptions` field, nothing under `[serve.static]`). Lazy-loading CodeMirror behind
+  `React.lazy` left it inlined and made the main chunk 12 KB *larger* — 1,452,951 → 1,464,934 bytes.
+  Getting the ~500 KB means a real `bun build --splitting` step and serving the output ourselves,
+  which means owning the asset layout §D7's worker reads out of the shell. Its own piece of work.
+- **Security headers, for the same shape of reason.** `nosniff`, `Referrer-Policy`, `X-Frame-Options`
+  and HSTS (only when the request actually arrived over TLS — otherwise `bun run dev` locks a laptop
+  out of `http://localhost:3000` for a year) now go on every response served from a *handler*, errors
+  included. They cannot go on `/`, `/app` or `/app/*`: those are `HTMLBundle` routes with no hook, and
+  `server.fetch()` does not re-enter routing, so there is no in-process way to wrap them. **No CSP
+  ships at all** as a consequence — one covering only the JSON API protects nothing, and claiming a
+  policy is worse than naming the gap.
+- **Nothing could restart a wedged container.** §D17 wrote down that Railway calls the healthcheck
+  only at deploy time and `ON_FAILURE` only reacts to the process exiting. `backend/watchdog.ts` runs
+  the healthcheck's own `SELECT 1` every 30s and exits after five consecutive failures, so the restart
+  policy has something to react to. A *hung* check counts as a failure rather than a wait, which is the
+  whole point: a wedge does not reject, it never settles. One slow query under a `chordpro` render does
+  not count — the run resets on any success.
+
+**Dates belong to `Intl`** (`src/shared/datetime.ts`), replacing three hand-rolled English relative
+formatters; `index.html` gained a `lang`; and `isChord` learned the Czech `zm`/`zv`, which had been
+passing through untransposed.
+
+**Two decisions deliberately left open, so they stay visible:**
+- **Backups.** There are none, and this is the only unrecoverable failure in the app. The runbook is
+  written — [`docs/backup-and-restore.md`](docs/backup-and-restore.md), with Litestream as the
+  recommendation and the env-gating pattern §D21 already uses — and automating it was left to the
+  owner, since it needs a bucket and credentials this repo should not hold.
+- **i18n.** Not started, on purpose. It is a from-scratch job across every route and component, not a
+  wiring job, and the cost only grows — so it is a decision to take deliberately rather than to drift
+  into inside a hygiene batch.
+
 ---
 
 ## 6. Design system (for building the screens)
@@ -1069,39 +1238,39 @@ Grouped by area, then sequenced into the PRD's phases at the end. Foundation tas
 unblock most screens — do them first.
 
 ### A. Data model & migrations
-- [ ] **A1.** Personal scope: signup hook to auto-create a personal `Organization`; mark/hide personal orgs (D1).
-- [ ] **A2.** Roles: configure better-auth access control with Admin/Writer/Reader; seed `owner`→Admin mapping (D6).
-- [ ] **A3.** Add `User.defaultChordView` (`asfingered` | `concert`) (D2).
-- [ ] **A4.** Song metadata: add `tempo`, `timeSignature` to `Chart`; add `Tag` + `SongTag` join (D4).
-- [ ] **A5.** Fork model: add `Song.forkedFromId`; change slug uniqueness to `@@unique([organizationId, slug])`; migration + backfill (D3).
-- [ ] **A6.** *(should-have)* `Suggestion` model (chartId, proposedContent, proposerId, status, timestamps).
-- [ ] **A7.** Seed script for the Curated library (the ~7 traditional songs shown in the Library design).
+- [x] **A1.** Personal scope: signup hook to auto-create a personal `Organization`; mark/hide personal orgs (D1).
+- [x] **A2.** Roles: configure better-auth access control with Admin/Writer/Reader; seed `owner`→Admin mapping (D6).
+- [x] **A3.** Add `User.defaultChordView` (`asfingered` | `concert`) (D2).
+- [x] **A4.** Song metadata: add `tempo`, `timeSignature` to `Chart`; add `Tag` + `SongTag` join (D4).
+- [x] **A5.** Fork model: `Song.forkedFromId` added. Slug uniqueness deliberately stayed **global** with a collision suffix (`uniqueSongSlug`) rather than `@@unique([organizationId, slug])`, which would force scope into every song URL — see §D3.
+- [x] **A6.** *(should-have)* `Suggestion` model (chartId, proposedContent, proposerId, status, timestamps).
+- [x] **A7.** Seed script for the Curated library (the ~7 traditional songs shown in the Library design).
 
 ### B. Shared engine & utilities
-- [ ] **B1.** Port the transpose engine to `src/shared/transpose.ts` (chord shift, sharp-spelling, slash chords) (D5).
-- [ ] **B2.** ChordPro metadata parser: `content` → `{title,artist,key,capo,tempo,timeSig,tags,sections}` for denormalization + preview (D4).
-- [ ] **B3.** "Two views from one chart" helper: given `(content, capo, transposeSteps, view)` → rendered blocks for `ChordSheet`.
+- [x] **B1.** Port the transpose engine to `src/shared/transpose.ts` (chord shift, sharp-spelling, slash chords) (D5).
+- [x] **B2.** ChordPro metadata parser: `content` → `{title,artist,key,capo,tempo,timeSig,tags,sections}` for denormalization + preview (D4).
+- [x] **B3.** "Two views from one chart" helper: given `(content, capo, transposeSteps, view)` → rendered blocks for `ChordSheet`.
 
 ### C. APIs (Elysia services)
-- [ ] **C1.** `songsCreate` v2: accept full metadata + credits/artists (find-or-create Artist) + scope selector; derive slug per-scope.
-- [ ] **C2.** Implement `songsUpdate` + `songsDelete` with `requireRole` write guards (D6).
-- [ ] **C3.** `songsList` filters: `scope/orgId`, `q` (title/artist), `artist`, `key`, `tag` (powers Library search).
-- [ ] **C4.** **Fork** endpoint `POST /songs/:slug/fork` → copies Song+Chart into a writable target org, sets provenance (D3).
-- [ ] **C5.** Songbooks (playlists): implement list/read/create/update/delete + add/remove song + reorder (`order`).
-- [ ] **C6.** Preferences endpoint (or better-auth `additionalFields`) to read/update `defaultChordView`.
-- [ ] **C7.** *(should-have)* Suggestions: create / list / accept (apply to chart) / reject.
-- [ ] **C8.** Bands/members/invitations: wire better-auth org client calls (create band, invite by email/link, change role, switch active org) — mostly config + UI, little custom API.
+- [x] **C1.** `songsCreate` v2: accept full metadata + credits/artists (find-or-create Artist) + scope selector; derive slug per-scope.
+- [x] **C2.** Implement `songsUpdate` + `songsDelete` with `requireRole` write guards (D6).
+- [x] **C3.** `songsList` filters: `scope/orgId`, `q` (title/artist), `artist`, `key`, `tag` (powers Library search).
+- [x] **C4.** **Fork** endpoint `POST /songs/:slug/fork` → copies Song+Chart into a writable target org, sets provenance (D3).
+- [x] **C5.** Songbooks (playlists): implement list/read/create/update/delete + add/remove song + reorder (`order`).
+- [x] **C6.** Preferences endpoint (or better-auth `additionalFields`) to read/update `defaultChordView`.
+- [x] **C7.** *(should-have)* Suggestions: create / list / accept (apply to chart) / reject.
+- [x] **C8.** Bands/members/invitations: wire better-auth org client calls (create band, invite by email/link, change role, switch active org) — mostly config + UI, little custom API.
 
 ### D. PWA / offline (D7)
 - [x] **D1.** Web app manifest + PNG icons; root-scoped service worker, bundled by `serveSw()`.
 - [x] **D2.** App-shell precache (shell HTML + the hashed bundle it names); every `/app/*` navigation falls back to it.
 - [x] **D3.** "Download for offline" → per-setlist snapshot in localStorage; `/app/offline` shelf + "Available offline" on Home.
 - [x] **D4.** Offline detection → `OfflinePill`; Live mode reads the snapshot with no network; session snapshot lets the installed app boot signed-in.
-- [ ] **D5.** Download progress UI, and a size/quota warning for very large setlists.
+- [x] **D5.** Quota handling: a failed download is reported rather than pretended (§D27), the least recently used set is evicted and the download retried, and `offlineBytesUsed()` shows what the device is holding. No progress bar — a snapshot is one synchronous write, so there is nothing to show progress *of*.
 
 ### E. PDF export (D8)
-- [ ] **E1.** Print-styled route rendering a playlist in order (one song/page, page-break, capo/key header).
-- [ ] **E2.** Render-mode option: as-fingered / concert / both (capo'd song prints twice); reuse `ChordSheet` + transpose engine.
+- [x] **E1.** Print-styled route rendering a playlist in order (one song/page, page-break, capo/key header).
+- [x] **E2.** Render-mode option: as-fingered / concert / both (capo'd song prints twice); reuse `ChordSheet` + transpose engine.
 
 ### F. Screens (each = TanStack route + components + the APIs above)
 
@@ -1120,10 +1289,10 @@ unblock most screens — do them first.
 | F11 | **App shell / nav** | `_protected/layout` | Top bar (BandBro logo, section, theme toggle, account avatar → Preferences §D22) + mobile sheet nav (§D16), active-org context, route guards | A1/A2 |
 
 ### G. Cross-cutting
-- [ ] **G1.** Active-organization (scope) context provider in the frontend, synced to `session.activeOrganizationId`.
-- [ ] **G2.** Role-aware UI (hide Edit/Delete/Manage for Readers; show "Suggest" instead).
-- [ ] **G3.** Replace placeholder routes/data-dumps; remove the demo `EXAMPLE`/`addNumbers` once real flows exist.
-- [ ] **G4.** Tests for the transpose engine (B1) and capo translation (golden cases from PRD §7 worked example).
+- [x] **G1.** Active-organization (scope) context provider in the frontend, synced to `session.activeOrganizationId`.
+- [x] **G2.** Role-aware UI from the *real* per-band role (`bandMemberships.ts` → `lib/roles.ts`), not an assumed one — see §D27. Readers get "Suggest", and the suggestion now actually reaches a reviewer.
+- [x] **G3.** Placeholder routes and the `addNumbers` demo are gone; every route in §F is a built screen.
+- [x] **G4.** `src/shared/transpose.test.ts`, plus sixteen other pure-logic suites under `src/shared`. The two files guarding every write — `services/scope.ts` and `permissions.ts` — remain the thinnest-covered part of the app.
 
 ### Phasing (PRD §13)
 - **Phase 1 — Songbook:** A1–A5, A7, B*, C1–C4, C6, F1–F3, F5, F7, F8, F10, F11, G1–G2.
