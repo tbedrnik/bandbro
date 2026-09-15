@@ -20,27 +20,49 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { api } from "@frontend/api";
+import { ConfirmDelete } from "@frontend/components/ConfirmDelete";
 import { ExportPdfButton } from "@frontend/components/ExportPdfButton";
+import { LineupPicker } from "@frontend/components/LineupPicker";
 import { MetaChip } from "@frontend/components/MetaChip";
+import { NamePromptDialog } from "@frontend/components/NamePromptDialog";
 import { OfflinePill } from "@frontend/components/OfflinePill";
+import { ReadinessChip } from "@frontend/components/ReadinessChip";
 import { ShareWithFansModal } from "@frontend/components/ShareWithFansModal";
 import { Button } from "@frontend/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@frontend/components/ui/dropdown-menu";
 import { Input } from "@frontend/components/ui/input";
+import { lineupLabel, useLineups } from "@frontend/lib/lineups";
 import {
 	downloadSetlist,
 	getOfflineSetlist,
 	isDownloaded,
+	removeOfflineSetlist,
+	useOfflineSync,
 	useOnline,
 } from "@frontend/lib/offline";
+import { useBandRoles } from "@frontend/lib/roles";
+import { useScopes } from "@frontend/lib/scopes";
+import { useDebounced } from "@frontend/lib/useDebounced";
 import { useFanSession } from "@frontend/lib/useFanSession";
 import { cn } from "@frontend/lib/utils";
 import { displayKey } from "@shared/notation";
+import { SONGS_PAGE } from "@shared/pagination";
+import { readinessRank } from "@shared/proficiency";
 import {
+	IconCopy,
+	IconDotsVertical,
 	IconDownload,
 	IconGripVertical,
+	IconPencil,
 	IconPlayerPlay,
 	IconPlus,
 	IconShare3,
+	IconTrash,
 	IconX,
 } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -78,11 +100,19 @@ function SetlistDetail() {
 	const { id } = Route.useParams();
 	const { export: exportJobId } = Route.useSearch();
 	const queryClient = useQueryClient();
+	const navigate = Route.useNavigate();
 	const online = useOnline();
 	const [adding, setAdding] = useState(false);
 	const [q, setQ] = useState("");
+	// One request per pause in the typing, not per character (§D27).
+	const searchQuery = useDebounced(q);
 	const [downloaded, setDownloaded] = useState(() => isDownloaded(id));
+	const [downloadFailed, setDownloadFailed] = useState(false);
 	const [shareOpen, setShareOpen] = useState(false);
+	const [renameOpen, setRenameOpen] = useState(false);
+	const [cloneOpen, setCloneOpen] = useState(false);
+	const [cloneTarget, setCloneTarget] = useState<string | null>(null);
+	const [confirmDelete, setConfirmDelete] = useState(false);
 	// Order shown while a reorder is in flight, so a dragged row doesn't snap back to
 	// its old position for the length of the PUT + refetch. Cleared as soon as the
 	// server's own order changes (it caught up, or a song was added/removed).
@@ -90,12 +120,39 @@ function SetlistDetail() {
 	const fan = useFanSession(id);
 
 	const { data: setlist, isPending } = useSetlistQuery(id);
+	const setlistOrgId = setlist?.organizationId;
+	const setlistLineupId = setlist?.lineupId;
 
 	const update = useMutation({
 		...api.songbooks({ id }).put.mutationOptions(),
 		onSuccess: () =>
 			queryClient.invalidateQueries(api.songbooks.get.queryFilter()),
 		onError: () => setPendingOrder(null),
+	});
+	// The API sets a status with no body on purpose (a body would widen every route's Eden
+	// success type — see api.ts), so the reason is written here from the status. Without
+	// this a refused change is completely silent: the dragged row just slides back.
+	const updateStatus = (update.error as { status?: number } | null)?.status;
+
+	const remove_ = useMutation({
+		...api.songbooks({ id }).delete.mutationOptions(),
+		onSuccess: () => {
+			queryClient.invalidateQueries(api.songbooks.get.queryFilter());
+			navigate({ to: "/setlists" });
+		},
+	});
+
+	const { data: lineups } = useLineups();
+	const { bands, personal } = useScopes();
+	const { canWriteIn } = useBandRoles();
+	const clone = useMutation({
+		...api.songbooks({ id }).clone.post.mutationOptions(),
+		onSuccess: (created) => {
+			queryClient.invalidateQueries(api.songbooks.get.queryFilter());
+			setCloneOpen(false);
+			if (created?.id)
+				navigate({ to: "/setlists/$id", params: { id: created.id } });
+		},
 	});
 
 	// Pointer drags start after a few px so a tap on the handle still behaves like a
@@ -107,16 +164,53 @@ function SetlistDetail() {
 		}),
 	);
 
+	// A set downloaded last week and edited at rehearsal since is the offline feature's
+	// real failure mode — you find out at the venue, with no signal. While the fresh
+	// payload is on screen there is nothing to ask about, so the copy is refreshed from
+	// it silently; only a refresh that *fails* needs the player (§D7).
+	const syncStatus = useOfflineSync(id, online ? setlist : undefined);
+
+	const ownLineupId = setlist?.lineupId;
+	useEffect(() => {
+		if (!cloneTarget && ownLineupId) setCloneTarget(ownLineupId);
+	}, [cloneTarget, ownLineupId]);
+
 	const serverOrder = (setlist?.songs ?? []).map((s) => s.chartId).join(",");
 	// biome-ignore lint/correctness/useExhaustiveDependencies: the server order string is the trigger
 	useEffect(() => {
 		setPendingOrder(null);
 	}, [serverOrder]);
 
+	// Asking for the readiness of *this set's lineup* is what turns the search into a
+	// builder: the same library sorts differently for the duo and for the full band,
+	// which is the whole point of marking who can play what (§D26).
 	const { data: searchResults } = useQuery({
-		...api.songs.get.queryOptions(q ? { q } : {}),
+		...api.songs.get.queryOptions({
+			limit: SONGS_PAGE,
+			...(searchQuery ? { q: searchQuery } : {}),
+			...(setlistLineupId ? { lineupId: setlistLineupId } : {}),
+		}),
 		enabled: adding && online,
 	});
+
+	// Only this band's own songs and Curated ones can go into the set. A chart owned by
+	// another band would be a *reference*, leaving two bands silently editing one chart,
+	// so the server rejects it (§D25) — offering it here would only produce failures.
+	// Filtered client-side rather than with the `scope` param, which is an exact match on
+	// one organization and would drop the Curated library with it.
+	const addable = (searchResults ?? [])
+		.filter(
+			(song) =>
+				song.organizationId === null || song.organizationId === setlistOrgId,
+		)
+		// Songs this lineup can actually play come first; the ones nobody has been asked
+		// about sink. A stable sort keeps the server's alphabetical order inside each
+		// band, so the list doesn't reshuffle unrecognisably.
+		.sort((a, b) =>
+			a.readiness && b.readiness
+				? readinessRank(a.readiness) - readinessRank(b.readiness)
+				: 0,
+		);
 
 	if (isPending) {
 		return (
@@ -148,6 +242,21 @@ function SetlistDetail() {
 		);
 	}
 
+	// A Reader may open, read, transpose, download and perform a set — but not change it.
+	// Before this they got the drag handles, the ✕ and the add box, and the server refused
+	// each one (§G2).
+	const editable = online && canWriteIn(setlist.organizationId);
+
+	// Every lineup this set could be duplicated onto, each carrying its band's name for
+	// the picker's "Banda · Duo Tomi Kohy" label.
+	const writableScopes = [...bands, ...(personal ? [personal] : [])].filter(
+		(s) => canWriteIn(s.id),
+	);
+	const cloneOptions = (lineups ?? []).flatMap((lineup) => {
+		const band = writableScopes.find((s) => s.id === lineup.organizationId);
+		return band ? [{ ...lineup, bandName: band.name }] : [];
+	});
+
 	const chartIds = pendingOrder ?? setlist.songs.map((s) => s.chartId);
 	const byChartId = new Map(setlist.songs.map((s) => [s.chartId, s]));
 	const ordered = chartIds.flatMap((chartId) => {
@@ -175,12 +284,17 @@ function SetlistDetail() {
 	};
 
 	const onDownload = () => {
-		downloadSetlist(id, setlist);
-		setDownloaded(true);
+		// `downloadSetlist` returns whether the write survived, and that return value is
+		// the whole point of it: discarding it marked the set "Offline · downloaded" after
+		// a quota failure, so a player found out at the venue, with no signal — precisely
+		// the failure the offline feature exists to prevent (§D7, §D27).
+		const ok = downloadSetlist(id, setlist);
+		setDownloaded(ok);
+		setDownloadFailed(!ok);
 	};
 
 	const rows = ordered.map((entry, i) =>
-		online ? (
+		editable ? (
 			<SortableSongRow
 				key={entry.chartId}
 				entry={entry}
@@ -222,12 +336,22 @@ function SetlistDetail() {
 				<div>
 					<h1 className="font-display text-3xl font-bold">{setlist.title}</h1>
 					<div className="mt-1 font-mono text-xs text-muted-foreground">
-						{setlist.songs.length} songs · {setlist.organization?.name}
+						{setlist.songs.length} songs ·{" "}
+						{lineupLabel(setlist.lineup, setlist.organization?.name)}
 					</div>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
 					{downloaded ? (
-						<OfflinePill label="Offline" detail="setlist downloaded" />
+						<OfflinePill
+							label="Offline"
+							detail={
+								syncStatus === "updated"
+									? "copy just updated"
+									: syncStatus === "failed"
+										? "copy is out of date"
+										: "setlist downloaded"
+							}
+						/>
 					) : (
 						online && (
 							<Button variant="outline" onClick={onDownload}>
@@ -262,8 +386,129 @@ function SetlistDetail() {
 					>
 						<IconPlayerPlay className="size-4" /> Live mode
 					</Button>
+					{/* Renaming and cloning are both writes — nothing to offer offline (§D7),
+					    and nothing to offer a Reader (§G2). */}
+					{editable && (
+						<DropdownMenu>
+							<DropdownMenuTrigger
+								render={
+									<Button variant="outline" aria-label="More setlist actions" />
+								}
+							>
+								<IconDotsVertical className="size-4" />
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end" className="min-w-52">
+								<DropdownMenuItem onClick={() => setRenameOpen(true)}>
+									<IconPencil className="size-4" /> Rename setlist
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => setCloneOpen(true)}>
+									<IconCopy className="size-4" /> Duplicate to…
+								</DropdownMenuItem>
+								{/* The endpoint has existed since setlists did; nothing ever
+								    called it, so a set could be made but never removed. */}
+								<DropdownMenuItem
+									onClick={() => setConfirmDelete(true)}
+									className="text-destructive"
+								>
+									<IconTrash className="size-4" /> Delete setlist
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					)}
 				</div>
 			</div>
+
+			<ConfirmDelete
+				open={confirmDelete}
+				onOpenChange={setConfirmDelete}
+				title="Delete this setlist?"
+				what={`“${setlist.title}” and its running order will be removed.`}
+				consequence="The songs themselves stay in the band's library."
+				confirmLabel="Delete setlist"
+				pending={remove_.isPending}
+				onConfirm={() => remove_.mutate({})}
+			/>
+
+			<NamePromptDialog
+				open={renameOpen}
+				onOpenChange={setRenameOpen}
+				title="Rename setlist"
+				label="Setlist name"
+				defaultValue={setlist.title}
+				submitLabel="Save"
+				pending={update.isPending}
+				onSubmit={(title) => {
+					update.mutate({ title });
+					setRenameOpen(false);
+				}}
+			/>
+
+			{/* Duplicating into another lineup of the same band shares the charts; into a
+			    different band it forks them, so neither can edit the other's (§D25). */}
+			<NamePromptDialog
+				open={cloneOpen}
+				onOpenChange={setCloneOpen}
+				title="Duplicate setlist"
+				description="Same songs, a separate set you can change on its own."
+				label="New setlist name"
+				defaultValue={`${setlist.title} (copy)`}
+				submitLabel="Duplicate"
+				pending={clone.isPending}
+				onSubmit={(title) =>
+					cloneTarget && clone.mutate({ targetLineupId: cloneTarget, title })
+				}
+			>
+				<LineupPicker
+					label="Duplicate to"
+					lineups={cloneOptions}
+					bandName={(orgId) =>
+						cloneOptions.find((l) => l.organizationId === orgId)?.bandName ??
+						"Band"
+					}
+					value={cloneTarget}
+					onChange={setCloneTarget}
+				/>
+			</NamePromptDialog>
+
+			{downloadFailed && (
+				<p
+					role="alert"
+					className="mt-4 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+				>
+					This device is out of storage, so the set was <b>not</b> downloaded —
+					even after clearing older ones. Remove some sets from your offline
+					shelf and try again.
+				</p>
+			)}
+
+			{update.isError && (
+				<p className="mt-4 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+					{updateStatus === 403
+						? "That change wasn't saved: this set contains a song from another band, which has to be forked into this one first. An admin can fix it with `bun run repair:setlists`."
+						: updateStatus === 404
+							? "That change wasn't saved — the setlist or one of its songs no longer exists. Reload to see the current set."
+							: "That change wasn't saved. Check your connection and try again."}
+				</p>
+			)}
+
+			{syncStatus === "failed" && (
+				<div className="mt-4 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm">
+					<p className="text-destructive">
+						This set has changed since you downloaded it, and the copy on this
+						device couldn't be updated — storage is full or blocked.
+					</p>
+					<Button
+						variant="outline"
+						className="mt-2"
+						onClick={() => {
+							removeOfflineSetlist(id);
+							setDownloaded(false);
+						}}
+					>
+						Remove the old copy
+					</Button>
+				</div>
+			)}
 
 			<ShareWithFansModal
 				open={shareOpen}
@@ -279,11 +524,13 @@ function SetlistDetail() {
 			{/* Songs — online, drag the handle on the left to reorder the set. */}
 			{ordered.length === 0 ? (
 				<div className="mt-6 rounded-xl border border-border px-4 py-10 text-center text-muted-foreground">
-					{online
+					{editable
 						? "No songs yet — add some below."
-						: "This downloaded set has no songs."}
+						: online
+							? "No songs in this set yet."
+							: "This downloaded set has no songs."}
 				</div>
-			) : online ? (
+			) : editable ? (
 				<DndContext
 					sensors={sensors}
 					collisionDetection={closestCenter}
@@ -301,8 +548,9 @@ function SetlistDetail() {
 				<div className="mt-6 rounded-xl border border-border">{rows}</div>
 			)}
 
-			{/* Add songs — a search over the server's libraries plus a PUT, so online only. */}
-			{online ? (
+			{/* Add songs — a search over the server's libraries plus a PUT, so online only,
+			    and writers only (§G2). */}
+			{editable ? (
 				<div className="mt-4">
 					{!adding ? (
 						<Button
@@ -318,7 +566,7 @@ function SetlistDetail() {
 								<Input
 									value={q}
 									onChange={(e) => setQ(e.target.value)}
-									placeholder="Search songs across your libraries"
+									placeholder="Search this band's songs and the curated library"
 									autoFocus
 								/>
 								<Button variant="ghost" onClick={() => setAdding(false)}>
@@ -326,7 +574,14 @@ function SetlistDetail() {
 								</Button>
 							</div>
 							<div className="mt-3 max-h-72 overflow-auto">
-								{searchResults?.map((song) => {
+								{!addable.length && (
+									<p className="px-3 py-6 text-center text-sm text-muted-foreground">
+										{q
+											? "Nothing here — songs from your other bands have to be forked into this one first."
+											: "No songs in this band's library yet."}
+									</p>
+								)}
+								{addable.map((song) => {
 									const chartId = song.charts[0]?.id;
 									const inList = chartId && chartIds.includes(chartId);
 									return (
@@ -337,11 +592,12 @@ function SetlistDetail() {
 											onClick={() => chartId && add(chartId)}
 											className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left hover:bg-muted disabled:opacity-40"
 										>
-											<span className="font-display text-sm">
+											<span className="flex flex-wrap items-center gap-2 font-display text-sm">
 												{song.name}
-												<span className="ml-2 text-xs text-muted-foreground">
+												<span className="text-xs text-muted-foreground">
 													{song.organization?.name ?? "Curated"}
 												</span>
+												<ReadinessChip readiness={song.readiness} />
 											</span>
 											<span className="text-xs text-muted-foreground">
 												{inList ? "added" : "+ add"}
@@ -355,8 +611,9 @@ function SetlistDetail() {
 				</div>
 			) : (
 				<p className="mt-4 text-sm text-muted-foreground">
-					You're offline — editing this set needs a connection. Use ▶ to open
-					the set in Live mode at that song.
+					{online
+						? "You have read access to this band, so this set is yours to open, transpose and perform — but not to change."
+						: "You're offline — editing this set needs a connection. Use ▶ to open the set in Live mode at that song."}
 				</p>
 			)}
 		</div>

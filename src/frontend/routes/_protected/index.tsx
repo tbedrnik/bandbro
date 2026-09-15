@@ -29,8 +29,10 @@ function HomePage() {
 	const { bands, personal } = useScopes();
 	const online = useOnline();
 	const offlineSetlists = useOfflineSetlists();
-	const { data: songs } = useQuery(api.songs.get.queryOptions({}));
-	const recent = songs?.slice(0, 6) ?? [];
+	// Six rows are rendered, so six are asked for — this used to pull the whole
+	// readable library down to slice the front off it (§D27).
+	const { data: songs } = useQuery(api.songs.get.queryOptions({ limit: 6 }));
+	const recent = songs ?? [];
 	const [bandDialogOpen, setBandDialogOpen] = useState(false);
 	const [creatingBand, setCreatingBand] = useState(false);
 

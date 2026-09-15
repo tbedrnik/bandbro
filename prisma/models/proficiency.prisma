@@ -1,0 +1,37 @@
+// Who can play what (CLAUDE.md §D26).
+//
+// The reason three lineups of the same friends have three repertoires is not that they
+// keep three libraries — it is that different people can play different things. With one
+// shared library (§D25), this is what lets the setlist builder answer "what can tonight's
+// lineup actually play?".
+//
+// A missing row means UNKNOWN: nobody has been asked. That is deliberately not the same
+// as "can't play" — a library of 200 songs would otherwise read as entirely unplayable on
+// day one, and the one useful signal (someone IS learning this) would be invisible inside
+// the noise. Setting a mark back to UNKNOWN deletes the row.
+//
+// Attached to the Song, not the Chart: "I can play Wagon Wheel" is a fact about the song,
+// and marks would otherwise fragment across a band's arrangements of it.
+model SongProficiency {
+	userId String
+	user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+	songId String
+	song   Song   @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+	level ProficiencyLevel @default(UNKNOWN)
+
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+
+	@@id([userId, songId])
+	@@index([songId])
+	@@map("song_proficiency")
+}
+
+enum ProficiencyLevel {
+	UNKNOWN  // not asked / no answer — the absence of a row
+	LEARNING // working on it
+	FOLLOW   // can busk it with the chart in front of me
+	PLAY     // solid
+}

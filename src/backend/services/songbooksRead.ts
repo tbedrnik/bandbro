@@ -17,6 +17,16 @@ export async function songbooksRead({
 		where: { id, organization: { members: { some: { userId } } } },
 		include: {
 			organization: { select: { id: true, name: true, slug: true } },
+			lineup: {
+				select: {
+					id: true,
+					name: true,
+					isDefault: true,
+					members: {
+						select: { userId: true, user: { select: { name: true } } },
+					},
+				},
+			},
 			songs: {
 				orderBy: { order: "asc" },
 				include: {

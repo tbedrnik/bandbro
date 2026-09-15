@@ -1,13 +1,17 @@
-import { api } from "@frontend/api";
+import { api, apiClient } from "@frontend/api";
 import { auth } from "@frontend/auth";
+import { ErrorNote } from "@frontend/components/ErrorNote";
 import { InviteLinkPanel } from "@frontend/components/InviteLinkPanel";
+import { NamePromptDialog } from "@frontend/components/NamePromptDialog";
 import { RoleBadge, roleLabel } from "@frontend/components/RoleBadge";
 import { Button } from "@frontend/components/ui/button";
 import { useUser } from "@frontend/contexts/UserContext";
+import { useLineups } from "@frontend/lib/lineups";
 import { useOnline } from "@frontend/lib/offline";
 import { useScopes } from "@frontend/lib/scopes";
 import { cn } from "@frontend/lib/utils";
-import { IconLink, IconQrcode } from "@tabler/icons-react";
+import { formatDate } from "@shared/datetime";
+import { IconLink, IconPlus, IconQrcode } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -18,6 +22,7 @@ export const Route = createFileRoute("/_protected/bands")({
 
 type Member = {
 	id: string;
+	userId: string;
 	role: string;
 	user: { name: string; email: string };
 };
@@ -124,6 +129,12 @@ function BandsPage() {
 									ⓘ Only admins can change roles or invite members.
 								</p>
 							)}
+							{amAdmin && (
+								<p className="mt-2 text-sm text-muted-foreground">
+									ⓘ You can change anyone's role but your own — that's what
+									stops a band's last admin from locking everyone out.
+								</p>
+							)}
 
 							<div className="mt-4 overflow-hidden rounded-xl border border-border">
 								{members.map((m) => (
@@ -147,10 +158,24 @@ function BandsPage() {
 												{m.user.email}
 											</div>
 										</div>
-										<RoleBadge role={roleLabel(m.role)} />
+										{amAdmin && m.user.email !== me.email ? (
+											<MemberRoleSelect
+												organizationId={selected}
+												memberId={m.id}
+												role={m.role}
+											/>
+										) : (
+											<RoleBadge role={roleLabel(m.role)} />
+										)}
 									</div>
 								))}
 							</div>
+
+							<LineupsSection
+								organizationId={selected}
+								members={members}
+								canWrite={amAdmin || myRole === "writer"}
+							/>
 
 							{amAdmin && <InvitesSection organizationId={selected} />}
 						</>
@@ -274,6 +299,12 @@ function InvitesSection({ organizationId }: { organizationId: string }) {
 					</Button>
 				</div>
 
+				<ErrorNote
+					error={create.error}
+					when={create.isError}
+					subject="The invite link"
+				/>
+
 				{fresh && (
 					<div className="mt-4">
 						<InviteLinkPanel code={fresh} />
@@ -328,14 +359,6 @@ const STATUS_LABEL: Record<Invite["status"], string> = {
 	expired: "Expired",
 	exhausted: "Used up",
 };
-
-function formatDate(iso: string): string {
-	return new Date(iso).toLocaleDateString(undefined, {
-		day: "numeric",
-		month: "short",
-		year: "numeric",
-	});
-}
 
 function InviteRow({
 	invite,
@@ -416,6 +439,12 @@ function InviteRow({
 				</div>
 			)}
 
+			<ErrorNote
+				error={revoke.error}
+				when={revoke.isError}
+				subject="The revoke"
+			/>
+
 			{showQr && (
 				<div className="mt-3">
 					<InviteLinkPanel code={invite.code} />
@@ -463,6 +492,301 @@ function EmailInviteRow({
 			>
 				Cancel
 			</Button>
+			<ErrorNote
+				error={cancel.error}
+				when={cancel.isError}
+				subject="The cancel"
+				className="w-full"
+			/>
+		</div>
+	);
+}
+
+const ROLE_OPTIONS = [
+	{ value: "admin", label: "Admin" },
+	{ value: "writer", label: "Writer" },
+	{ value: "reader", label: "Reader" },
+];
+
+/**
+ * Change a bandmate's role (§D6). Admin-only, and never your own row: demoting the last
+ * admin would leave a band nobody can manage, and the cheapest guard against that is
+ * simply not offering it. Another admin can always change you.
+ */
+function MemberRoleSelect({
+	organizationId,
+	memberId,
+	role,
+}: {
+	organizationId: string;
+	memberId: string;
+	role: string;
+}) {
+	const queryClient = useQueryClient();
+	const [error, setError] = useState(false);
+	const update = useMutation({
+		mutationFn: async (next: string) => {
+			const res = await auth.organization.updateMemberRole({
+				organizationId,
+				memberId,
+				// better-auth types this against its own default role union; ours are the
+				// §D6 roles configured on the same access-control instance.
+				role: next as "admin",
+			});
+			if (res.error) throw new Error(res.error.message ?? "Update failed");
+			return res.data;
+		},
+		onSuccess: () => {
+			setError(false);
+			queryClient.invalidateQueries({ queryKey: ["org", organizationId] });
+		},
+		onError: () => setError(true),
+	});
+
+	// better-auth's own `owner`/`member` defaults predate the §D6 roles and still sit on
+	// older rows; show them as their nearest equivalent rather than an empty select.
+	const value =
+		role === "owner" ? "admin" : role === "member" ? "reader" : role;
+
+	return (
+		<select
+			className={cn(
+				selectClass,
+				"h-8 text-xs",
+				error && "border-destructive text-destructive",
+			)}
+			value={value}
+			disabled={update.isPending}
+			aria-label="Member role"
+			onChange={(e) => update.mutate(e.target.value)}
+		>
+			{ROLE_OPTIONS.map((o) => (
+				<option key={o.value} value={o.value}>
+					{error ? "Couldn't save" : o.label}
+				</option>
+			))}
+		</select>
+	);
+}
+
+/**
+ * Lineups — the names this band performs under (CLAUDE.md §D25).
+ *
+ * Hidden entirely until the band has a second one: a band that plays under one name
+ * should never have to learn the concept. The prompt to add one is the only thing shown
+ * until then, and it explains itself.
+ */
+function LineupsSection({
+	organizationId,
+	members,
+	canWrite,
+}: {
+	organizationId: string;
+	members: Member[];
+	canWrite: boolean;
+}) {
+	const queryClient = useQueryClient();
+	const { data: lineups, isPending } = useLineups(organizationId);
+	const [adding, setAdding] = useState(false);
+	const [editing, setEditing] = useState<string | null>(null);
+
+	const invalidate = () => {
+		queryClient.invalidateQueries(api.lineups.get.queryFilter());
+		queryClient.invalidateQueries(api.songbooks.get.queryFilter());
+	};
+
+	const create = useMutation({
+		...api.lineups.post.mutationOptions(),
+		onSuccess: () => {
+			invalidate();
+			setAdding(false);
+		},
+	});
+	// The id is a mutation *variable*, not baked into the options at render time: the
+	// proxy binds `{id}` when the hook is built, so a row-agnostic handler would delete
+	// whichever lineup happened to be open in the players panel.
+	const remove = useMutation({
+		mutationFn: async (id: string) => {
+			const { error } = await apiClient.api.lineups({ id }).delete();
+			if (error) throw new Error(String(error.status));
+		},
+		onSuccess: invalidate,
+	});
+
+	const list = lineups ?? [];
+
+	return (
+		<section className="mt-8">
+			<div className="flex items-center justify-between">
+				<h3 className="font-display text-lg font-semibold">Lineups</h3>
+				{canWrite && (
+					<Button variant="outline" onClick={() => setAdding(true)}>
+						<IconPlus className="size-4" /> Add lineup
+					</Button>
+				)}
+			</div>
+			<p className="mt-1 text-sm text-muted-foreground">
+				The names this band performs under. Same songs, separate setlists — so a
+				duo and the full band can each keep their own sets without copying
+				charts.
+			</p>
+
+			{isPending ? (
+				<p className="mt-4 text-sm text-muted-foreground">Loading…</p>
+			) : (
+				<div className="mt-4 overflow-hidden rounded-xl border border-border">
+					{list.map((lineup) => (
+						<div
+							key={lineup.id}
+							className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3 last:border-0"
+						>
+							<div className="flex-1">
+								<div className="font-display text-sm font-medium">
+									{lineup.name}
+									{lineup.isDefault && (
+										<span className="ml-2 font-mono text-[10px] text-muted-foreground uppercase">
+											everyone
+										</span>
+									)}
+								</div>
+								<div className="text-xs text-muted-foreground">
+									{lineup.isDefault
+										? `All ${members.length} members`
+										: lineup.members.length
+											? lineup.members.map((m) => m.user.name).join(", ")
+											: "No players picked yet"}
+									{" · "}
+									{lineup._count.songbooks} setlist
+									{lineup._count.songbooks === 1 ? "" : "s"}
+								</div>
+							</div>
+							{canWrite && !lineup.isDefault && (
+								<div className="flex items-center gap-1">
+									<Button
+										variant="ghost"
+										className="h-8 px-2 text-xs"
+										onClick={() =>
+											setEditing(editing === lineup.id ? null : lineup.id)
+										}
+									>
+										Players
+									</Button>
+									<Button
+										variant="ghost"
+										className="h-8 px-2 text-xs text-destructive"
+										onClick={() => remove.mutate(lineup.id)}
+									>
+										Delete
+									</Button>
+								</div>
+							)}
+							{editing === lineup.id && (
+								<LineupMembers
+									lineupId={lineup.id}
+									members={members}
+									selected={lineup.members.map((m) => m.userId)}
+									onDone={() => {
+										invalidate();
+										setEditing(null);
+									}}
+								/>
+							)}
+						</div>
+					))}
+				</div>
+			)}
+
+			{remove.isError && (
+				<p className="mt-2 text-sm text-destructive">
+					That lineup still has setlists — move or delete them first.
+				</p>
+			)}
+
+			<NamePromptDialog
+				open={adding}
+				onOpenChange={setAdding}
+				title="New lineup"
+				description="A name this band performs under — “Duo Tomi Kohy”, say. Pick the players next."
+				label="Lineup name"
+				placeholder="Duo Tomi Kohy"
+				submitLabel="Add lineup"
+				pending={create.isPending}
+				onSubmit={(name) => create.mutate({ name, organizationId })}
+			>
+				<ErrorNote
+					error={create.error}
+					when={create.isError}
+					subject="The lineup"
+				/>
+			</NamePromptDialog>
+		</section>
+	);
+}
+
+/** Tick which bandmates play in this lineup. */
+function LineupMembers({
+	lineupId,
+	members,
+	selected,
+	onDone,
+}: {
+	lineupId: string;
+	members: Member[];
+	selected: string[];
+	onDone: () => void;
+}) {
+	const [picked, setPicked] = useState<string[]>(selected);
+	const save = useMutation({
+		...api.lineups({ id: lineupId }).put.mutationOptions(),
+		onSuccess: onDone,
+	});
+
+	return (
+		<div className="w-full border-t border-border pt-3">
+			<div className="flex flex-wrap gap-2">
+				{members.map((m) => {
+					const on = picked.includes(m.userId);
+					return (
+						<button
+							key={m.id}
+							type="button"
+							onClick={() =>
+								setPicked(
+									on
+										? picked.filter((id) => id !== m.userId)
+										: [...picked, m.userId],
+								)
+							}
+							className={cn(
+								"rounded-lg px-3 py-1.5 font-display text-xs transition-colors",
+								on
+									? "bg-foreground text-background"
+									: "bg-card text-muted-foreground hover:bg-muted",
+							)}
+						>
+							{m.user.name}
+						</button>
+					);
+				})}
+			</div>
+			<div className="mt-3 flex justify-end gap-2">
+				<Button variant="ghost" className="h-8 text-xs" onClick={onDone}>
+					Cancel
+				</Button>
+				<Button
+					className="h-8 text-xs"
+					disabled={save.isPending}
+					onClick={() => save.mutate({ memberIds: picked })}
+				>
+					{save.isPending ? "Saving…" : "Save players"}
+				</Button>
+			</div>
+			<ErrorNote
+				error={save.error}
+				when={save.isError}
+				subject="The lineup"
+				className="text-right"
+			/>
 		</div>
 	);
 }

@@ -25,49 +25,77 @@ export async function songsUpdate({
 	userId: string;
 	payload: SongUpdatePayload;
 }) {
+	// Every chart of this song, not just the oldest: the chart being written is resolved
+	// from this list, which is what keeps `payload.chart.id` from naming somebody else's.
 	const song = await prisma.song.findUnique({
 		where: { slug },
-		include: { charts: { orderBy: { createdAt: "asc" }, take: 1 } },
+		include: { charts: { orderBy: { createdAt: "asc" } } },
 	});
 	if (!song) throw new HttpError(404, "Song not found.");
 	await requireWrite(userId, song.organizationId);
 
-	if (payload.chart) {
-		const meta = parseChordproMeta(payload.chart.content);
-		const chartId = payload.chart.id ?? song.charts[0]?.id;
-		if (chartId) {
-			await prisma.chart.update({
-				where: { id: chartId },
-				data: {
-					content: payload.chart.content,
-					description: payload.chart.description,
-					key: meta.key,
-					capo: meta.capo,
-					tempo: meta.tempo,
-					timeSignature: meta.timeSignature,
-				},
-			});
+	const meta = payload.chart
+		? parseChordproMeta(payload.chart.content)
+		: undefined;
+
+	if (payload.chart && meta) {
+		// Resolve the chart *through the song*. `requireWrite` above authorizes the song's
+		// band, so an id looked up any other way would be unauthorized: `chart.update` on a
+		// caller-supplied id let anyone with a personal band (i.e. everyone — see
+		// auth.ts's signup hook) overwrite any chart whose id they could read, and
+		// `GET /songs` hands every Curated chart id to every signed-in user. Curated charts
+		// are *referenced* rather than copied by setlists in every band precisely because
+		// they are read-only and "cannot drift" (see `foreignChartIds`), so that was a
+		// cross-band write dressed up as an edit of your own song.
+		const chart = payload.chart.id
+			? song.charts.find((c) => c.id === payload.chart?.id)
+			: song.charts[0];
+		if (!chart) {
+			throw new HttpError(404, "That arrangement isn't part of this song.");
 		}
+		await prisma.chart.update({
+			where: { id: chart.id },
+			data: {
+				content: payload.chart.content,
+				description: payload.chart.description,
+				key: meta.key,
+				capo: meta.capo,
+				tempo: meta.tempo,
+				timeSignature: meta.timeSignature,
+			},
+		});
 	}
 
-	if (payload.tags) {
-		const tagIds = await findOrCreateTags(payload.tags);
+	// Tags, credits and year all fall back to the ChordPro directives, the same way
+	// `songsCreate` derives them (§D4: the content is the source of truth). The editor
+	// sends neither `credits` nor `year`, so without the fallback adding `{artist: …}` or
+	// `{year: …}` to an existing song was parsed, denormalized nowhere, and silently lost.
+	const tags = payload.tags ?? meta?.tags;
+	if (tags) {
+		const tagIds = await findOrCreateTags(tags);
 		await prisma.songTag.deleteMany({ where: { songId: song.id } });
 		await prisma.songTag.createMany({
 			data: tagIds.map((tagId) => ({ songId: song.id, tagId })),
 		});
 	}
 
-	if (payload.credits) {
-		await prisma.credit.deleteMany({ where: { songId: song.id } });
-		for (const c of payload.credits) {
-			await prisma.credit.create({
-				data: {
-					songId: song.id,
-					artistId: await findOrCreateArtist(c.artist.name),
-					role: c.role ?? CreditRole.ARTIST,
-				},
+	const credits =
+		payload.credits ??
+		(meta?.artist
+			? [{ artist: { name: meta.artist }, role: CreditRole.ARTIST }]
+			: undefined);
+	if (credits) {
+		const creditData = [];
+		for (const c of credits) {
+			creditData.push({
+				songId: song.id,
+				artistId: await findOrCreateArtist(c.artist.name),
+				role: c.role ?? CreditRole.ARTIST,
 			});
+		}
+		await prisma.credit.deleteMany({ where: { songId: song.id } });
+		for (const data of creditData) {
+			await prisma.credit.create({ data });
 		}
 	}
 
@@ -75,7 +103,8 @@ export async function songsUpdate({
 		where: { id: song.id },
 		data: {
 			name: payload.name ?? undefined,
-			year: payload.year === undefined ? undefined : payload.year,
+			year:
+				payload.year === undefined ? (meta?.year ?? undefined) : payload.year,
 		},
 		include: { charts: true, tags: { include: { tag: true } } },
 	});

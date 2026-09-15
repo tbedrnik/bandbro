@@ -196,6 +196,7 @@ export type OrganizationWhereInput = {
   charts?: Prisma.ChartListRelationFilter
   songbooks?: Prisma.SongbookListRelationFilter
   bandInvites?: Prisma.BandInviteListRelationFilter
+  lineups?: Prisma.LineupListRelationFilter
 }
 
 export type OrganizationOrderByWithRelationInput = {
@@ -211,6 +212,7 @@ export type OrganizationOrderByWithRelationInput = {
   charts?: Prisma.ChartOrderByRelationAggregateInput
   songbooks?: Prisma.SongbookOrderByRelationAggregateInput
   bandInvites?: Prisma.BandInviteOrderByRelationAggregateInput
+  lineups?: Prisma.LineupOrderByRelationAggregateInput
 }
 
 export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
@@ -229,6 +231,7 @@ export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
   charts?: Prisma.ChartListRelationFilter
   songbooks?: Prisma.SongbookListRelationFilter
   bandInvites?: Prisma.BandInviteListRelationFilter
+  lineups?: Prisma.LineupListRelationFilter
 }, "id" | "slug">
 
 export type OrganizationOrderByWithAggregationInput = {
@@ -268,6 +271,7 @@ export type OrganizationCreateInput = {
   charts?: Prisma.ChartCreateNestedManyWithoutOrganizationInput
   songbooks?: Prisma.SongbookCreateNestedManyWithoutOrganizationInput
   bandInvites?: Prisma.BandInviteCreateNestedManyWithoutOrganizationInput
+  lineups?: Prisma.LineupCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateInput = {
@@ -283,6 +287,7 @@ export type OrganizationUncheckedCreateInput = {
   charts?: Prisma.ChartUncheckedCreateNestedManyWithoutOrganizationInput
   songbooks?: Prisma.SongbookUncheckedCreateNestedManyWithoutOrganizationInput
   bandInvites?: Prisma.BandInviteUncheckedCreateNestedManyWithoutOrganizationInput
+  lineups?: Prisma.LineupUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUpdateInput = {
@@ -298,6 +303,7 @@ export type OrganizationUpdateInput = {
   charts?: Prisma.ChartUpdateManyWithoutOrganizationNestedInput
   songbooks?: Prisma.SongbookUpdateManyWithoutOrganizationNestedInput
   bandInvites?: Prisma.BandInviteUpdateManyWithoutOrganizationNestedInput
+  lineups?: Prisma.LineupUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateInput = {
@@ -313,6 +319,7 @@ export type OrganizationUncheckedUpdateInput = {
   charts?: Prisma.ChartUncheckedUpdateManyWithoutOrganizationNestedInput
   songbooks?: Prisma.SongbookUncheckedUpdateManyWithoutOrganizationNestedInput
   bandInvites?: Prisma.BandInviteUncheckedUpdateManyWithoutOrganizationNestedInput
+  lineups?: Prisma.LineupUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateManyInput = {
@@ -421,6 +428,20 @@ export type OrganizationUpdateOneRequiredWithoutBandInvitesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.OrganizationUpdateToOneWithWhereWithoutBandInvitesInput, Prisma.OrganizationUpdateWithoutBandInvitesInput>, Prisma.OrganizationUncheckedUpdateWithoutBandInvitesInput>
 }
 
+export type OrganizationCreateNestedOneWithoutLineupsInput = {
+  create?: Prisma.XOR<Prisma.OrganizationCreateWithoutLineupsInput, Prisma.OrganizationUncheckedCreateWithoutLineupsInput>
+  connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutLineupsInput
+  connect?: Prisma.OrganizationWhereUniqueInput
+}
+
+export type OrganizationUpdateOneRequiredWithoutLineupsNestedInput = {
+  create?: Prisma.XOR<Prisma.OrganizationCreateWithoutLineupsInput, Prisma.OrganizationUncheckedCreateWithoutLineupsInput>
+  connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutLineupsInput
+  upsert?: Prisma.OrganizationUpsertWithoutLineupsInput
+  connect?: Prisma.OrganizationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrganizationUpdateToOneWithWhereWithoutLineupsInput, Prisma.OrganizationUpdateWithoutLineupsInput>, Prisma.OrganizationUncheckedUpdateWithoutLineupsInput>
+}
+
 export type OrganizationCreateNestedOneWithoutSongsInput = {
   create?: Prisma.XOR<Prisma.OrganizationCreateWithoutSongsInput, Prisma.OrganizationUncheckedCreateWithoutSongsInput>
   connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutSongsInput
@@ -479,6 +500,7 @@ export type OrganizationCreateWithoutMembersInput = {
   charts?: Prisma.ChartCreateNestedManyWithoutOrganizationInput
   songbooks?: Prisma.SongbookCreateNestedManyWithoutOrganizationInput
   bandInvites?: Prisma.BandInviteCreateNestedManyWithoutOrganizationInput
+  lineups?: Prisma.LineupCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutMembersInput = {
@@ -493,6 +515,7 @@ export type OrganizationUncheckedCreateWithoutMembersInput = {
   charts?: Prisma.ChartUncheckedCreateNestedManyWithoutOrganizationInput
   songbooks?: Prisma.SongbookUncheckedCreateNestedManyWithoutOrganizationInput
   bandInvites?: Prisma.BandInviteUncheckedCreateNestedManyWithoutOrganizationInput
+  lineups?: Prisma.LineupUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutMembersInput = {
@@ -523,6 +546,7 @@ export type OrganizationUpdateWithoutMembersInput = {
   charts?: Prisma.ChartUpdateManyWithoutOrganizationNestedInput
   songbooks?: Prisma.SongbookUpdateManyWithoutOrganizationNestedInput
   bandInvites?: Prisma.BandInviteUpdateManyWithoutOrganizationNestedInput
+  lineups?: Prisma.LineupUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutMembersInput = {
@@ -537,6 +561,7 @@ export type OrganizationUncheckedUpdateWithoutMembersInput = {
   charts?: Prisma.ChartUncheckedUpdateManyWithoutOrganizationNestedInput
   songbooks?: Prisma.SongbookUncheckedUpdateManyWithoutOrganizationNestedInput
   bandInvites?: Prisma.BandInviteUncheckedUpdateManyWithoutOrganizationNestedInput
+  lineups?: Prisma.LineupUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutInvitationsInput = {
@@ -551,6 +576,7 @@ export type OrganizationCreateWithoutInvitationsInput = {
   charts?: Prisma.ChartCreateNestedManyWithoutOrganizationInput
   songbooks?: Prisma.SongbookCreateNestedManyWithoutOrganizationInput
   bandInvites?: Prisma.BandInviteCreateNestedManyWithoutOrganizationInput
+  lineups?: Prisma.LineupCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutInvitationsInput = {
@@ -565,6 +591,7 @@ export type OrganizationUncheckedCreateWithoutInvitationsInput = {
   charts?: Prisma.ChartUncheckedCreateNestedManyWithoutOrganizationInput
   songbooks?: Prisma.SongbookUncheckedCreateNestedManyWithoutOrganizationInput
   bandInvites?: Prisma.BandInviteUncheckedCreateNestedManyWithoutOrganizationInput
+  lineups?: Prisma.LineupUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutInvitationsInput = {
@@ -595,6 +622,7 @@ export type OrganizationUpdateWithoutInvitationsInput = {
   charts?: Prisma.ChartUpdateManyWithoutOrganizationNestedInput
   songbooks?: Prisma.SongbookUpdateManyWithoutOrganizationNestedInput
   bandInvites?: Prisma.BandInviteUpdateManyWithoutOrganizationNestedInput
+  lineups?: Prisma.LineupUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutInvitationsInput = {
@@ -609,6 +637,7 @@ export type OrganizationUncheckedUpdateWithoutInvitationsInput = {
   charts?: Prisma.ChartUncheckedUpdateManyWithoutOrganizationNestedInput
   songbooks?: Prisma.SongbookUncheckedUpdateManyWithoutOrganizationNestedInput
   bandInvites?: Prisma.BandInviteUncheckedUpdateManyWithoutOrganizationNestedInput
+  lineups?: Prisma.LineupUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutBandInvitesInput = {
@@ -623,6 +652,7 @@ export type OrganizationCreateWithoutBandInvitesInput = {
   songs?: Prisma.SongCreateNestedManyWithoutOrganizationInput
   charts?: Prisma.ChartCreateNestedManyWithoutOrganizationInput
   songbooks?: Prisma.SongbookCreateNestedManyWithoutOrganizationInput
+  lineups?: Prisma.LineupCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutBandInvitesInput = {
@@ -637,6 +667,7 @@ export type OrganizationUncheckedCreateWithoutBandInvitesInput = {
   songs?: Prisma.SongUncheckedCreateNestedManyWithoutOrganizationInput
   charts?: Prisma.ChartUncheckedCreateNestedManyWithoutOrganizationInput
   songbooks?: Prisma.SongbookUncheckedCreateNestedManyWithoutOrganizationInput
+  lineups?: Prisma.LineupUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutBandInvitesInput = {
@@ -667,6 +698,7 @@ export type OrganizationUpdateWithoutBandInvitesInput = {
   songs?: Prisma.SongUpdateManyWithoutOrganizationNestedInput
   charts?: Prisma.ChartUpdateManyWithoutOrganizationNestedInput
   songbooks?: Prisma.SongbookUpdateManyWithoutOrganizationNestedInput
+  lineups?: Prisma.LineupUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutBandInvitesInput = {
@@ -681,6 +713,83 @@ export type OrganizationUncheckedUpdateWithoutBandInvitesInput = {
   songs?: Prisma.SongUncheckedUpdateManyWithoutOrganizationNestedInput
   charts?: Prisma.ChartUncheckedUpdateManyWithoutOrganizationNestedInput
   songbooks?: Prisma.SongbookUncheckedUpdateManyWithoutOrganizationNestedInput
+  lineups?: Prisma.LineupUncheckedUpdateManyWithoutOrganizationNestedInput
+}
+
+export type OrganizationCreateWithoutLineupsInput = {
+  id: string
+  name: string
+  slug: string
+  logo?: string | null
+  createdAt: Date | string
+  metadata?: string | null
+  members?: Prisma.MemberCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput
+  songs?: Prisma.SongCreateNestedManyWithoutOrganizationInput
+  charts?: Prisma.ChartCreateNestedManyWithoutOrganizationInput
+  songbooks?: Prisma.SongbookCreateNestedManyWithoutOrganizationInput
+  bandInvites?: Prisma.BandInviteCreateNestedManyWithoutOrganizationInput
+}
+
+export type OrganizationUncheckedCreateWithoutLineupsInput = {
+  id: string
+  name: string
+  slug: string
+  logo?: string | null
+  createdAt: Date | string
+  metadata?: string | null
+  members?: Prisma.MemberUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput
+  songs?: Prisma.SongUncheckedCreateNestedManyWithoutOrganizationInput
+  charts?: Prisma.ChartUncheckedCreateNestedManyWithoutOrganizationInput
+  songbooks?: Prisma.SongbookUncheckedCreateNestedManyWithoutOrganizationInput
+  bandInvites?: Prisma.BandInviteUncheckedCreateNestedManyWithoutOrganizationInput
+}
+
+export type OrganizationCreateOrConnectWithoutLineupsInput = {
+  where: Prisma.OrganizationWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrganizationCreateWithoutLineupsInput, Prisma.OrganizationUncheckedCreateWithoutLineupsInput>
+}
+
+export type OrganizationUpsertWithoutLineupsInput = {
+  update: Prisma.XOR<Prisma.OrganizationUpdateWithoutLineupsInput, Prisma.OrganizationUncheckedUpdateWithoutLineupsInput>
+  create: Prisma.XOR<Prisma.OrganizationCreateWithoutLineupsInput, Prisma.OrganizationUncheckedCreateWithoutLineupsInput>
+  where?: Prisma.OrganizationWhereInput
+}
+
+export type OrganizationUpdateToOneWithWhereWithoutLineupsInput = {
+  where?: Prisma.OrganizationWhereInput
+  data: Prisma.XOR<Prisma.OrganizationUpdateWithoutLineupsInput, Prisma.OrganizationUncheckedUpdateWithoutLineupsInput>
+}
+
+export type OrganizationUpdateWithoutLineupsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  members?: Prisma.MemberUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput
+  songs?: Prisma.SongUpdateManyWithoutOrganizationNestedInput
+  charts?: Prisma.ChartUpdateManyWithoutOrganizationNestedInput
+  songbooks?: Prisma.SongbookUpdateManyWithoutOrganizationNestedInput
+  bandInvites?: Prisma.BandInviteUpdateManyWithoutOrganizationNestedInput
+}
+
+export type OrganizationUncheckedUpdateWithoutLineupsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  members?: Prisma.MemberUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput
+  songs?: Prisma.SongUncheckedUpdateManyWithoutOrganizationNestedInput
+  charts?: Prisma.ChartUncheckedUpdateManyWithoutOrganizationNestedInput
+  songbooks?: Prisma.SongbookUncheckedUpdateManyWithoutOrganizationNestedInput
+  bandInvites?: Prisma.BandInviteUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutSongsInput = {
@@ -695,6 +804,7 @@ export type OrganizationCreateWithoutSongsInput = {
   charts?: Prisma.ChartCreateNestedManyWithoutOrganizationInput
   songbooks?: Prisma.SongbookCreateNestedManyWithoutOrganizationInput
   bandInvites?: Prisma.BandInviteCreateNestedManyWithoutOrganizationInput
+  lineups?: Prisma.LineupCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutSongsInput = {
@@ -709,6 +819,7 @@ export type OrganizationUncheckedCreateWithoutSongsInput = {
   charts?: Prisma.ChartUncheckedCreateNestedManyWithoutOrganizationInput
   songbooks?: Prisma.SongbookUncheckedCreateNestedManyWithoutOrganizationInput
   bandInvites?: Prisma.BandInviteUncheckedCreateNestedManyWithoutOrganizationInput
+  lineups?: Prisma.LineupUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutSongsInput = {
@@ -739,6 +850,7 @@ export type OrganizationUpdateWithoutSongsInput = {
   charts?: Prisma.ChartUpdateManyWithoutOrganizationNestedInput
   songbooks?: Prisma.SongbookUpdateManyWithoutOrganizationNestedInput
   bandInvites?: Prisma.BandInviteUpdateManyWithoutOrganizationNestedInput
+  lineups?: Prisma.LineupUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutSongsInput = {
@@ -753,6 +865,7 @@ export type OrganizationUncheckedUpdateWithoutSongsInput = {
   charts?: Prisma.ChartUncheckedUpdateManyWithoutOrganizationNestedInput
   songbooks?: Prisma.SongbookUncheckedUpdateManyWithoutOrganizationNestedInput
   bandInvites?: Prisma.BandInviteUncheckedUpdateManyWithoutOrganizationNestedInput
+  lineups?: Prisma.LineupUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutChartsInput = {
@@ -767,6 +880,7 @@ export type OrganizationCreateWithoutChartsInput = {
   songs?: Prisma.SongCreateNestedManyWithoutOrganizationInput
   songbooks?: Prisma.SongbookCreateNestedManyWithoutOrganizationInput
   bandInvites?: Prisma.BandInviteCreateNestedManyWithoutOrganizationInput
+  lineups?: Prisma.LineupCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutChartsInput = {
@@ -781,6 +895,7 @@ export type OrganizationUncheckedCreateWithoutChartsInput = {
   songs?: Prisma.SongUncheckedCreateNestedManyWithoutOrganizationInput
   songbooks?: Prisma.SongbookUncheckedCreateNestedManyWithoutOrganizationInput
   bandInvites?: Prisma.BandInviteUncheckedCreateNestedManyWithoutOrganizationInput
+  lineups?: Prisma.LineupUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutChartsInput = {
@@ -811,6 +926,7 @@ export type OrganizationUpdateWithoutChartsInput = {
   songs?: Prisma.SongUpdateManyWithoutOrganizationNestedInput
   songbooks?: Prisma.SongbookUpdateManyWithoutOrganizationNestedInput
   bandInvites?: Prisma.BandInviteUpdateManyWithoutOrganizationNestedInput
+  lineups?: Prisma.LineupUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutChartsInput = {
@@ -825,6 +941,7 @@ export type OrganizationUncheckedUpdateWithoutChartsInput = {
   songs?: Prisma.SongUncheckedUpdateManyWithoutOrganizationNestedInput
   songbooks?: Prisma.SongbookUncheckedUpdateManyWithoutOrganizationNestedInput
   bandInvites?: Prisma.BandInviteUncheckedUpdateManyWithoutOrganizationNestedInput
+  lineups?: Prisma.LineupUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutSongbooksInput = {
@@ -839,6 +956,7 @@ export type OrganizationCreateWithoutSongbooksInput = {
   songs?: Prisma.SongCreateNestedManyWithoutOrganizationInput
   charts?: Prisma.ChartCreateNestedManyWithoutOrganizationInput
   bandInvites?: Prisma.BandInviteCreateNestedManyWithoutOrganizationInput
+  lineups?: Prisma.LineupCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutSongbooksInput = {
@@ -853,6 +971,7 @@ export type OrganizationUncheckedCreateWithoutSongbooksInput = {
   songs?: Prisma.SongUncheckedCreateNestedManyWithoutOrganizationInput
   charts?: Prisma.ChartUncheckedCreateNestedManyWithoutOrganizationInput
   bandInvites?: Prisma.BandInviteUncheckedCreateNestedManyWithoutOrganizationInput
+  lineups?: Prisma.LineupUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutSongbooksInput = {
@@ -883,6 +1002,7 @@ export type OrganizationUpdateWithoutSongbooksInput = {
   songs?: Prisma.SongUpdateManyWithoutOrganizationNestedInput
   charts?: Prisma.ChartUpdateManyWithoutOrganizationNestedInput
   bandInvites?: Prisma.BandInviteUpdateManyWithoutOrganizationNestedInput
+  lineups?: Prisma.LineupUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutSongbooksInput = {
@@ -897,6 +1017,7 @@ export type OrganizationUncheckedUpdateWithoutSongbooksInput = {
   songs?: Prisma.SongUncheckedUpdateManyWithoutOrganizationNestedInput
   charts?: Prisma.ChartUncheckedUpdateManyWithoutOrganizationNestedInput
   bandInvites?: Prisma.BandInviteUncheckedUpdateManyWithoutOrganizationNestedInput
+  lineups?: Prisma.LineupUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 
@@ -911,6 +1032,7 @@ export type OrganizationCountOutputType = {
   charts: number
   songbooks: number
   bandInvites: number
+  lineups: number
 }
 
 export type OrganizationCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -920,6 +1042,7 @@ export type OrganizationCountOutputTypeSelect<ExtArgs extends runtime.Types.Exte
   charts?: boolean | OrganizationCountOutputTypeCountChartsArgs
   songbooks?: boolean | OrganizationCountOutputTypeCountSongbooksArgs
   bandInvites?: boolean | OrganizationCountOutputTypeCountBandInvitesArgs
+  lineups?: boolean | OrganizationCountOutputTypeCountLineupsArgs
 }
 
 /**
@@ -974,6 +1097,13 @@ export type OrganizationCountOutputTypeCountBandInvitesArgs<ExtArgs extends runt
   where?: Prisma.BandInviteWhereInput
 }
 
+/**
+ * OrganizationCountOutputType without action
+ */
+export type OrganizationCountOutputTypeCountLineupsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LineupWhereInput
+}
+
 
 export type OrganizationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -988,6 +1118,7 @@ export type OrganizationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   charts?: boolean | Prisma.Organization$chartsArgs<ExtArgs>
   songbooks?: boolean | Prisma.Organization$songbooksArgs<ExtArgs>
   bandInvites?: boolean | Prisma.Organization$bandInvitesArgs<ExtArgs>
+  lineups?: boolean | Prisma.Organization$lineupsArgs<ExtArgs>
   _count?: boolean | Prisma.OrganizationCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["organization"]>
 
@@ -1026,6 +1157,7 @@ export type OrganizationInclude<ExtArgs extends runtime.Types.Extensions.Interna
   charts?: boolean | Prisma.Organization$chartsArgs<ExtArgs>
   songbooks?: boolean | Prisma.Organization$songbooksArgs<ExtArgs>
   bandInvites?: boolean | Prisma.Organization$bandInvitesArgs<ExtArgs>
+  lineups?: boolean | Prisma.Organization$lineupsArgs<ExtArgs>
   _count?: boolean | Prisma.OrganizationCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OrganizationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1040,6 +1172,7 @@ export type $OrganizationPayload<ExtArgs extends runtime.Types.Extensions.Intern
     charts: Prisma.$ChartPayload<ExtArgs>[]
     songbooks: Prisma.$SongbookPayload<ExtArgs>[]
     bandInvites: Prisma.$BandInvitePayload<ExtArgs>[]
+    lineups: Prisma.$LineupPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1448,6 +1581,7 @@ export interface Prisma__OrganizationClient<T, Null = never, ExtArgs extends run
   charts<T extends Prisma.Organization$chartsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$chartsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChartPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   songbooks<T extends Prisma.Organization$songbooksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$songbooksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SongbookPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   bandInvites<T extends Prisma.Organization$bandInvitesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$bandInvitesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BandInvitePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  lineups<T extends Prisma.Organization$lineupsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$lineupsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LineupPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2015,6 +2149,30 @@ export type Organization$bandInvitesArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.BandInviteScalarFieldEnum | Prisma.BandInviteScalarFieldEnum[]
+}
+
+/**
+ * Organization.lineups
+ */
+export type Organization$lineupsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Lineup
+   */
+  select?: Prisma.LineupSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Lineup
+   */
+  omit?: Prisma.LineupOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LineupInclude<ExtArgs> | null
+  where?: Prisma.LineupWhereInput
+  orderBy?: Prisma.LineupOrderByWithRelationInput | Prisma.LineupOrderByWithRelationInput[]
+  cursor?: Prisma.LineupWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LineupScalarFieldEnum | Prisma.LineupScalarFieldEnum[]
 }
 
 /**

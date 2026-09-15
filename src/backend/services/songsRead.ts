@@ -1,5 +1,6 @@
 import { canWrite } from "@backend/permissions";
 import { prisma } from "@backend/prisma";
+import type { ProficiencyLevel } from "@shared/proficiency";
 import type { User } from "better-auth/types";
 import { getMemberRole, readableScopeWhere } from "./scope";
 
@@ -35,5 +36,25 @@ export async function songsRead({ slug, user }: { slug: string; user: User }) {
 		? await getMemberRole(user.id, song.organizationId)
 		: null;
 
-	return { ...song, viewerRole, viewerCanWrite: canWrite(viewerRole) };
+	// Who in the band can play this (§D26) — including the viewer's own mark, which is
+	// the one thing on this screen anybody can set regardless of role.
+	const marks = await prisma.songProficiency.findMany({
+		where: { songId: song.id },
+		select: { userId: true, level: true, user: { select: { name: true } } },
+	});
+
+	return {
+		...song,
+		viewerRole,
+		viewerCanWrite: canWrite(viewerRole),
+		myLevel: (marks.find((m) => m.userId === user.id)?.level ??
+			"UNKNOWN") as ProficiencyLevel,
+		bandLevels: marks
+			.filter((m) => m.userId !== user.id)
+			.map((m) => ({
+				userId: m.userId,
+				name: m.user.name,
+				level: m.level as ProficiencyLevel,
+			})),
+	};
 }

@@ -1,6 +1,6 @@
 import { serverTiming } from "@elysiajs/server-timing";
 import { Elysia, t } from "elysia";
-import { CreditRole } from "../generated/prisma/enums";
+import { CreditRole, ProficiencyLevel } from "../generated/prisma/enums";
 import { authMiddleware } from "./auth";
 import { prisma } from "./prisma";
 import {
@@ -11,8 +11,17 @@ import {
 	bandInvitesCreate,
 	bandInvitesList,
 } from "./services/bandInvites";
+import { bandMemberships } from "./services/bandMemberships";
+import {
+	lineupsCreate,
+	lineupsDelete,
+	lineupsList,
+	lineupsUpdate,
+} from "./services/lineups";
 import {
 	liveSessionCreate,
+	liveSessionEnd,
+	liveSessionNowRead,
 	liveSessionPublicRead,
 	liveSessionSetCurrent,
 } from "./services/liveSessions";
@@ -21,6 +30,7 @@ import {
 	pdfExportFile,
 	pdfExportRead,
 } from "./services/pdfExports";
+import { proficiencySet } from "./services/proficiency";
 import {
 	pushPublicKey,
 	pushStatus,
@@ -29,13 +39,14 @@ import {
 	pushUnsubscribe,
 } from "./services/push";
 import { HttpError } from "./services/scope";
+import { songbooksClone } from "./services/songbooksClone";
 import { songbooksCreate } from "./services/songbooksCreate";
 import { songbooksDelete } from "./services/songbooksDelete";
 import { songbooksList } from "./services/songbooksList";
 import { songbooksRead } from "./services/songbooksRead";
 import { songbooksUpdate } from "./services/songbooksUpdate";
 import { songsCreate } from "./services/songsCreate";
-import { songsDelete } from "./services/songsDelete";
+import { songsDelete, songsDeleteImpact } from "./services/songsDelete";
 import { songsFork } from "./services/songsFork";
 import { songsImport } from "./services/songsImport";
 import { songsList } from "./services/songsList";
@@ -45,6 +56,7 @@ import {
 	suggestionsAccept,
 	suggestionsCreate,
 	suggestionsList,
+	suggestionsPendingCount,
 	suggestionsReject,
 } from "./services/suggestions";
 
@@ -73,8 +85,30 @@ const pdfExportSchema = t.Object({
 	finishedAt: t.Nullable(t.String()),
 });
 
+/**
+ * Length caps on everything a client can send.
+ *
+ * Without them a single request can carry an arbitrarily large chart, which is then read
+ * back *in full* by the setlist read, the unauthenticated fan poll, the PDF loader and the
+ * offline snapshot — a couple of concurrent reads is enough to exhaust a small container,
+ * and one oversized chart also blows the ~5 MB localStorage budget the offline shelf lives
+ * in. The numbers are deliberate multiples of real content: a long ChordPro song is ~4 KB,
+ * so 64 KB is 16x headroom; a big setlist is ~60 songs, so 200 entries is 3x.
+ *
+ * `MAX_SONGS` is load-bearing beyond memory: `chartIds` flows into a `WHERE id IN (…)` and
+ * a `createMany`, and SQLite has a hard ceiling on bound parameters.
+ */
+const CONTENT = 64 * 1024;
+const NAME = 200;
+const SHORT = 100;
+const TEXT = 2000;
+const ID = 64;
+const URL_MAX = 2048;
+const MAX_SONGS = 200;
+const MAX_LIST = 50;
+
 const creditSchema = t.Object({
-	artist: t.Object({ name: t.String() }),
+	artist: t.Object({ name: t.String({ minLength: 1, maxLength: NAME }) }),
 	role: t.Enum(CreditRole),
 });
 
@@ -120,11 +154,15 @@ export const api = new Elysia({ prefix: "/api" })
 			.get("/", ({ user, query }) => songsList({ user, query }), {
 				auth: true,
 				query: t.Object({
-					scope: t.Optional(t.String()),
-					q: t.Optional(t.String()),
-					artist: t.Optional(t.String()),
-					key: t.Optional(t.String()),
-					tag: t.Optional(t.String()),
+					lineupId: t.Optional(t.String({ maxLength: ID })),
+					scope: t.Optional(t.String({ maxLength: ID })),
+					q: t.Optional(t.String({ maxLength: SHORT })),
+					artist: t.Optional(t.String({ maxLength: NAME })),
+					key: t.Optional(t.String({ maxLength: SHORT })),
+					tag: t.Optional(t.String({ maxLength: NAME })),
+					// No `maximum` here on purpose: the service clamps instead, so an
+					// over-eager caller gets a page rather than a validation error.
+					limit: t.Optional(t.Numeric({ minimum: 1 })),
 				}),
 			})
 			.get(
@@ -140,30 +178,47 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						name: t.String({ minLength: 1 }),
+						name: t.String({ minLength: 1, maxLength: NAME }),
 						year: t.Optional(
 							t.Nullable(t.Integer({ minimum: 0, maximum: 2100 })),
 						),
-						organizationId: t.String(),
-						credits: t.Optional(t.Array(creditSchema)),
-						tags: t.Optional(t.Array(t.String())),
+						organizationId: t.String({ maxLength: ID }),
+						credits: t.Optional(t.Array(creditSchema, { maxItems: MAX_LIST })),
+						tags: t.Optional(
+							t.Array(t.String({ maxLength: NAME }), { maxItems: MAX_LIST }),
+						),
 						chart: t.Object({
-							content: t.String(),
-							description: t.Optional(t.String()),
+							content: t.String({ maxLength: CONTENT }),
+							description: t.Optional(t.String({ maxLength: TEXT })),
 						}),
 					}),
 				},
 			)
 			// Import from an external chord-sheet site (akordy.kytary.cz) → a new song
 			// in the chosen scope. Declared before "/:slug" routes for clarity.
+			// Anyone who can read a song can say whether they can play it — including a
+			// Reader. It is a fact about the player, not an edit to the song (§D26).
+			.put(
+				"/:slug/proficiency",
+				({ params, user, body }) =>
+					proficiencySet({
+						userId: user.id,
+						slug: params.slug,
+						level: body.level,
+					}),
+				{
+					auth: true,
+					body: t.Object({ level: t.Enum(ProficiencyLevel) }),
+				},
+			)
 			.post(
 				"/import",
 				({ user, body }) => songsImport({ userId: user.id, payload: body }),
 				{
 					auth: true,
 					body: t.Object({
-						url: t.String({ minLength: 1 }),
-						organizationId: t.String(),
+						url: t.String({ minLength: 1, maxLength: URL_MAX }),
+						organizationId: t.String({ maxLength: ID }),
 					}),
 				},
 			)
@@ -174,28 +229,47 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						name: t.Optional(t.String()),
+						name: t.Optional(t.String({ minLength: 1, maxLength: NAME })),
 						year: t.Optional(
 							t.Nullable(t.Integer({ minimum: 0, maximum: 2100 })),
 						),
-						tags: t.Optional(t.Array(t.String())),
-						credits: t.Optional(t.Array(creditSchema)),
+						tags: t.Optional(
+							t.Array(t.String({ maxLength: NAME }), { maxItems: MAX_LIST }),
+						),
+						credits: t.Optional(t.Array(creditSchema, { maxItems: MAX_LIST })),
 						chart: t.Optional(
 							t.Object({
-								id: t.Optional(t.String()),
-								content: t.String(),
-								description: t.Optional(t.String()),
+								id: t.Optional(t.String({ maxLength: ID })),
+								content: t.String({ maxLength: CONTENT }),
+								description: t.Optional(t.String({ maxLength: TEXT })),
 							}),
 						),
 					}),
 				},
 			)
+			// What deleting this song would take with it — read first, so the confirmation
+			// can name the number (§D27).
+			.get(
+				"/:slug/delete-impact",
+				({ params, user }) =>
+					songsDeleteImpact({ slug: params.slug, userId: user.id }),
+				{ auth: true, response: t.Object({ setlists: t.Integer() }) },
+			)
+			// Deleting a song strips it from every setlist that referenced it, so the count
+			// must be confirmed back (§D27).
 			.delete(
 				"/:slug",
-				({ params, user }) =>
-					songsDelete({ slug: params.slug, userId: user.id }),
+				({ params, user, query }) =>
+					songsDelete({
+						slug: params.slug,
+						userId: user.id,
+						confirmSetlists: query.confirmSetlists,
+					}),
 				{
 					auth: true,
+					query: t.Object({
+						confirmSetlists: t.Optional(t.Integer({ minimum: 0 })),
+					}),
 				},
 			)
 			.post(
@@ -210,8 +284,8 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						targetOrganizationId: t.String(),
-						chartId: t.Optional(t.String()),
+						targetOrganizationId: t.String({ maxLength: ID }),
+						chartId: t.Optional(t.String({ maxLength: ID })),
 					}),
 				},
 			),
@@ -223,7 +297,10 @@ export const api = new Elysia({ prefix: "/api" })
 				({ user, query }) => songbooksList({ userId: user.id, query }),
 				{
 					auth: true,
-					query: t.Object({ scope: t.Optional(t.String()) }),
+					query: t.Object({
+						scope: t.Optional(t.String({ maxLength: ID })),
+						lineupId: t.Optional(t.String({ maxLength: ID })),
+					}),
 				},
 			)
 			.get(
@@ -239,10 +316,13 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						title: t.String({ minLength: 1 }),
-						description: t.Optional(t.String()),
-						organizationId: t.String(),
-						chartIds: t.Optional(t.Array(t.String())),
+						title: t.String({ minLength: 1, maxLength: NAME }),
+						description: t.Optional(t.String({ maxLength: TEXT })),
+						// The lineup owns the setlist; the band is derived from it (§D25).
+						lineupId: t.String({ maxLength: ID }),
+						chartIds: t.Optional(
+							t.Array(t.String({ maxLength: ID }), { maxItems: MAX_SONGS }),
+						),
 					}),
 				},
 			)
@@ -253,9 +333,13 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						title: t.Optional(t.String()),
-						description: t.Optional(t.String()),
-						chartIds: t.Optional(t.Array(t.String())),
+						title: t.Optional(t.String({ minLength: 1, maxLength: NAME })),
+						description: t.Optional(t.String({ maxLength: TEXT })),
+						// Move the set to another lineup of the same band.
+						lineupId: t.Optional(t.String({ maxLength: ID })),
+						chartIds: t.Optional(
+							t.Array(t.String({ maxLength: ID }), { maxItems: MAX_SONGS }),
+						),
 					}),
 				},
 			)
@@ -265,6 +349,21 @@ export const api = new Elysia({ prefix: "/api" })
 					songbooksDelete({ id: params.id, userId: user.id }),
 				{
 					auth: true,
+				},
+			)
+			// Copy a setlist onto another lineup (§D25). Within a band this copies rows
+			// only; across bands it forks the charts, so the two can never edit each
+			// other's.
+			.post(
+				"/:id/clone",
+				({ params, user, body }) =>
+					songbooksClone({ id: params.id, userId: user.id, payload: body }),
+				{
+					auth: true,
+					body: t.Object({
+						targetLineupId: t.String({ maxLength: ID }),
+						title: t.Optional(t.String({ minLength: 1, maxLength: NAME })),
+					}),
 				},
 			)
 			// Queue a render and return immediately (CLAUDE.md §D20). There is deliberately
@@ -288,6 +387,50 @@ export const api = new Elysia({ prefix: "/api" })
 					),
 					response: pdfExportSchema,
 				},
+			),
+	)
+	// Lineups — the performing identities inside a band (CLAUDE.md §D25). Permission is
+	// the band's, so there are no lineup-level roles here.
+	.group("/lineups", (group) =>
+		group
+			.get("/", ({ user, query }) => lineupsList({ userId: user.id, query }), {
+				auth: true,
+				query: t.Object({
+					organizationId: t.Optional(t.String({ maxLength: ID })),
+				}),
+			})
+			.post(
+				"/",
+				({ user, body }) => lineupsCreate({ userId: user.id, payload: body }),
+				{
+					auth: true,
+					body: t.Object({
+						name: t.String({ minLength: 1, maxLength: NAME }),
+						organizationId: t.String({ maxLength: ID }),
+						memberIds: t.Optional(
+							t.Array(t.String({ maxLength: ID }), { maxItems: MAX_LIST }),
+						),
+					}),
+				},
+			)
+			.put(
+				"/:id",
+				({ params, user, body }) =>
+					lineupsUpdate({ id: params.id, userId: user.id, payload: body }),
+				{
+					auth: true,
+					body: t.Object({
+						name: t.Optional(t.String({ minLength: 1, maxLength: NAME })),
+						memberIds: t.Optional(
+							t.Array(t.String({ maxLength: ID }), { maxItems: MAX_LIST }),
+						),
+					}),
+				},
+			)
+			.delete(
+				"/:id",
+				({ params, user }) => lineupsDelete({ id: params.id, userId: user.id }),
+				{ auth: true },
 			),
 	)
 	.group("/pdf-exports", (group) =>
@@ -347,8 +490,11 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						endpoint: t.String(),
-						keys: t.Object({ p256dh: t.String(), auth: t.String() }),
+						endpoint: t.String({ minLength: 1, maxLength: URL_MAX }),
+						keys: t.Object({
+							p256dh: t.String({ maxLength: 400 }),
+							auth: t.String({ maxLength: 400 }),
+						}),
 					}),
 					response: t.Object({ ok: t.Boolean() }),
 				},
@@ -359,7 +505,9 @@ export const api = new Elysia({ prefix: "/api" })
 					pushUnsubscribe({ userId: user.id, endpoint: body.endpoint }),
 				{
 					auth: true,
-					body: t.Object({ endpoint: t.String() }),
+					body: t.Object({
+						endpoint: t.String({ minLength: 1, maxLength: URL_MAX }),
+					}),
 					response: t.Object({ ok: t.Boolean() }),
 				},
 			)
@@ -383,7 +531,27 @@ export const api = new Elysia({ prefix: "/api" })
 						clientId: query.clientId,
 					}),
 				{
-					query: t.Object({ clientId: t.Optional(t.String()) }),
+					// clientId is unauthenticated and becomes an in-memory map key.
+					query: t.Object({
+						clientId: t.Optional(t.String({ maxLength: ID })),
+					}),
+				},
+			)
+			// The cheap poll: where the band is now, and nothing else. Fans hit this every
+			// few seconds; the songs come from "/:code" once (§D27).
+			.get(
+				"/:code/now",
+				({ params, query }) =>
+					liveSessionNowRead({ code: params.code, clientId: query.clientId }),
+				{
+					query: t.Object({
+						clientId: t.Optional(t.String({ maxLength: ID })),
+					}),
+					response: t.Object({
+						currentSongIndex: t.Integer(),
+						songCount: t.Integer(),
+						watching: t.Integer(),
+					}),
 				},
 			)
 			// Band creates (or reuses) the share session for a setlist.
@@ -393,7 +561,7 @@ export const api = new Elysia({ prefix: "/api" })
 					liveSessionCreate({ userId: user.id, songbookId: body.songbookId }),
 				{
 					auth: true,
-					body: t.Object({ songbookId: t.String() }),
+					body: t.Object({ songbookId: t.String({ maxLength: ID }) }),
 				},
 			)
 			// Band advances the set — fans follow on their next poll.
@@ -409,10 +577,28 @@ export const api = new Elysia({ prefix: "/api" })
 					auth: true,
 					body: t.Object({ currentSongIndex: t.Integer({ minimum: 0 }) }),
 				},
+			)
+			// Stop sharing — the code goes dead for everyone holding it.
+			.post(
+				"/:code/end",
+				({ params, user }) =>
+					liveSessionEnd({ userId: user.id, code: params.code }),
+				{ auth: true },
 			),
 	)
 	.group("/bands", (group) =>
 		group
+			// The caller's own role in each band. better-auth's org list doesn't carry it.
+			.get("/memberships", ({ user }) => bandMemberships({ userId: user.id }), {
+				auth: true,
+				response: t.Array(
+					t.Object({
+						id: t.String(),
+						name: t.String(),
+						role: t.String(),
+					}),
+				),
+			})
 			// Public, no-auth preview of an invite code — the join page names the band and
 			// the role on offer before it asks anyone to sign in (CLAUDE.md §D13).
 			.get("/join/:code", ({ params }) =>
@@ -484,6 +670,13 @@ export const api = new Elysia({ prefix: "/api" })
 	)
 	.group("/suggestions", (group) =>
 		group
+			// How many are waiting, across every band the caller can write to — the badge
+			// that makes the feature discoverable at all.
+			.get(
+				"/pending-count",
+				({ user }) => suggestionsPendingCount({ userId: user.id }),
+				{ auth: true, response: t.Object({ count: t.Integer() }) },
+			)
 			.post(
 				"/",
 				({ user, body }) =>
@@ -491,9 +684,9 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						chartId: t.String(),
-						proposedContent: t.String(),
-						message: t.Optional(t.String()),
+						chartId: t.String({ maxLength: ID }),
+						proposedContent: t.String({ minLength: 1, maxLength: CONTENT }),
+						message: t.Optional(t.String({ maxLength: TEXT })),
 					}),
 				},
 			)
@@ -506,7 +699,7 @@ export const api = new Elysia({ prefix: "/api" })
 					}),
 				{
 					auth: true,
-					query: t.Object({ organizationId: t.String() }),
+					query: t.Object({ organizationId: t.String({ maxLength: ID }) }),
 				},
 			)
 			.post(

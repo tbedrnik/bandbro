@@ -10,13 +10,19 @@ import {
 	DropdownMenuTrigger,
 } from "@frontend/components/ui/dropdown-menu";
 import { Input } from "@frontend/components/ui/input";
+import { mutationErrorMessage } from "@frontend/lib/mutationError";
 import { useOnline } from "@frontend/lib/offline";
+import { useBandRoles } from "@frontend/lib/roles";
 import {
 	type Scope,
 	useRememberedScope,
 	useScopes,
 } from "@frontend/lib/scopes";
+import { useDebounced } from "@frontend/lib/useDebounced";
+import { cn } from "@frontend/lib/utils";
 import { displayKey } from "@shared/notation";
+import { SONGS_PAGE } from "@shared/pagination";
+import { LEVEL_LABELS, type ProficiencyLevel } from "@shared/proficiency";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -37,18 +43,36 @@ function LibraryPage() {
 	const { scopes, bands, personal, isPending: scopesPending } = useScopes();
 	const [scopeParam, setScopeParam] = useRememberedScope(scopes, scopesPending);
 	const [q, setQ] = useState("");
+	// The box stays live; only the request waits for the typing to stop (§D27).
+	const query = useDebounced(q);
+	const [mine, setMine] = useState<ProficiencyLevel | "ALL">("ALL");
 	const online = useOnline();
 
 	const active: Scope = scopes.find((s) => s.param === scopeParam) ?? scopes[0];
 
 	const { data: songs, isPending } = useQuery({
-		...api.songs.get.queryOptions({ scope: scopeParam, ...(q ? { q } : {}) }),
+		...api.songs.get.queryOptions({
+			scope: scopeParam,
+			limit: SONGS_PAGE,
+			...(query ? { q: query } : {}),
+		}),
 		// Offline the fetch can only fail; retrying it three times just holds the screen
 		// on "Loading…" before it can say so.
 		retry: online ? 3 : false,
 	});
 
-	const writableScopes = [...bands, ...(personal ? [personal] : [])];
+	const { canWriteIn } = useBandRoles();
+	// "Writable" now means it, rather than "every band you're in" (§G2).
+	const writableScopes = [...bands, ...(personal ? [personal] : [])].filter(
+		(s) => canWriteIn(s.id),
+	);
+
+	// "What can't I play yet?" is the question one shared library can answer and three
+	// separate ones can't (§D26) — a bandmate can find the gaps and go learn them
+	// without waiting to be added to a set.
+	const visible = (songs ?? []).filter(
+		(song) => mine === "ALL" || song.myLevel === mine,
+	);
 
 	return (
 		<div className="mx-auto max-w-6xl px-6 py-8">
@@ -61,7 +85,9 @@ function LibraryPage() {
 				{/* Both write to the server; ImportSongButton hides itself offline (§D7). */}
 				<div className="flex gap-2">
 					<ImportSongButton />
-					{online && (
+					{/* Nowhere to save a new song is the same as not being able to make
+					    one, so the button goes rather than leading to a dead editor (§G2). */}
+					{online && writableScopes.length > 0 && (
 						<Button render={<Link to="/songs/new" />}>
 							<IconPlus className="size-4" /> New song
 						</Button>
@@ -76,8 +102,12 @@ function LibraryPage() {
 						{DESCRIPTIONS[active?.kind ?? "band"]}
 					</p>
 				</div>
+				{/* A page that came back exactly full is the only evidence there is more
+				    behind it, so say so rather than silently truncating (§D27). */}
 				<div className="font-mono text-sm text-muted-foreground">
-					{songs?.length ?? 0} songs
+					{visible.length} songs
+					{(songs?.length ?? 0) >= SONGS_PAGE &&
+						" (first page — search to narrow)"}
 				</div>
 			</div>
 
@@ -95,6 +125,31 @@ function LibraryPage() {
 				</div>
 			)}
 
+			{/* Filtering by your own marks is pure client-side work over a list already on
+			    screen, but the list itself is a server read — so offline there is nothing
+			    to filter (§D7). */}
+			{online && (
+				<div className="mt-4 flex flex-wrap gap-2">
+					{(["ALL", "PLAY", "FOLLOW", "LEARNING", "UNKNOWN"] as const).map(
+						(option) => (
+							<button
+								key={option}
+								type="button"
+								onClick={() => setMine(option)}
+								className={cn(
+									"rounded-lg px-3 py-1.5 font-display text-xs font-semibold transition-colors",
+									option === mine
+										? "bg-foreground text-background"
+										: "bg-card text-muted-foreground hover:bg-muted",
+								)}
+							>
+								{option === "ALL" ? "All songs" : LEVEL_LABELS[option]}
+							</button>
+						),
+					)}
+				</div>
+			)}
+
 			<div className="mt-4 overflow-hidden rounded-xl border border-border">
 				<div className="hidden grid-cols-[1fr_180px_70px_70px_160px] items-center gap-4 border-b border-border bg-card px-4 py-2.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground sm:grid">
 					<div>Song</div>
@@ -107,10 +162,14 @@ function LibraryPage() {
 					<div className="px-4 py-10 text-center text-muted-foreground">
 						Loading…
 					</div>
-				) : !songs?.length ? (
+				) : !visible.length ? (
 					<div className="px-4 py-10 text-center text-muted-foreground">
 						{online ? (
-							"No songs here yet."
+							mine === "ALL" ? (
+								"No songs here yet."
+							) : (
+								`Nothing marked “${LEVEL_LABELS[mine]}” here.`
+							)
 						) : (
 							<>
 								You're offline — the library needs a connection.{" "}
@@ -122,7 +181,7 @@ function LibraryPage() {
 						)}
 					</div>
 				) : (
-					songs.map((song) => {
+					visible.map((song) => {
 						const chart = song.charts[0];
 						const artist = song.credits.map((c) => c.artist.name).join(", ");
 						return (
@@ -197,7 +256,7 @@ function LibraryPage() {
 										Open
 									</Button>
 									{/* Forking copies the song server-side. */}
-									{online && (
+									{online && writableScopes.length > 0 && (
 										<ForkButton
 											slug={song.slug}
 											writableScopes={writableScopes}
@@ -233,8 +292,20 @@ function ForkButton({
 		<DropdownMenu>
 			<DropdownMenuTrigger
 				render={
-					<Button size="sm" variant="solid" disabled={fork.isPending}>
-						Fork
+					// A table row has nowhere to put a sentence, so the control itself
+					// carries the failure rather than the click doing nothing (§D27).
+					<Button
+						size="sm"
+						variant={fork.isError ? "outline" : "solid"}
+						disabled={fork.isPending}
+						title={
+							fork.isError
+								? mutationErrorMessage(fork.error, "The fork")
+								: undefined
+						}
+						className={fork.isError ? "text-destructive" : undefined}
+					>
+						{fork.isError ? "Retry fork" : "Fork"}
 					</Button>
 				}
 			/>

@@ -20,6 +20,8 @@ model User {
   bandInviteUses     BandInviteUse[]
   pdfExports         PdfExport[]
   pushSubscriptions  PushSubscription[]
+  lineupMembers      LineupMember[]
+  proficiencies      SongProficiency[]
 
   @@unique([email])
   @@map("user")
@@ -89,6 +91,7 @@ model Organization {
   charts      Chart[]
   songbooks   Songbook[]
   bandInvites BandInvite[]
+  lineups     Lineup[]
 
   @@unique([slug])
   @@map("organization")

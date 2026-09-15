@@ -1,3 +1,4 @@
+import { formatAge } from "@shared/datetime";
 import { useCallback, useRef, useState } from "react";
 
 /**
@@ -87,19 +88,11 @@ export function clearPlayed(setlistId: string) {
 /**
  * Age of a stored session, in the units that tell a player what they're looking at: the
  * question is "was that this evening's set, or last month's gig?", so minutes and hours
- * matter here in a way they don't on the offline shelf.
+ * matter here in a way they don't on the offline shelf. Locale-aware since §D27 — a Czech
+ * band was reading "3 days ago" beside a Czech-formatted date.
  */
 export function formatPlayedAge(at: number, now = Date.now()): string {
-	const minutes = Math.floor((now - at) / 60_000);
-	if (!at || minutes < 0) return "just now";
-	if (minutes < 1) return "just now";
-	if (minutes < 60) return `${minutes} min ago`;
-	const hours = Math.floor(minutes / 60);
-	if (hours < 24) return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
-	const days = Math.floor(hours / 24);
-	if (days === 1) return "yesterday";
-	if (days < 30) return `${days} days ago`;
-	return new Date(at).toLocaleDateString();
+	return formatAge(at, now);
 }
 
 /**

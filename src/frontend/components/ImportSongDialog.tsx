@@ -89,11 +89,22 @@ export function ImportSongDialog({
 						<Dialog.Title className="font-display text-lg font-semibold">
 							Import a song
 						</Dialog.Title>
+						{/* The importer is the fastest way into this app, and used to be a bare
+						    "Import" button over a dialog that never said what to paste (§D27).
+						    Name the site, link it, and say where the URL comes from. */}
 						<Dialog.Description className="mt-1 text-sm text-muted-foreground">
-							Paste a song page from{" "}
-							<span className="font-mono text-xs">akordy.kytary.cz</span> —
-							we'll convert its chords and lyrics to ChordPro and open the
-							editor.
+							Find the song on{" "}
+							<a
+								href="https://akordy.kytary.cz"
+								target="_blank"
+								rel="noreferrer"
+								className="font-mono text-xs text-primary hover:underline"
+							>
+								akordy.kytary.cz
+							</a>
+							, then copy the page's address out of your browser and paste it
+							here. We'll turn its chords and lyrics into a chart and open the
+							editor so you can set the key and capo.
 						</Dialog.Description>
 
 						<label className="mt-4 block">
@@ -166,7 +177,11 @@ export function ImportSongButton() {
 	return (
 		<>
 			<Button variant="outline" onClick={() => setOpen(true)}>
-				<IconFileImport className="size-4" /> Import
+				<IconFileImport className="size-4" />
+				{/* The label says what it imports where there is room for it; a phone
+				    keeps the short one so the row still fits beside "New song". */}
+				<span className="hidden sm:inline">Import from kytary</span>
+				<span className="sm:hidden">Import</span>
 			</Button>
 			<ImportSongDialog open={open} onOpenChange={setOpen} />
 		</>

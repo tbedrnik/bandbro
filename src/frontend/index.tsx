@@ -1,3 +1,4 @@
+import { AppError } from "@frontend/components/AppError";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import React from "react";
@@ -12,6 +13,9 @@ const router = createRouter({
 	scrollRestoration: true,
 	defaultPreload: "intent",
 	defaultPendingComponent: () => "loading...",
+	// Without this a render-time throw unmounts the whole app to a blank page with no way
+	// back — the worst available failure mode for an installed PWA on a music stand.
+	defaultErrorComponent: AppError,
 	context: { queryClient },
 });
 

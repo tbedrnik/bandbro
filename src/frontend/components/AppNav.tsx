@@ -1,3 +1,4 @@
+import { api } from "@frontend/api";
 import { UserAvatar } from "@frontend/components/UserAvatar";
 import {
 	Drawer,
@@ -26,7 +27,9 @@ import {
 	IconSettings,
 	IconSun,
 	IconUsers,
+	IconWand,
 } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -50,6 +53,28 @@ const SECTIONS = [
 ] as const;
 
 /**
+ * Suggestions appear in the nav only while something is waiting, and disappear again once
+ * the queue is empty (CLAUDE.md §D27).
+ *
+ * A permanent fifth section for a feature most bands use rarely is noise on every screen;
+ * showing it exactly when there is something to act on is the whole of what discoverability
+ * needs here, and it is the only reason the feature is reachable at all — before this,
+ * every suggestion a reader sent was unreachable by any human.
+ */
+function usePendingSuggestions(): number {
+	const online = useOnline();
+	const { data } = useQuery({
+		...api.suggestions["pending-count"].get.queryOptions({}),
+		enabled: online,
+		retry: false,
+		// Not urgent: this is a badge, not a notification.
+		refetchInterval: 5 * 60 * 1000,
+		staleTime: 60 * 1000,
+	});
+	return data?.count ?? 0;
+}
+
+/**
  * Top navigation bar shared by all authoring screens (F11).
  *
  * The four section links only fit a desktop row, so below `md` they move into a bottom
@@ -61,6 +86,7 @@ const SECTIONS = [
  * is named in the bar *and* highlighted in the sheet, so "where am I" survives the move.
  */
 export function AppNav({ section }: { section?: string }) {
+	const pending = usePendingSuggestions();
 	const { theme, toggle } = useTheme();
 	// Optional: the layout renders this behind a session guard, but an offline boot runs
 	// on the session snapshot (§D7) and a nav that throws would take the app down with it.
@@ -94,6 +120,21 @@ export function AppNav({ section }: { section?: string }) {
 						{s.label}
 					</Link>
 				))}
+				{pending > 0 && (
+					<Link
+						to="/suggestions"
+						className={cn(link, "inline-flex items-center gap-1.5")}
+						activeProps={{ className: "text-foreground" }}
+						inactiveProps={{
+							className: "text-muted-foreground hover:text-foreground",
+						}}
+					>
+						Suggestions
+						<span className="rounded-md bg-accent-wash px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary">
+							{pending}
+						</span>
+					</Link>
+				)}
 			</nav>
 			<div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-4">
 				{section && (
@@ -152,6 +193,23 @@ export function AppNav({ section }: { section?: string }) {
 								{s.label}
 							</Link>
 						))}
+						{pending > 0 && (
+							<Link
+								to="/suggestions"
+								onClick={() => setMenuOpen(false)}
+								className="flex items-center gap-3 rounded-xl px-4 py-3.5 font-display text-base font-medium transition-colors"
+								activeProps={{ className: "bg-secondary text-foreground" }}
+								inactiveProps={{
+									className: "text-muted-foreground hover:bg-muted",
+								}}
+							>
+								<IconWand className="size-5 text-primary" />
+								Suggestions
+								<span className="ml-auto rounded-md bg-accent-wash px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary">
+									{pending}
+								</span>
+							</Link>
+						)}
 					</nav>
 				</DrawerContent>
 			</Drawer>

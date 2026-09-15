@@ -1,6 +1,9 @@
 import { api } from "@frontend/api";
 import { CapoToggle } from "@frontend/components/CapoToggle";
+import { ConfirmDelete } from "@frontend/components/ConfirmDelete";
+import { ErrorNote } from "@frontend/components/ErrorNote";
 import { MetaChip, Tag } from "@frontend/components/MetaChip";
+import { ProficiencyControl } from "@frontend/components/ProficiencyControl";
 import { SongSheet } from "@frontend/components/SongSheet";
 import { TransposeStepper } from "@frontend/components/TransposeStepper";
 import { Button } from "@frontend/components/ui/button";
@@ -12,11 +15,17 @@ import {
 } from "@frontend/components/ui/dropdown-menu";
 import { useUser } from "@frontend/contexts/UserContext";
 import { useOnline } from "@frontend/lib/offline";
+import { useBandRoles } from "@frontend/lib/roles";
 import { useScopes } from "@frontend/lib/scopes";
 import { displayKey } from "@shared/notation";
 import type { ChordView } from "@shared/transpose";
 import { transposeKey } from "@shared/transpose";
-import { IconBulb, IconGitFork, IconPencil } from "@tabler/icons-react";
+import {
+	IconBulb,
+	IconGitFork,
+	IconPencil,
+	IconTrash,
+} from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
@@ -51,7 +60,27 @@ function SongViewPage() {
 
 	const chart = song?.charts[0];
 	const capo = chart?.capo ?? 0;
-	const writableScopes = [...bands, ...(personal ? [personal] : [])];
+	const { canWriteIn } = useBandRoles();
+	const writableScopes = [...bands, ...(personal ? [personal] : [])].filter(
+		(s) => canWriteIn(s.id),
+	);
+
+	const [confirmDelete, setConfirmDelete] = useState(false);
+
+	// How many setlists would lose this song. Read only while the dialog is open, so the
+	// Library isn't paying for it on every row.
+	const { data: impact } = useQuery({
+		...api.songs({ slug })["delete-impact"].get.queryOptions({}),
+		enabled: confirmDelete,
+	});
+
+	const remove = useMutation({
+		...api.songs({ slug }).delete.mutationOptions(),
+		onSuccess: () => {
+			queryClient.invalidateQueries(api.songs.get.queryFilter());
+			navigate({ to: "/library" });
+		},
+	});
 
 	const fork = useMutation({
 		...api.songs({ slug }).fork.post.mutationOptions(),
@@ -81,6 +110,28 @@ function SongViewPage() {
 
 	return (
 		<div className="mx-auto grid max-w-6xl gap-8 px-6 py-8 lg:grid-cols-[1fr_300px]">
+			<ConfirmDelete
+				open={confirmDelete}
+				onOpenChange={setConfirmDelete}
+				title="Delete this song?"
+				what={`“${song.name}” and its chart will be removed from ${
+					song.organization?.name ?? "the curated library"
+				}.`}
+				consequence={
+					impact?.setlists
+						? `It is in ${impact.setlists} setlist${
+								impact.setlists === 1 ? "" : "s"
+							}, and will be removed from ${
+								impact.setlists === 1 ? "that one" : "all of them"
+							}.`
+						: undefined
+				}
+				confirmLabel="Delete song"
+				pending={remove.isPending}
+				onConfirm={() =>
+					remove.mutate({ query: { confirmSetlists: impact?.setlists ?? 0 } })
+				}
+			/>
 			{/* Chart — the hero */}
 			<article className="order-2 lg:order-1">
 				<header className="mb-6 border-b border-border pb-5">
@@ -115,6 +166,15 @@ function SongViewPage() {
 
 			{/* Controls */}
 			<aside className="order-1 flex flex-col gap-6 lg:order-2">
+				{/* Any reader can answer this — it's about the player, not the song (§D26).
+				    Offline it's a PUT away from the server, so it's hidden (§D7). */}
+				{online && (
+					<ProficiencyControl
+						slug={song.slug}
+						level={song.myLevel}
+						bandLevels={song.bandLevels}
+					/>
+				)}
 				<div>
 					<div className="mb-2 font-display text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 						Chord view
@@ -177,6 +237,22 @@ function SongViewPage() {
 								))}
 							</DropdownMenuContent>
 						</DropdownMenu>
+						<ErrorNote
+							error={fork.error}
+							when={fork.isError}
+							subject="The fork"
+							className="mt-0"
+						/>
+
+						{song.viewerCanWrite && (
+							<Button
+								variant="outline"
+								className="text-destructive"
+								onClick={() => setConfirmDelete(true)}
+							>
+								<IconTrash className="size-4" /> Delete song
+							</Button>
+						)}
 
 						{song.viewerCanWrite ? (
 							<Button

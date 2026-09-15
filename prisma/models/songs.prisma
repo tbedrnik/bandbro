@@ -18,6 +18,7 @@ model Song {
 	credits Credit[]
 	charts  Chart[]
 	tags    SongTag[]
+	proficiencies SongProficiency[]
 
 	// Potential future Album relation:
 	// albums Album[]
@@ -135,6 +136,14 @@ model Songbook {
 	title       String
 	description String?
 
+	// The lineup that performs this set — the setlist's owner (CLAUDE.md §D25).
+	lineupId String
+	lineup   Lineup @relation(fields: [lineupId], references: [id], onDelete: Cascade)
+
+	// Denormalized from `lineup.organizationId`, the same pattern LiveSession uses
+	// below. It is what every membership/role guard reads, so adding lineups left the
+	// whole authorization surface untouched. It cannot drift: the write paths derive it
+	// from the lineup and never accept it from the caller.
 	organizationId      String
 	organization        Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -146,6 +155,7 @@ model Songbook {
 	updatedAt   DateTime @updatedAt
 
 	@@index([organizationId])
+	@@index([lineupId])
 	@@map("songbook")
 }
 

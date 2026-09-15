@@ -27,14 +27,14 @@ class MemoryStorage implements Storage {
 	}
 }
 
-// Install only if nothing is there: another test file in the same run may already have
-// put its own stand-in on the global, and redefining a non-configurable property throws.
-if (!("localStorage" in globalThis)) {
-	Object.defineProperty(globalThis, "localStorage", {
-		value: new MemoryStorage(),
-		configurable: true,
-	});
-}
+// Always install this file's own stand-in. Deferring to whatever another test file left
+// on the global looks safe but isn't: offline.test.ts's store carries a `quota` its own
+// tests shrink, so these tests were running against a storage that rejected ordinary
+// writes. Every stand-in is `configurable`, so each file can claim the global in turn.
+Object.defineProperty(globalThis, "localStorage", {
+	value: new MemoryStorage(),
+	configurable: true,
+});
 
 const { clearPlayed, formatPlayedAge, playedKey, readPlayed, writePlayed } =
 	await import("./livePlayed");
@@ -90,20 +90,22 @@ describe("formatPlayedAge", () => {
 	const now = Date.UTC(2026, 0, 15, 12, 0, 0);
 	const ago = (ms: number) => formatPlayedAge(now - ms, now);
 
+	// The exact wording belongs to Intl (and to the reader's locale) since §D27, so these
+	// pin the *units* — which is what actually tells a player what they're looking at.
 	test("minutes and hours, which is what a set break looks like", () => {
-		expect(ago(20_000)).toBe("just now");
-		expect(ago(5 * 60_000)).toBe("5 min ago");
-		expect(ago(59 * 60_000)).toBe("59 min ago");
-		expect(ago(60 * 60_000)).toBe("1 hour ago");
-		expect(ago(5 * 3_600_000)).toBe("5 hours ago");
+		expect(ago(20_000)).toMatch(/now/i);
+		expect(ago(5 * 60_000)).toMatch(/\b5\b.*min/i);
+		expect(ago(59 * 60_000)).toMatch(/\b59\b.*min/i);
+		expect(ago(60 * 60_000)).toMatch(/hour/i);
+		expect(ago(5 * 3_600_000)).toMatch(/\b5\b.*hour/i);
 	});
 
 	test("days, which is what last week's gig looks like", () => {
 		expect(ago(26 * 3_600_000)).toBe("yesterday");
-		expect(ago(4 * 86_400_000)).toBe("4 days ago");
+		expect(ago(4 * 86_400_000)).toMatch(/\b4\b.*day/i);
 	});
 
 	test("a missing stamp is not a date in 1970", () => {
-		expect(formatPlayedAge(0, now)).toBe("just now");
+		expect(formatPlayedAge(0, now)).toMatch(/now/i);
 	});
 });

@@ -9,6 +9,16 @@
 * 🟢 You can import this file directly.
 */
 
+export const ProficiencyLevel = {
+  UNKNOWN: 'UNKNOWN',
+  LEARNING: 'LEARNING',
+  FOLLOW: 'FOLLOW',
+  PLAY: 'PLAY'
+} as const
+
+export type ProficiencyLevel = (typeof ProficiencyLevel)[keyof typeof ProficiencyLevel]
+
+
 export const CreditRole = {
   ARTIST: 'ARTIST',
   COMPOSER: 'COMPOSER',

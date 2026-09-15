@@ -39,6 +39,15 @@ function EditPage() {
 	}
 
 	const chart = song.charts[0];
+	// Readable-but-chartless is possible (a chart in a scope this account can't read),
+	// and reaching into `charts[0]` for its id threw the whole app to the error boundary.
+	if (!chart) {
+		return (
+			<div className="grid min-h-[60vh] place-items-center px-6 text-center text-muted-foreground">
+				This song has no arrangement you can edit.
+			</div>
+		);
+	}
 	return (
 		<ChordProEditorScreen
 			mode={suggest ? "suggest" : "edit"}

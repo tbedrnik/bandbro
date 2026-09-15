@@ -1,0 +1,47 @@
+// A Lineup is a named subset of a band who perform together — the *performing
+// identity* that owns setlists. See CLAUDE.md §D25.
+//
+// The band (Organization) keeps the three things it is actually good at: membership,
+// roles and invite links, plus ONE shared song library. What varies between "Duo Tomi
+// Kohy", "Thomas Davidson" and "Banda" is the name on the poster, who plays, and which
+// setlists — so that, and only that, lives here.
+//
+// Every band has exactly one lineup with `isDefault = true`, whose id is derived from
+// the band's (`defaultLineupId()` in services/lineups.ts). A deterministic id makes
+// "ensure the default exists" a single idempotent upsert with no race, and lets the
+// backfill migration compute the same ids in SQL. A band with only that lineup shows
+// no lineup UI at all — the concept stays invisible until a second one exists.
+model Lineup {
+	id             String       @id @default(cuid())
+	name           String
+	organizationId String
+	organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+	isDefault Boolean @default(false)
+
+	members   LineupMember[]
+	songbooks Songbook[]
+
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+
+	@@index([organizationId])
+	@@map("lineup")
+}
+
+// Who plays in a lineup. Deliberately carries no role: permission stays band-wide
+// (§D6), which is what keeps lineups from sliding into per-resource ACLs. Membership
+// here is descriptive ("who's on stage", and the input to the readiness calculation
+// in §D26) — never a permission boundary.
+model LineupMember {
+	lineupId String
+	lineup   Lineup @relation(fields: [lineupId], references: [id], onDelete: Cascade)
+	userId   String
+	user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+	createdAt DateTime @default(now())
+
+	@@id([lineupId, userId])
+	@@index([userId])
+	@@map("lineup_member")
+}

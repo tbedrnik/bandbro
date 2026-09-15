@@ -7,11 +7,13 @@ import { Input } from "@frontend/components/ui/input";
 import {
 	listOfflineSongs,
 	type OfflineSong,
+	offlineBytesUsed,
 	removeOfflineSetlist,
 	useOfflineSetlists,
 	useOnline,
 } from "@frontend/lib/offline";
 import { useTheme } from "@frontend/lib/theme";
+import { formatAge } from "@shared/datetime";
 import { displayKey } from "@shared/notation";
 import { searchSongs } from "@shared/songSearch";
 import {
@@ -23,6 +25,20 @@ import {
 } from "@tabler/icons-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+
+/**
+ * What browsers typically allow per origin. Not a number we can read — the Storage API's
+ * `estimate()` reports the whole origin quota, which localStorage is only a slice of — so
+ * it is stated as "about", and the eviction in `downloadSetlist` is what actually handles
+ * running out.
+ */
+const OFFLINE_BUDGET = 5 * 1024 * 1024;
+
+function formatBytes(bytes: number): string {
+	if (bytes < 1024) return `${bytes} B`;
+	if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 export const Route = createFileRoute("/offline")({
 	component: OfflineShelf,
@@ -40,6 +56,8 @@ function OfflineShelf() {
 	useTheme();
 	const online = useOnline();
 	const setlists = useOfflineSetlists();
+	// biome-ignore lint/correctness/useExhaustiveDependencies: the shelf list is when usage can move
+	const used = useMemo(() => offlineBytesUsed(), [setlists]);
 	const [q, setQ] = useState("");
 
 	// The corpus is parsed out of the stored payloads, so it is rebuilt when the shelf
@@ -76,6 +94,22 @@ function OfflineShelf() {
 					with no signal — chords, keys, capo and transpose all work from the
 					copy stored here.
 				</p>
+				{/* Browser storage is a cliff you otherwise walk off in the dark: there is
+				    no warning, the write just fails. Showing the number turns the limit
+				    into something a player can act on before a gig, not after. */}
+				{setlists.length > 0 && (
+					<p className="mt-2 font-mono text-xs text-muted-foreground">
+						{setlists.length} set{setlists.length === 1 ? "" : "s"} ·{" "}
+						{formatBytes(used)} of about {formatBytes(OFFLINE_BUDGET)} used
+						{used > OFFLINE_BUDGET * 0.8 && (
+							<span className="text-destructive">
+								{" "}
+								— nearly full. The oldest set is dropped automatically to make
+								room.
+							</span>
+						)}
+					</p>
+				)}
 
 				{setlists.length > 0 && (
 					<div className="relative mt-6">
@@ -210,9 +244,5 @@ function SearchResults({
 
 /** Coarse "how fresh is this copy" — the exact minute never matters on a stage. */
 function formatDownloadedAt(at: number) {
-	const days = Math.floor((Date.now() - at) / 86_400_000);
-	if (days < 1) return "today";
-	if (days === 1) return "yesterday";
-	if (days < 30) return `${days} days ago`;
-	return new Date(at).toLocaleDateString();
+	return formatAge(at);
 }

@@ -1,4 +1,5 @@
 import { api } from "@frontend/api";
+import { ErrorNote } from "@frontend/components/ErrorNote";
 import { MetaChip, Tag } from "@frontend/components/MetaChip";
 import { SongEditor } from "@frontend/components/SongEditor";
 import { SongSheet } from "@frontend/components/SongSheet";
@@ -54,6 +55,7 @@ export function ChordProEditorScreen(props: Props) {
 	const queryClient = useQueryClient();
 	const { bands, personal } = useScopes();
 	const writableScopes = [...bands, ...(personal ? [personal] : [])];
+	const canSaveNew = writableScopes.length > 0;
 	const online = useOnline();
 
 	/** What's in the editor pane: the source in the reader's note-name convention. */
@@ -119,10 +121,17 @@ export function ChordProEditorScreen(props: Props) {
 	});
 
 	const pending = create.isPending || update.isPending || suggest.isPending;
+	// A failed save used to do nothing at all: the button stopped saying "Saving…" and the
+	// work was gone. That includes the ordinary case of a Reader opening the edit URL and
+	// being refused by `requireWrite` (§D27).
+	const failed = create.isError || update.isError || suggest.isError;
+	const failure = create.error ?? update.error ?? suggest.error;
 
 	const onSave = () => {
 		if (props.mode === "new") {
 			const target = scope || writableScopes[0]?.id;
+			// The org list is async; before it lands there is nothing to save *to*, so the
+			// button is disabled rather than silently doing nothing.
 			if (!target) return;
 			create.mutate({
 				name: meta.title || "Untitled",
@@ -205,7 +214,10 @@ export function ChordProEditorScreen(props: Props) {
 									</select>
 								</label>
 							)}
-							<Button onClick={onSave} disabled={pending}>
+							<Button
+								onClick={onSave}
+								disabled={pending || (props.mode === "new" && !canSaveNew)}
+							>
 								{pending ? "Saving…" : isSuggest ? "Send suggestion" : "Save"}
 							</Button>
 						</>
@@ -215,6 +227,12 @@ export function ChordProEditorScreen(props: Props) {
 						</span>
 					)}
 				</div>
+				<ErrorNote
+					error={failure}
+					when={failed}
+					subject={isSuggest ? "Your suggestion" : "Your changes"}
+					className="mt-0 w-full"
+				/>
 			</div>
 
 			{/* Panes */}

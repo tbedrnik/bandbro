@@ -28,6 +28,7 @@ export type SongbookMinAggregateOutputType = {
   id: string | null
   title: string | null
   description: string | null
+  lineupId: string | null
   organizationId: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -37,6 +38,7 @@ export type SongbookMaxAggregateOutputType = {
   id: string | null
   title: string | null
   description: string | null
+  lineupId: string | null
   organizationId: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -46,6 +48,7 @@ export type SongbookCountAggregateOutputType = {
   id: number
   title: number
   description: number
+  lineupId: number
   organizationId: number
   createdAt: number
   updatedAt: number
@@ -57,6 +60,7 @@ export type SongbookMinAggregateInputType = {
   id?: true
   title?: true
   description?: true
+  lineupId?: true
   organizationId?: true
   createdAt?: true
   updatedAt?: true
@@ -66,6 +70,7 @@ export type SongbookMaxAggregateInputType = {
   id?: true
   title?: true
   description?: true
+  lineupId?: true
   organizationId?: true
   createdAt?: true
   updatedAt?: true
@@ -75,6 +80,7 @@ export type SongbookCountAggregateInputType = {
   id?: true
   title?: true
   description?: true
+  lineupId?: true
   organizationId?: true
   createdAt?: true
   updatedAt?: true
@@ -157,6 +163,7 @@ export type SongbookGroupByOutputType = {
   id: string
   title: string
   description: string | null
+  lineupId: string
   organizationId: string
   createdAt: Date
   updatedAt: Date
@@ -187,9 +194,11 @@ export type SongbookWhereInput = {
   id?: Prisma.StringFilter<"Songbook"> | string
   title?: Prisma.StringFilter<"Songbook"> | string
   description?: Prisma.StringNullableFilter<"Songbook"> | string | null
+  lineupId?: Prisma.StringFilter<"Songbook"> | string
   organizationId?: Prisma.StringFilter<"Songbook"> | string
   createdAt?: Prisma.DateTimeFilter<"Songbook"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Songbook"> | Date | string
+  lineup?: Prisma.XOR<Prisma.LineupScalarRelationFilter, Prisma.LineupWhereInput>
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   songs?: Prisma.SongbookSongListRelationFilter
   liveSessions?: Prisma.LiveSessionListRelationFilter
@@ -200,9 +209,11 @@ export type SongbookOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
+  lineupId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  lineup?: Prisma.LineupOrderByWithRelationInput
   organization?: Prisma.OrganizationOrderByWithRelationInput
   songs?: Prisma.SongbookSongOrderByRelationAggregateInput
   liveSessions?: Prisma.LiveSessionOrderByRelationAggregateInput
@@ -216,9 +227,11 @@ export type SongbookWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.SongbookWhereInput | Prisma.SongbookWhereInput[]
   title?: Prisma.StringFilter<"Songbook"> | string
   description?: Prisma.StringNullableFilter<"Songbook"> | string | null
+  lineupId?: Prisma.StringFilter<"Songbook"> | string
   organizationId?: Prisma.StringFilter<"Songbook"> | string
   createdAt?: Prisma.DateTimeFilter<"Songbook"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Songbook"> | Date | string
+  lineup?: Prisma.XOR<Prisma.LineupScalarRelationFilter, Prisma.LineupWhereInput>
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   songs?: Prisma.SongbookSongListRelationFilter
   liveSessions?: Prisma.LiveSessionListRelationFilter
@@ -229,6 +242,7 @@ export type SongbookOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
+  lineupId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -244,6 +258,7 @@ export type SongbookScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Songbook"> | string
   title?: Prisma.StringWithAggregatesFilter<"Songbook"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Songbook"> | string | null
+  lineupId?: Prisma.StringWithAggregatesFilter<"Songbook"> | string
   organizationId?: Prisma.StringWithAggregatesFilter<"Songbook"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Songbook"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Songbook"> | Date | string
@@ -255,6 +270,7 @@ export type SongbookCreateInput = {
   description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  lineup: Prisma.LineupCreateNestedOneWithoutSongbooksInput
   organization: Prisma.OrganizationCreateNestedOneWithoutSongbooksInput
   songs?: Prisma.SongbookSongCreateNestedManyWithoutSongbookInput
   liveSessions?: Prisma.LiveSessionCreateNestedManyWithoutSongbookInput
@@ -265,6 +281,7 @@ export type SongbookUncheckedCreateInput = {
   id?: string
   title: string
   description?: string | null
+  lineupId: string
   organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -279,6 +296,7 @@ export type SongbookUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lineup?: Prisma.LineupUpdateOneRequiredWithoutSongbooksNestedInput
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutSongbooksNestedInput
   songs?: Prisma.SongbookSongUpdateManyWithoutSongbookNestedInput
   liveSessions?: Prisma.LiveSessionUpdateManyWithoutSongbookNestedInput
@@ -289,6 +307,7 @@ export type SongbookUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineupId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -301,6 +320,7 @@ export type SongbookCreateManyInput = {
   id?: string
   title: string
   description?: string | null
+  lineupId: string
   organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -318,6 +338,7 @@ export type SongbookUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineupId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -337,6 +358,7 @@ export type SongbookCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  lineupId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -346,6 +368,7 @@ export type SongbookMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  lineupId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -355,6 +378,7 @@ export type SongbookMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  lineupId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -407,6 +431,48 @@ export type SongbookUncheckedUpdateManyWithoutOrganizationNestedInput = {
   deleteMany?: Prisma.SongbookScalarWhereInput | Prisma.SongbookScalarWhereInput[]
 }
 
+export type SongbookCreateNestedManyWithoutLineupInput = {
+  create?: Prisma.XOR<Prisma.SongbookCreateWithoutLineupInput, Prisma.SongbookUncheckedCreateWithoutLineupInput> | Prisma.SongbookCreateWithoutLineupInput[] | Prisma.SongbookUncheckedCreateWithoutLineupInput[]
+  connectOrCreate?: Prisma.SongbookCreateOrConnectWithoutLineupInput | Prisma.SongbookCreateOrConnectWithoutLineupInput[]
+  createMany?: Prisma.SongbookCreateManyLineupInputEnvelope
+  connect?: Prisma.SongbookWhereUniqueInput | Prisma.SongbookWhereUniqueInput[]
+}
+
+export type SongbookUncheckedCreateNestedManyWithoutLineupInput = {
+  create?: Prisma.XOR<Prisma.SongbookCreateWithoutLineupInput, Prisma.SongbookUncheckedCreateWithoutLineupInput> | Prisma.SongbookCreateWithoutLineupInput[] | Prisma.SongbookUncheckedCreateWithoutLineupInput[]
+  connectOrCreate?: Prisma.SongbookCreateOrConnectWithoutLineupInput | Prisma.SongbookCreateOrConnectWithoutLineupInput[]
+  createMany?: Prisma.SongbookCreateManyLineupInputEnvelope
+  connect?: Prisma.SongbookWhereUniqueInput | Prisma.SongbookWhereUniqueInput[]
+}
+
+export type SongbookUpdateManyWithoutLineupNestedInput = {
+  create?: Prisma.XOR<Prisma.SongbookCreateWithoutLineupInput, Prisma.SongbookUncheckedCreateWithoutLineupInput> | Prisma.SongbookCreateWithoutLineupInput[] | Prisma.SongbookUncheckedCreateWithoutLineupInput[]
+  connectOrCreate?: Prisma.SongbookCreateOrConnectWithoutLineupInput | Prisma.SongbookCreateOrConnectWithoutLineupInput[]
+  upsert?: Prisma.SongbookUpsertWithWhereUniqueWithoutLineupInput | Prisma.SongbookUpsertWithWhereUniqueWithoutLineupInput[]
+  createMany?: Prisma.SongbookCreateManyLineupInputEnvelope
+  set?: Prisma.SongbookWhereUniqueInput | Prisma.SongbookWhereUniqueInput[]
+  disconnect?: Prisma.SongbookWhereUniqueInput | Prisma.SongbookWhereUniqueInput[]
+  delete?: Prisma.SongbookWhereUniqueInput | Prisma.SongbookWhereUniqueInput[]
+  connect?: Prisma.SongbookWhereUniqueInput | Prisma.SongbookWhereUniqueInput[]
+  update?: Prisma.SongbookUpdateWithWhereUniqueWithoutLineupInput | Prisma.SongbookUpdateWithWhereUniqueWithoutLineupInput[]
+  updateMany?: Prisma.SongbookUpdateManyWithWhereWithoutLineupInput | Prisma.SongbookUpdateManyWithWhereWithoutLineupInput[]
+  deleteMany?: Prisma.SongbookScalarWhereInput | Prisma.SongbookScalarWhereInput[]
+}
+
+export type SongbookUncheckedUpdateManyWithoutLineupNestedInput = {
+  create?: Prisma.XOR<Prisma.SongbookCreateWithoutLineupInput, Prisma.SongbookUncheckedCreateWithoutLineupInput> | Prisma.SongbookCreateWithoutLineupInput[] | Prisma.SongbookUncheckedCreateWithoutLineupInput[]
+  connectOrCreate?: Prisma.SongbookCreateOrConnectWithoutLineupInput | Prisma.SongbookCreateOrConnectWithoutLineupInput[]
+  upsert?: Prisma.SongbookUpsertWithWhereUniqueWithoutLineupInput | Prisma.SongbookUpsertWithWhereUniqueWithoutLineupInput[]
+  createMany?: Prisma.SongbookCreateManyLineupInputEnvelope
+  set?: Prisma.SongbookWhereUniqueInput | Prisma.SongbookWhereUniqueInput[]
+  disconnect?: Prisma.SongbookWhereUniqueInput | Prisma.SongbookWhereUniqueInput[]
+  delete?: Prisma.SongbookWhereUniqueInput | Prisma.SongbookWhereUniqueInput[]
+  connect?: Prisma.SongbookWhereUniqueInput | Prisma.SongbookWhereUniqueInput[]
+  update?: Prisma.SongbookUpdateWithWhereUniqueWithoutLineupInput | Prisma.SongbookUpdateWithWhereUniqueWithoutLineupInput[]
+  updateMany?: Prisma.SongbookUpdateManyWithWhereWithoutLineupInput | Prisma.SongbookUpdateManyWithWhereWithoutLineupInput[]
+  deleteMany?: Prisma.SongbookScalarWhereInput | Prisma.SongbookScalarWhereInput[]
+}
+
 export type SongbookCreateNestedOneWithoutLiveSessionsInput = {
   create?: Prisma.XOR<Prisma.SongbookCreateWithoutLiveSessionsInput, Prisma.SongbookUncheckedCreateWithoutLiveSessionsInput>
   connectOrCreate?: Prisma.SongbookCreateOrConnectWithoutLiveSessionsInput
@@ -455,6 +521,7 @@ export type SongbookCreateWithoutOrganizationInput = {
   description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  lineup: Prisma.LineupCreateNestedOneWithoutSongbooksInput
   songs?: Prisma.SongbookSongCreateNestedManyWithoutSongbookInput
   liveSessions?: Prisma.LiveSessionCreateNestedManyWithoutSongbookInput
   pdfExports?: Prisma.PdfExportCreateNestedManyWithoutSongbookInput
@@ -464,6 +531,7 @@ export type SongbookUncheckedCreateWithoutOrganizationInput = {
   id?: string
   title: string
   description?: string | null
+  lineupId: string
   createdAt?: Date | string
   updatedAt?: Date | string
   songs?: Prisma.SongbookSongUncheckedCreateNestedManyWithoutSongbookInput
@@ -503,9 +571,59 @@ export type SongbookScalarWhereInput = {
   id?: Prisma.StringFilter<"Songbook"> | string
   title?: Prisma.StringFilter<"Songbook"> | string
   description?: Prisma.StringNullableFilter<"Songbook"> | string | null
+  lineupId?: Prisma.StringFilter<"Songbook"> | string
   organizationId?: Prisma.StringFilter<"Songbook"> | string
   createdAt?: Prisma.DateTimeFilter<"Songbook"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Songbook"> | Date | string
+}
+
+export type SongbookCreateWithoutLineupInput = {
+  id?: string
+  title: string
+  description?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutSongbooksInput
+  songs?: Prisma.SongbookSongCreateNestedManyWithoutSongbookInput
+  liveSessions?: Prisma.LiveSessionCreateNestedManyWithoutSongbookInput
+  pdfExports?: Prisma.PdfExportCreateNestedManyWithoutSongbookInput
+}
+
+export type SongbookUncheckedCreateWithoutLineupInput = {
+  id?: string
+  title: string
+  description?: string | null
+  organizationId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  songs?: Prisma.SongbookSongUncheckedCreateNestedManyWithoutSongbookInput
+  liveSessions?: Prisma.LiveSessionUncheckedCreateNestedManyWithoutSongbookInput
+  pdfExports?: Prisma.PdfExportUncheckedCreateNestedManyWithoutSongbookInput
+}
+
+export type SongbookCreateOrConnectWithoutLineupInput = {
+  where: Prisma.SongbookWhereUniqueInput
+  create: Prisma.XOR<Prisma.SongbookCreateWithoutLineupInput, Prisma.SongbookUncheckedCreateWithoutLineupInput>
+}
+
+export type SongbookCreateManyLineupInputEnvelope = {
+  data: Prisma.SongbookCreateManyLineupInput | Prisma.SongbookCreateManyLineupInput[]
+}
+
+export type SongbookUpsertWithWhereUniqueWithoutLineupInput = {
+  where: Prisma.SongbookWhereUniqueInput
+  update: Prisma.XOR<Prisma.SongbookUpdateWithoutLineupInput, Prisma.SongbookUncheckedUpdateWithoutLineupInput>
+  create: Prisma.XOR<Prisma.SongbookCreateWithoutLineupInput, Prisma.SongbookUncheckedCreateWithoutLineupInput>
+}
+
+export type SongbookUpdateWithWhereUniqueWithoutLineupInput = {
+  where: Prisma.SongbookWhereUniqueInput
+  data: Prisma.XOR<Prisma.SongbookUpdateWithoutLineupInput, Prisma.SongbookUncheckedUpdateWithoutLineupInput>
+}
+
+export type SongbookUpdateManyWithWhereWithoutLineupInput = {
+  where: Prisma.SongbookScalarWhereInput
+  data: Prisma.XOR<Prisma.SongbookUpdateManyMutationInput, Prisma.SongbookUncheckedUpdateManyWithoutLineupInput>
 }
 
 export type SongbookCreateWithoutLiveSessionsInput = {
@@ -514,6 +632,7 @@ export type SongbookCreateWithoutLiveSessionsInput = {
   description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  lineup: Prisma.LineupCreateNestedOneWithoutSongbooksInput
   organization: Prisma.OrganizationCreateNestedOneWithoutSongbooksInput
   songs?: Prisma.SongbookSongCreateNestedManyWithoutSongbookInput
   pdfExports?: Prisma.PdfExportCreateNestedManyWithoutSongbookInput
@@ -523,6 +642,7 @@ export type SongbookUncheckedCreateWithoutLiveSessionsInput = {
   id?: string
   title: string
   description?: string | null
+  lineupId: string
   organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -552,6 +672,7 @@ export type SongbookUpdateWithoutLiveSessionsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lineup?: Prisma.LineupUpdateOneRequiredWithoutSongbooksNestedInput
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutSongbooksNestedInput
   songs?: Prisma.SongbookSongUpdateManyWithoutSongbookNestedInput
   pdfExports?: Prisma.PdfExportUpdateManyWithoutSongbookNestedInput
@@ -561,6 +682,7 @@ export type SongbookUncheckedUpdateWithoutLiveSessionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineupId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -574,6 +696,7 @@ export type SongbookCreateWithoutSongsInput = {
   description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  lineup: Prisma.LineupCreateNestedOneWithoutSongbooksInput
   organization: Prisma.OrganizationCreateNestedOneWithoutSongbooksInput
   liveSessions?: Prisma.LiveSessionCreateNestedManyWithoutSongbookInput
   pdfExports?: Prisma.PdfExportCreateNestedManyWithoutSongbookInput
@@ -583,6 +706,7 @@ export type SongbookUncheckedCreateWithoutSongsInput = {
   id?: string
   title: string
   description?: string | null
+  lineupId: string
   organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -612,6 +736,7 @@ export type SongbookUpdateWithoutSongsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lineup?: Prisma.LineupUpdateOneRequiredWithoutSongbooksNestedInput
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutSongbooksNestedInput
   liveSessions?: Prisma.LiveSessionUpdateManyWithoutSongbookNestedInput
   pdfExports?: Prisma.PdfExportUpdateManyWithoutSongbookNestedInput
@@ -621,6 +746,7 @@ export type SongbookUncheckedUpdateWithoutSongsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineupId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -634,6 +760,7 @@ export type SongbookCreateWithoutPdfExportsInput = {
   description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  lineup: Prisma.LineupCreateNestedOneWithoutSongbooksInput
   organization: Prisma.OrganizationCreateNestedOneWithoutSongbooksInput
   songs?: Prisma.SongbookSongCreateNestedManyWithoutSongbookInput
   liveSessions?: Prisma.LiveSessionCreateNestedManyWithoutSongbookInput
@@ -643,6 +770,7 @@ export type SongbookUncheckedCreateWithoutPdfExportsInput = {
   id?: string
   title: string
   description?: string | null
+  lineupId: string
   organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -672,6 +800,7 @@ export type SongbookUpdateWithoutPdfExportsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lineup?: Prisma.LineupUpdateOneRequiredWithoutSongbooksNestedInput
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutSongbooksNestedInput
   songs?: Prisma.SongbookSongUpdateManyWithoutSongbookNestedInput
   liveSessions?: Prisma.LiveSessionUpdateManyWithoutSongbookNestedInput
@@ -681,6 +810,7 @@ export type SongbookUncheckedUpdateWithoutPdfExportsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineupId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -692,6 +822,7 @@ export type SongbookCreateManyOrganizationInput = {
   id?: string
   title: string
   description?: string | null
+  lineupId: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -702,6 +833,7 @@ export type SongbookUpdateWithoutOrganizationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lineup?: Prisma.LineupUpdateOneRequiredWithoutSongbooksNestedInput
   songs?: Prisma.SongbookSongUpdateManyWithoutSongbookNestedInput
   liveSessions?: Prisma.LiveSessionUpdateManyWithoutSongbookNestedInput
   pdfExports?: Prisma.PdfExportUpdateManyWithoutSongbookNestedInput
@@ -711,6 +843,7 @@ export type SongbookUncheckedUpdateWithoutOrganizationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineupId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   songs?: Prisma.SongbookSongUncheckedUpdateManyWithoutSongbookNestedInput
@@ -722,6 +855,49 @@ export type SongbookUncheckedUpdateManyWithoutOrganizationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lineupId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type SongbookCreateManyLineupInput = {
+  id?: string
+  title: string
+  description?: string | null
+  organizationId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type SongbookUpdateWithoutLineupInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutSongbooksNestedInput
+  songs?: Prisma.SongbookSongUpdateManyWithoutSongbookNestedInput
+  liveSessions?: Prisma.LiveSessionUpdateManyWithoutSongbookNestedInput
+  pdfExports?: Prisma.PdfExportUpdateManyWithoutSongbookNestedInput
+}
+
+export type SongbookUncheckedUpdateWithoutLineupInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  songs?: Prisma.SongbookSongUncheckedUpdateManyWithoutSongbookNestedInput
+  liveSessions?: Prisma.LiveSessionUncheckedUpdateManyWithoutSongbookNestedInput
+  pdfExports?: Prisma.PdfExportUncheckedUpdateManyWithoutSongbookNestedInput
+}
+
+export type SongbookUncheckedUpdateManyWithoutLineupInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -779,9 +955,11 @@ export type SongbookSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   id?: boolean
   title?: boolean
   description?: boolean
+  lineupId?: boolean
   organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  lineup?: boolean | Prisma.LineupDefaultArgs<ExtArgs>
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   songs?: boolean | Prisma.Songbook$songsArgs<ExtArgs>
   liveSessions?: boolean | Prisma.Songbook$liveSessionsArgs<ExtArgs>
@@ -793,9 +971,11 @@ export type SongbookSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   id?: boolean
   title?: boolean
   description?: boolean
+  lineupId?: boolean
   organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  lineup?: boolean | Prisma.LineupDefaultArgs<ExtArgs>
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["songbook"]>
 
@@ -803,9 +983,11 @@ export type SongbookSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   id?: boolean
   title?: boolean
   description?: boolean
+  lineupId?: boolean
   organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  lineup?: boolean | Prisma.LineupDefaultArgs<ExtArgs>
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["songbook"]>
 
@@ -813,13 +995,15 @@ export type SongbookSelectScalar = {
   id?: boolean
   title?: boolean
   description?: boolean
+  lineupId?: boolean
   organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type SongbookOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "organizationId" | "createdAt" | "updatedAt", ExtArgs["result"]["songbook"]>
+export type SongbookOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "lineupId" | "organizationId" | "createdAt" | "updatedAt", ExtArgs["result"]["songbook"]>
 export type SongbookInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  lineup?: boolean | Prisma.LineupDefaultArgs<ExtArgs>
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   songs?: boolean | Prisma.Songbook$songsArgs<ExtArgs>
   liveSessions?: boolean | Prisma.Songbook$liveSessionsArgs<ExtArgs>
@@ -827,15 +1011,18 @@ export type SongbookInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   _count?: boolean | Prisma.SongbookCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type SongbookIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  lineup?: boolean | Prisma.LineupDefaultArgs<ExtArgs>
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }
 export type SongbookIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  lineup?: boolean | Prisma.LineupDefaultArgs<ExtArgs>
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }
 
 export type $SongbookPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Songbook"
   objects: {
+    lineup: Prisma.$LineupPayload<ExtArgs>
     organization: Prisma.$OrganizationPayload<ExtArgs>
     songs: Prisma.$SongbookSongPayload<ExtArgs>[]
     liveSessions: Prisma.$LiveSessionPayload<ExtArgs>[]
@@ -845,6 +1032,7 @@ export type $SongbookPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     id: string
     title: string
     description: string | null
+    lineupId: string
     organizationId: string
     createdAt: Date
     updatedAt: Date
@@ -1242,6 +1430,7 @@ readonly fields: SongbookFieldRefs;
  */
 export interface Prisma__SongbookClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  lineup<T extends Prisma.LineupDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LineupDefaultArgs<ExtArgs>>): Prisma.Prisma__LineupClient<runtime.Types.Result.GetResult<Prisma.$LineupPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   songs<T extends Prisma.Songbook$songsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Songbook$songsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SongbookSongPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   liveSessions<T extends Prisma.Songbook$liveSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Songbook$liveSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LiveSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1278,6 +1467,7 @@ export interface SongbookFieldRefs {
   readonly id: Prisma.FieldRef<"Songbook", 'String'>
   readonly title: Prisma.FieldRef<"Songbook", 'String'>
   readonly description: Prisma.FieldRef<"Songbook", 'String'>
+  readonly lineupId: Prisma.FieldRef<"Songbook", 'String'>
   readonly organizationId: Prisma.FieldRef<"Songbook", 'String'>
   readonly createdAt: Prisma.FieldRef<"Songbook", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Songbook", 'DateTime'>

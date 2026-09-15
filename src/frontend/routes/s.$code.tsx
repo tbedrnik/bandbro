@@ -7,6 +7,7 @@ import {
 } from "@frontend/components/ui/drawer";
 import { getClientId } from "@frontend/lib/fanSession";
 import { FAN_SIZES, type FanTheme, fanPalette } from "@frontend/lib/fanTheme";
+import { useWakeLock } from "@frontend/lib/useWakeLock";
 import { displayKey } from "@shared/notation";
 import { transposeKey } from "@shared/transpose";
 import {
@@ -38,11 +39,46 @@ function FanLiveView() {
 	const { code } = Route.useParams();
 	const clientId = useRef(getClientId()).current;
 
-	const { data, isPending, isError } = useQuery({
-		...api.live({ code: code.toUpperCase() }).get.queryOptions({ clientId }),
-		refetchInterval: POLL_MS,
-		retry: false,
+	const upper = code.toUpperCase();
+
+	// The songs, fetched once. They are the heavy part — every chart's complete ChordPro —
+	// and they don't change while the band plays, so polling them was shipping megabytes a
+	// second at a well-attended gig, on the same two cores serving the band (§D27).
+	const {
+		data,
+		isPending,
+		isError,
+		refetch: refetchSongs,
+	} = useQuery({
+		...api.live({ code: upper }).get.queryOptions({ clientId }),
+		staleTime: Number.POSITIVE_INFINITY,
+		// A room full of people shares one overloaded access point, so a dropped request
+		// is the normal case, not the exception. `retry: false` turned one of them into a
+		// permanent "session not found" with no way back.
+		retry: 3,
+		retryDelay: 1000,
 	});
+
+	// Where the band is now — the only thing that actually changes.
+	const { data: now } = useQuery({
+		...api.live({ code: upper }).now.get.queryOptions({ clientId }),
+		refetchInterval: POLL_MS,
+		enabled: !isError,
+		retry: 3,
+		retryDelay: 1000,
+	});
+
+	// The band can add or remove songs mid-session; a changed count is the cue to re-read
+	// the set rather than keep rendering a stale one.
+	const songCount = now?.songCount;
+	useEffect(() => {
+		if (songCount !== undefined && data && songCount !== data.songs.length) {
+			void refetchSongs();
+		}
+	}, [songCount, data, refetchSongs]);
+
+	// A fan reading lyrics touches nothing for three minutes at a time.
+	useWakeLock();
 
 	// Per-device view state.
 	const [chords, setChords] = useState(false);
@@ -50,21 +86,29 @@ function FanLiveView() {
 	const [theme, setTheme] = useState<FanTheme>("dark");
 	const [transpose, setTranspose] = useState(0);
 	const [open, setOpen] = useState(false);
+	const [shared, setShared] = useState(false);
 
 	// Auto-follow: flash a "Now playing" pill whenever the band advances the set.
 	const [flash, setFlash] = useState(false);
 	const prevIndex = useRef<number | null>(null);
-	const currentIndex = data?.currentSongIndex ?? 0;
+	// The light poll is authoritative for position; the initial read seeds it so the first
+	// paint isn't always song 1.
+	const currentIndex = now?.currentSongIndex ?? data?.currentSongIndex ?? 0;
 	useEffect(() => {
-		if (!data) return;
-		if (prevIndex.current !== null && prevIndex.current !== currentIndex) {
-			setFlash(true);
-			const t = setTimeout(() => setFlash(false), 2600);
-			setTranspose(0);
-			return () => clearTimeout(t);
-		}
+		const previous = prevIndex.current;
+		// Record the new position *first*. Returning early before this left the ref pinned
+		// to the old index, so with `data` in the dependency list the effect re-fired on
+		// every poll, re-flashed the pill and — worse — kept resetting the fan's own
+		// transpose to 0 every few seconds (§D27).
 		prevIndex.current = currentIndex;
-	}, [currentIndex, data]);
+		if (previous === null || previous === currentIndex) return;
+
+		setFlash(true);
+		// The band changed song, so this device's transpose no longer refers to anything.
+		setTranspose(0);
+		const t = setTimeout(() => setFlash(false), 2600);
+		return () => clearTimeout(t);
+	}, [currentIndex]);
 
 	if (isPending) {
 		return (
@@ -90,11 +134,23 @@ function FanLiveView() {
 						This show has ended, or the code{" "}
 						<span className="font-mono">{code.toUpperCase()}</span> is wrong.
 					</p>
+					<button
+						type="button"
+						onClick={() => void refetchSongs()}
+						className="mt-5 rounded-xl px-4 py-2 font-display text-sm font-semibold"
+						style={{ background: "#b4690f", color: "#17140e" }}
+					>
+						Try again
+					</button>
 				</div>
 			</div>
 		);
 	}
 
+	// The band can edit the set while the session is live, so the index the server holds
+	// can outrun the songs it sends. Every use below is already optional-chained, which
+	// meant a *blank* screen rather than a crash — arguably worse, since it looks broken
+	// with no explanation (§D27).
 	const song = data.songs[currentIndex];
 	const f = FAN_SIZES[sizeIdx];
 	const lyricSize = Math.round(24 * f);
@@ -102,7 +158,22 @@ function FanLiveView() {
 	const displayedKey = song
 		? displayKey(transposeKey(song.key, transpose))
 		: "";
+	const upNext = data.songs[currentIndex + 1];
 	const palette = fanPalette(theme);
+
+	const onShare = async () => {
+		const url = window.location.href;
+		try {
+			// The native sheet where there is one (every phone in the room), clipboard
+			// everywhere else. Both can be refused, and neither is worth an error.
+			if (navigator.share) await navigator.share({ title: data.band, url });
+			else await navigator.clipboard?.writeText(url);
+			setShared(true);
+			setTimeout(() => setShared(false), 2000);
+		} catch {
+			// Dismissed the share sheet, or no clipboard permission.
+		}
+	};
 	const eyebrow = `${data.band} · ${data.title}`;
 
 	return (
@@ -136,17 +207,28 @@ function FanLiveView() {
 				className="fan-scroll relative z-10 min-h-0 flex-1 overflow-y-auto px-6 pt-8"
 				style={{ paddingBottom: "calc(120px + env(safe-area-inset-bottom))" }}
 			>
-				{song && (
+				{song ? (
 					<SongSheet
 						content={song.content}
-						capo={0}
-						view="fingered"
+						// A capo'd song shown as fingered shapes with no mention of the capo
+						// is wrong for the one fan in the room holding a guitar, so the fan
+						// view reads in concert pitch — the same translation §D5 does, and
+						// the capo is named on the bar below.
+						capo={song.capo ?? 0}
+						view="concert"
 						transpose={transpose}
 						hideChords={!chords}
 						align={chords ? "left" : "center"}
 						lyricSize={lyricSize}
 						chordSize={chordSize}
 					/>
+				) : (
+					<p
+						className="px-8 text-center text-[15px]"
+						style={{ color: "#9d9281" }}
+					>
+						The band just changed the set — hold on.
+					</p>
 				)}
 			</div>
 
@@ -172,6 +254,15 @@ function FanLiveView() {
 						<div className="truncate font-display text-[18px] font-bold leading-[1.1] tracking-[-0.01em]">
 							{song?.title}
 						</div>
+						{/* The artist is computed by the server and was never rendered — for
+						    a covers set it is exactly what a stranger wants to know. */}
+						{(song?.artist || upNext) && (
+							<div className="mt-[3px] truncate text-[11.5px] text-muted-foreground">
+								{song?.artist}
+								{song?.artist && upNext ? " · " : ""}
+								{upNext && <>up next: {upNext.title}</>}
+							</div>
+						)}
 					</div>
 					<IconChevronUp className="size-4 flex-none text-muted-foreground" />
 				</div>
@@ -293,20 +384,29 @@ function FanLiveView() {
 							</div>
 						</div>
 
+						{/* This used to be "Follow {band}" as static text beside a "Tip the
+						    band" button with no onClick — the two things the drawer promised
+						    a room full of strangers, neither of which did anything. A dead
+						    tip button in front of eighty people is worse than no tip button,
+						    so what's here now is the one thing that genuinely works from a
+						    phone with no account: passing the code to whoever is next to you.
+						    A real follow/tip link needs somewhere in the model to live first
+						    (§D27). */}
 						<div className="mt-[11px] flex items-center justify-between gap-2.5 border-t border-border pb-1 pt-[11px]">
 							<div className="min-w-0">
 								<div className="text-[11px] text-muted-foreground">
-									Enjoying the set?
+									{data.songCount} songs tonight · on {currentIndex + 1}
 								</div>
 								<div className="truncate font-display text-[13px] font-semibold">
-									Follow {data.band}
+									{data.band}
 								</div>
 							</div>
 							<button
 								type="button"
+								onClick={onShare}
 								className="flex h-[38px] flex-none items-center gap-1.5 rounded-[10px] bg-primary px-[15px] font-display text-[13px] font-semibold text-primary-foreground"
 							>
-								♥ Tip the band
+								{shared ? "Link copied" : "Share this"}
 							</button>
 						</div>
 					</div>

@@ -1,7 +1,9 @@
 import frontend from "../frontend/index.html";
 import landing from "../landing/index.html";
 import { api } from "./api";
+import { prisma } from "./prisma";
 import { startPdfExportWorker } from "./services/pdfExports";
+import { startWatchdog } from "./watchdog";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -60,6 +62,48 @@ function serveIcon(name: string) {
 		});
 }
 
+/**
+ * Response headers for every surface we serve from a handler (CLAUDE.md §D27).
+ *
+ * **Known gap, stated rather than papered over:** the three HTML surfaces (`/`, `/app`,
+ * `/app/*` — which includes the public fan view) are served by Bun from an `HTMLBundle`
+ * route, and `Bun.serve` exposes no hook to touch those responses. `server.fetch()` does
+ * not re-enter routing ("fetch() requires the server to have a fetch handler"), so there
+ * is no in-process way to wrap them either. Getting headers onto the HTML means either
+ * building the SPA to static files and serving them ourselves — which would mean
+ * re-implementing the asset layout §D7's service worker depends on — or a proxy in front.
+ * Until then the pages carry none of these, so no CSP is shipped at all: a policy that
+ * covers only the JSON API protects nothing, and claiming one would be worse than the gap.
+ */
+function withSecurityHeaders(request: Request, response: Response): Response {
+	const headers = response.headers;
+	headers.set("X-Content-Type-Options", "nosniff");
+	headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+	headers.set("X-Frame-Options", "DENY");
+	// HSTS is a promise the browser remembers for a year, so only make it on a request
+	// that actually arrived over TLS — otherwise a laptop running `bun run dev` would
+	// lock itself out of http://localhost:3000 for twelve months. Behind Railway's edge
+	// the TLS terminates upstream, hence the forwarded header.
+	const forwarded = request.headers.get("x-forwarded-proto");
+	const scheme =
+		forwarded?.split(",")[0].trim() ?? new URL(request.url).protocol;
+	if (scheme === "https" || scheme === "https:") {
+		headers.set(
+			"Strict-Transport-Security",
+			"max-age=31536000; includeSubDomains",
+		);
+	}
+	return response;
+}
+
+/** Wrap a route handler so whatever it answers carries the headers above. */
+function secured(
+	handler: (request: Request) => Response | Promise<Response>,
+): (request: Request) => Promise<Response> {
+	return async (request) =>
+		withSecurityHeaders(request, await handler(request));
+}
+
 const server = Bun.serve({
 	// Bind to all interfaces and the platform-provided port. Without an explicit
 	// hostname, Bun.serve binds to localhost (127.0.0.1) once $PORT is set, which
@@ -77,12 +121,14 @@ const server = Bun.serve({
 	// The PDF service caps its own runtime well under this (see songbooksPdf.ts).
 	idleTimeout: 255,
 	routes: {
-		"/api/*": api.fetch,
-		"/app/sw.js": serveSw,
-		"/app/manifest.webmanifest": serveManifest,
-		"/app/icon-192.png": serveIcon("icon-192.png"),
-		"/app/icon-512.png": serveIcon("icon-512.png"),
-		"/app/icon-maskable-512.png": serveIcon("icon-maskable-512.png"),
+		// Every route below that is a *handler* gets the security headers; the three
+		// HTMLBundle routes at the bottom cannot — see `withSecurityHeaders`.
+		"/api/*": secured((request) => api.fetch(request)),
+		"/app/sw.js": secured(serveSw),
+		"/app/manifest.webmanifest": secured(serveManifest),
+		"/app/icon-192.png": secured(serveIcon("icon-192.png")),
+		"/app/icon-512.png": secured(serveIcon("icon-512.png")),
+		"/app/icon-maskable-512.png": secured(serveIcon("icon-maskable-512.png")),
 		"/app": frontend, // bare path + the SPA basepath
 		"/app/*": frontend, // matches with basepath in frontend; also the PWA start_url "/app/"
 		"/": landing,
@@ -97,6 +143,21 @@ console.log(`🐲 Bun is running at http://${server.hostname}:${server.port}`);
 // whether or not the queue is healthy, and a failure here must not stop the boot.
 startPdfExportWorker().catch((error) => {
 	console.error("[PDF] worker failed to start", error);
+});
+
+// Notice a wedge and exit, so the platform's restart policy has something to react to
+// (§D17 documented that nothing else can). Five consecutive failures of the same
+// `SELECT 1` the healthcheck runs, 30s apart: two and a half minutes of a database that
+// cannot be read is not a slow query under a PDF render, it is a dead container.
+startWatchdog({
+	check: () => prisma.$queryRaw`SELECT 1`,
+	onDead: (failures, error) => {
+		console.error(
+			`[watchdog] ${failures} consecutive failed checks — exiting`,
+			error,
+		);
+		process.exit(1);
+	},
 });
 
 // Run @tanstack/router-cli watch if in development
