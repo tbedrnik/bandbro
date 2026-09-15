@@ -55,7 +55,7 @@ function OfflineShelf() {
 	useTheme();
 	const online = useOnline();
 	const setlists = useOfflineSetlists();
-	// Recomputed whenever the shelf changes, which is the only time it can move.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: the shelf list is when usage can move
 	const used = useMemo(() => offlineBytesUsed(), [setlists]);
 	const [q, setQ] = useState("");
 

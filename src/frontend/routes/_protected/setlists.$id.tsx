@@ -100,6 +100,7 @@ function SetlistDetail() {
 	const [adding, setAdding] = useState(false);
 	const [q, setQ] = useState("");
 	const [downloaded, setDownloaded] = useState(() => isDownloaded(id));
+	const [downloadFailed, setDownloadFailed] = useState(false);
 	const [shareOpen, setShareOpen] = useState(false);
 	const [renameOpen, setRenameOpen] = useState(false);
 	const [cloneOpen, setCloneOpen] = useState(false);
@@ -257,7 +258,6 @@ function SetlistDetail() {
 		update.mutate({ chartIds: [...chartIds, chartId] });
 	};
 
-	const [downloadFailed, setDownloadFailed] = useState(false);
 	const onDownload = () => {
 		// `downloadSetlist` returns whether the write survived, and that return value is
 		// the whole point of it: discarding it marked the set "Offline · downloaded" after
