@@ -28,6 +28,9 @@ const { songbooksUpdate } = await import("./songbooksUpdate");
 const { defaultLineupId, ensureDefaultLineup, lineupsCreate, lineupsDelete } =
 	await import("./lineups");
 const { forkChartInto } = await import("./forkChart");
+const { songsUpdate } = await import("./songsUpdate");
+const { requireWrite, requireMember, requireAdmin, readableScopeWhere } =
+	await import("./scope");
 const { lineupReadinessFor, proficiencySet } = await import("./proficiency");
 const { songsList } = await import("./songsList");
 const { foreignChartIds } = await import("./scope");
@@ -687,5 +690,118 @@ describe("a setlist holding another band's chart", () => {
 		});
 		expect(original.content).toBe("[C]I heard there was");
 		expect(original.organizationId).toBe(ids.other);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// The security boundary. `scope.ts` guards every write in the app and had no tests.
+// ---------------------------------------------------------------------------
+
+describe("scope guards", () => {
+	test("requireWrite: a writer may write, a reader may not", async () => {
+		expect(await requireWrite(ids.tomas, ids.banda)).toBe("admin");
+		expect(await requireWrite(ids.dave, ids.banda)).toBe("writer");
+		await expect(requireWrite("u_reader", ids.banda)).rejects.toThrow(
+			/writer or admin/i,
+		);
+	});
+
+	test("requireWrite: a non-member is refused", async () => {
+		await expect(requireWrite(ids.stranger, ids.banda)).rejects.toThrow();
+	});
+
+	test("requireWrite: the curated library is never writable", async () => {
+		await expect(requireWrite(ids.tomas, null)).rejects.toThrow(/read-only/i);
+	});
+
+	test("requireAdmin: writers are not admins", async () => {
+		expect(await requireAdmin(ids.tomas, ids.banda)).toBe("admin");
+		await expect(requireAdmin(ids.dave, ids.banda)).rejects.toThrow(/admin/i);
+	});
+
+	test("requireMember: membership is the read floor", async () => {
+		expect(await requireMember(ids.dave, ids.banda)).toBe("writer");
+		await expect(requireMember(ids.stranger, ids.banda)).rejects.toThrow();
+	});
+
+	test("readableScopeWhere: an anonymous caller sees curated and nothing else", () => {
+		// Written as one OR, the membership arm degenerates to "any org with any member"
+		// for an anonymous caller, because Prisma reads an undefined filter as no filter.
+		expect(readableScopeWhere(undefined)).toEqual({ organizationId: null });
+		expect(readableScopeWhere("u_x")).toHaveProperty("OR");
+	});
+});
+
+describe("songsUpdate chart ownership", () => {
+	test("a chart id from another song is refused, not written", async () => {
+		const mine = await prisma.song.create({
+			data: {
+				name: "My Song",
+				slug: "my-song",
+				organizationId: ids.banda,
+				charts: { create: { content: "[C]mine", organizationId: ids.banda } },
+			},
+			include: { charts: true },
+		});
+		const curated = await prisma.song.findUniqueOrThrow({
+			where: { slug: "house-of-the-rising-sun" },
+			include: { charts: true },
+		});
+		const curatedChartId = curated.charts[0]!.id;
+
+		// The exploit: every user is admin of their own personal band, and GET /songs
+		// hands out every curated chart id — so `requireWrite` on *my* song passed while
+		// the write landed on a chart in a scope nobody may write.
+		await expect(
+			songsUpdate({
+				slug: "my-song",
+				userId: ids.tomas,
+				payload: {
+					chart: { id: curatedChartId, content: "[X]vandalised" },
+				},
+			}),
+		).rejects.toThrow(/isn't part of this song/i);
+
+		const after = await prisma.chart.findUniqueOrThrow({
+			where: { id: curatedChartId },
+		});
+		expect(after.content).toBe("[Am]There is a house");
+		expect(after.organizationId).toBeNull();
+
+		// And my own chart still updates normally.
+		await songsUpdate({
+			slug: "my-song",
+			userId: ids.tomas,
+			payload: { chart: { id: mine.charts[0]!.id, content: "[D]mine now" } },
+		});
+		const ok = await prisma.chart.findUniqueOrThrow({
+			where: { id: mine.charts[0]!.id },
+		});
+		expect(ok.content).toBe("[D]mine now");
+	});
+
+	test("metadata in the ChordPro is denormalized on update, not dropped", async () => {
+		// The editor sends neither `credits` nor `year`, so before this these directives
+		// were parsed and then silently lost on every edit after creation (§D4).
+		const updated = await songsUpdate({
+			slug: "my-song",
+			userId: ids.tomas,
+			payload: {
+				chart: {
+					content:
+						"{artist: Bob Dylan}\n{year: 1975}\n{key: G}\n{tempo: 120}\n{tags: folk}\n[G]words",
+				},
+			},
+		});
+		expect(updated.year).toBe(1975);
+		expect(updated.tags.map((t) => t.tag.name)).toEqual(["folk"]);
+		expect(updated.charts[0]?.key).toBe("G");
+		expect(updated.charts[0]?.tempo).toBe(120);
+
+		const credits = await prisma.credit.findMany({
+			where: { songId: updated.id },
+			include: { artist: true },
+		});
+		expect(credits.map((c) => c.artist.name)).toEqual(["Bob Dylan"]);
 	});
 });

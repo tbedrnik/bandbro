@@ -81,8 +81,30 @@ const pdfExportSchema = t.Object({
 	finishedAt: t.Nullable(t.String()),
 });
 
+/**
+ * Length caps on everything a client can send.
+ *
+ * Without them a single request can carry an arbitrarily large chart, which is then read
+ * back *in full* by the setlist read, the unauthenticated fan poll, the PDF loader and the
+ * offline snapshot — a couple of concurrent reads is enough to exhaust a small container,
+ * and one oversized chart also blows the ~5 MB localStorage budget the offline shelf lives
+ * in. The numbers are deliberate multiples of real content: a long ChordPro song is ~4 KB,
+ * so 64 KB is 16x headroom; a big setlist is ~60 songs, so 200 entries is 3x.
+ *
+ * `MAX_SONGS` is load-bearing beyond memory: `chartIds` flows into a `WHERE id IN (…)` and
+ * a `createMany`, and SQLite has a hard ceiling on bound parameters.
+ */
+const CONTENT = 64 * 1024;
+const NAME = 200;
+const SHORT = 100;
+const TEXT = 2000;
+const ID = 64;
+const URL_MAX = 2048;
+const MAX_SONGS = 200;
+const MAX_LIST = 50;
+
 const creditSchema = t.Object({
-	artist: t.Object({ name: t.String() }),
+	artist: t.Object({ name: t.String({ minLength: 1, maxLength: NAME }) }),
 	role: t.Enum(CreditRole),
 });
 
@@ -128,12 +150,12 @@ export const api = new Elysia({ prefix: "/api" })
 			.get("/", ({ user, query }) => songsList({ user, query }), {
 				auth: true,
 				query: t.Object({
-					lineupId: t.Optional(t.String()),
-					scope: t.Optional(t.String()),
-					q: t.Optional(t.String()),
-					artist: t.Optional(t.String()),
-					key: t.Optional(t.String()),
-					tag: t.Optional(t.String()),
+					lineupId: t.Optional(t.String({ maxLength: ID })),
+					scope: t.Optional(t.String({ maxLength: ID })),
+					q: t.Optional(t.String({ maxLength: SHORT })),
+					artist: t.Optional(t.String({ maxLength: NAME })),
+					key: t.Optional(t.String({ maxLength: SHORT })),
+					tag: t.Optional(t.String({ maxLength: NAME })),
 				}),
 			})
 			.get(
@@ -149,16 +171,18 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						name: t.String({ minLength: 1 }),
+						name: t.String({ minLength: 1, maxLength: NAME }),
 						year: t.Optional(
 							t.Nullable(t.Integer({ minimum: 0, maximum: 2100 })),
 						),
-						organizationId: t.String(),
-						credits: t.Optional(t.Array(creditSchema)),
-						tags: t.Optional(t.Array(t.String())),
+						organizationId: t.String({ maxLength: ID }),
+						credits: t.Optional(t.Array(creditSchema, { maxItems: MAX_LIST })),
+						tags: t.Optional(
+							t.Array(t.String({ maxLength: NAME }), { maxItems: MAX_LIST }),
+						),
 						chart: t.Object({
-							content: t.String(),
-							description: t.Optional(t.String()),
+							content: t.String({ maxLength: CONTENT }),
+							description: t.Optional(t.String({ maxLength: TEXT })),
 						}),
 					}),
 				},
@@ -186,8 +210,8 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						url: t.String({ minLength: 1 }),
-						organizationId: t.String(),
+						url: t.String({ minLength: 1, maxLength: URL_MAX }),
+						organizationId: t.String({ maxLength: ID }),
 					}),
 				},
 			)
@@ -198,17 +222,19 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						name: t.Optional(t.String()),
+						name: t.Optional(t.String({ minLength: 1, maxLength: NAME })),
 						year: t.Optional(
 							t.Nullable(t.Integer({ minimum: 0, maximum: 2100 })),
 						),
-						tags: t.Optional(t.Array(t.String())),
-						credits: t.Optional(t.Array(creditSchema)),
+						tags: t.Optional(
+							t.Array(t.String({ maxLength: NAME }), { maxItems: MAX_LIST }),
+						),
+						credits: t.Optional(t.Array(creditSchema, { maxItems: MAX_LIST })),
 						chart: t.Optional(
 							t.Object({
-								id: t.Optional(t.String()),
-								content: t.String(),
-								description: t.Optional(t.String()),
+								id: t.Optional(t.String({ maxLength: ID })),
+								content: t.String({ maxLength: CONTENT }),
+								description: t.Optional(t.String({ maxLength: TEXT })),
 							}),
 						),
 					}),
@@ -234,8 +260,8 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						targetOrganizationId: t.String(),
-						chartId: t.Optional(t.String()),
+						targetOrganizationId: t.String({ maxLength: ID }),
+						chartId: t.Optional(t.String({ maxLength: ID })),
 					}),
 				},
 			),
@@ -248,8 +274,8 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					query: t.Object({
-						scope: t.Optional(t.String()),
-						lineupId: t.Optional(t.String()),
+						scope: t.Optional(t.String({ maxLength: ID })),
+						lineupId: t.Optional(t.String({ maxLength: ID })),
 					}),
 				},
 			)
@@ -266,11 +292,13 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						title: t.String({ minLength: 1 }),
-						description: t.Optional(t.String()),
+						title: t.String({ minLength: 1, maxLength: NAME }),
+						description: t.Optional(t.String({ maxLength: TEXT })),
 						// The lineup owns the setlist; the band is derived from it (§D25).
-						lineupId: t.String(),
-						chartIds: t.Optional(t.Array(t.String())),
+						lineupId: t.String({ maxLength: ID }),
+						chartIds: t.Optional(
+							t.Array(t.String({ maxLength: ID }), { maxItems: MAX_SONGS }),
+						),
 					}),
 				},
 			)
@@ -281,11 +309,13 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						title: t.Optional(t.String({ minLength: 1 })),
-						description: t.Optional(t.String()),
+						title: t.Optional(t.String({ minLength: 1, maxLength: NAME })),
+						description: t.Optional(t.String({ maxLength: TEXT })),
 						// Move the set to another lineup of the same band.
-						lineupId: t.Optional(t.String()),
-						chartIds: t.Optional(t.Array(t.String())),
+						lineupId: t.Optional(t.String({ maxLength: ID })),
+						chartIds: t.Optional(
+							t.Array(t.String({ maxLength: ID }), { maxItems: MAX_SONGS }),
+						),
 					}),
 				},
 			)
@@ -307,8 +337,8 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						targetLineupId: t.String(),
-						title: t.Optional(t.String()),
+						targetLineupId: t.String({ maxLength: ID }),
+						title: t.Optional(t.String({ minLength: 1, maxLength: NAME })),
 					}),
 				},
 			)
@@ -341,7 +371,9 @@ export const api = new Elysia({ prefix: "/api" })
 		group
 			.get("/", ({ user, query }) => lineupsList({ userId: user.id, query }), {
 				auth: true,
-				query: t.Object({ organizationId: t.Optional(t.String()) }),
+				query: t.Object({
+					organizationId: t.Optional(t.String({ maxLength: ID })),
+				}),
 			})
 			.post(
 				"/",
@@ -349,9 +381,11 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						name: t.String({ minLength: 1 }),
-						organizationId: t.String(),
-						memberIds: t.Optional(t.Array(t.String())),
+						name: t.String({ minLength: 1, maxLength: NAME }),
+						organizationId: t.String({ maxLength: ID }),
+						memberIds: t.Optional(
+							t.Array(t.String({ maxLength: ID }), { maxItems: MAX_LIST }),
+						),
 					}),
 				},
 			)
@@ -362,8 +396,10 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						name: t.Optional(t.String({ minLength: 1 })),
-						memberIds: t.Optional(t.Array(t.String())),
+						name: t.Optional(t.String({ minLength: 1, maxLength: NAME })),
+						memberIds: t.Optional(
+							t.Array(t.String({ maxLength: ID }), { maxItems: MAX_LIST }),
+						),
 					}),
 				},
 			)
@@ -430,8 +466,11 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						endpoint: t.String(),
-						keys: t.Object({ p256dh: t.String(), auth: t.String() }),
+						endpoint: t.String({ minLength: 1, maxLength: URL_MAX }),
+						keys: t.Object({
+							p256dh: t.String({ maxLength: 400 }),
+							auth: t.String({ maxLength: 400 }),
+						}),
 					}),
 					response: t.Object({ ok: t.Boolean() }),
 				},
@@ -442,7 +481,9 @@ export const api = new Elysia({ prefix: "/api" })
 					pushUnsubscribe({ userId: user.id, endpoint: body.endpoint }),
 				{
 					auth: true,
-					body: t.Object({ endpoint: t.String() }),
+					body: t.Object({
+						endpoint: t.String({ minLength: 1, maxLength: URL_MAX }),
+					}),
 					response: t.Object({ ok: t.Boolean() }),
 				},
 			)
@@ -466,7 +507,10 @@ export const api = new Elysia({ prefix: "/api" })
 						clientId: query.clientId,
 					}),
 				{
-					query: t.Object({ clientId: t.Optional(t.String()) }),
+					// clientId is unauthenticated and becomes an in-memory map key.
+					query: t.Object({
+						clientId: t.Optional(t.String({ maxLength: ID })),
+					}),
 				},
 			)
 			// Band creates (or reuses) the share session for a setlist.
@@ -476,7 +520,7 @@ export const api = new Elysia({ prefix: "/api" })
 					liveSessionCreate({ userId: user.id, songbookId: body.songbookId }),
 				{
 					auth: true,
-					body: t.Object({ songbookId: t.String() }),
+					body: t.Object({ songbookId: t.String({ maxLength: ID }) }),
 				},
 			)
 			// Band advances the set — fans follow on their next poll.
@@ -574,9 +618,9 @@ export const api = new Elysia({ prefix: "/api" })
 				{
 					auth: true,
 					body: t.Object({
-						chartId: t.String(),
-						proposedContent: t.String(),
-						message: t.Optional(t.String()),
+						chartId: t.String({ maxLength: ID }),
+						proposedContent: t.String({ minLength: 1, maxLength: CONTENT }),
+						message: t.Optional(t.String({ maxLength: TEXT })),
 					}),
 				},
 			)
@@ -589,7 +633,7 @@ export const api = new Elysia({ prefix: "/api" })
 					}),
 				{
 					auth: true,
-					query: t.Object({ organizationId: t.String() }),
+					query: t.Object({ organizationId: t.String({ maxLength: ID }) }),
 				},
 			)
 			.post(
