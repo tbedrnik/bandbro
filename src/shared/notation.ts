@@ -51,8 +51,12 @@ const TO_INTERNATIONAL: Record<string, string> = {
  * quietly rewrite them ("Hridge", "Bhorus"). Anything outside the alphabet is not a
  * chord, and nothing touches it.
  */
+// `mi` is the Central-European minor spelling and `zm`/`zv` are its diminished and
+// augmented (zmenšený / zvětšený) — a kytary chart uses all three, and a suffix the
+// pattern doesn't know makes the whole token "not a chord", so it is copied through
+// untransposed and unmapped rather than shifted (§D11's `isChord` gate).
 const CHORD_PART =
-	/^[A-H][#b]?(?:major|minor|maj|min|mi|dim|aug|sus|add|alt|no|m|M|Δ|°|ø|\+|-|\d|#|b|\(|\)|\s)*$/;
+	/^[A-H][#b]?(?:major|minor|maj|min|mi|dim|aug|sus|add|alt|zm|zv|no|m|M|Δ|°|ø|\+|-|\d|#|b|\(|\)|\.|\s)*$/;
 
 /**
  * Does this token name a chord? Written for the tokens that turn up between `[…]` in

@@ -13,6 +13,7 @@ import {
 	useOnline,
 } from "@frontend/lib/offline";
 import { useTheme } from "@frontend/lib/theme";
+import { formatAge } from "@shared/datetime";
 import { displayKey } from "@shared/notation";
 import { searchSongs } from "@shared/songSearch";
 import {
@@ -243,9 +244,5 @@ function SearchResults({
 
 /** Coarse "how fresh is this copy" — the exact minute never matters on a stage. */
 function formatDownloadedAt(at: number) {
-	const days = Math.floor((Date.now() - at) / 86_400_000);
-	if (days < 1) return "today";
-	if (days === 1) return "yesterday";
-	if (days < 30) return `${days} days ago`;
-	return new Date(at).toLocaleDateString();
+	return formatAge(at);
 }

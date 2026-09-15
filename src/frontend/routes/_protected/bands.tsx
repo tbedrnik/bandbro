@@ -10,6 +10,7 @@ import { useLineups } from "@frontend/lib/lineups";
 import { useOnline } from "@frontend/lib/offline";
 import { useScopes } from "@frontend/lib/scopes";
 import { cn } from "@frontend/lib/utils";
+import { formatDate } from "@shared/datetime";
 import { IconLink, IconPlus, IconQrcode } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -358,14 +359,6 @@ const STATUS_LABEL: Record<Invite["status"], string> = {
 	expired: "Expired",
 	exhausted: "Used up",
 };
-
-function formatDate(iso: string): string {
-	return new Date(iso).toLocaleDateString(undefined, {
-		day: "numeric",
-		month: "short",
-		year: "numeric",
-	});
-}
 
 function InviteRow({
 	invite,

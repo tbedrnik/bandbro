@@ -162,3 +162,27 @@ describe("displayKey", () => {
 		expect(displayKey(undefined)).toBe("");
 	});
 });
+
+describe("Czech chord suffixes", () => {
+	test("zm / zv (zmenšený, zvětšený) are chords, not prose", () => {
+		// A suffix the pattern doesn't know makes the whole token "not a chord", so it is
+		// copied through untransposed and unmapped — a kytary chart using these silently
+		// stopped transposing (§D27).
+		expect(isChord("Czm")).toBe(true);
+		expect(isChord("Dzv")).toBe(true);
+		expect(isChord("Hzm")).toBe(true);
+		expect(isChord("Czm.")).toBe(true);
+	});
+
+	test("mi, the Central-European minor, still is too", () => {
+		expect(isChord("Ami")).toBe(true);
+		expect(isChord("Hmi")).toBe(true);
+	});
+
+	test("and section markers are still not", () => {
+		// The gate exists to keep these out; a wider suffix alphabet must not let them in.
+		expect(isChord("Bridge")).toBe(false);
+		expect(isChord("Chorus")).toBe(false);
+		expect(isChord("Dohra")).toBe(false);
+	});
+});
