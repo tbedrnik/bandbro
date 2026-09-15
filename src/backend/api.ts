@@ -160,6 +160,9 @@ export const api = new Elysia({ prefix: "/api" })
 					artist: t.Optional(t.String({ maxLength: NAME })),
 					key: t.Optional(t.String({ maxLength: SHORT })),
 					tag: t.Optional(t.String({ maxLength: NAME })),
+					// No `maximum` here on purpose: the service clamps instead, so an
+					// over-eager caller gets a page rather than a validation error.
+					limit: t.Optional(t.Numeric({ minimum: 1 })),
 				}),
 			})
 			.get(

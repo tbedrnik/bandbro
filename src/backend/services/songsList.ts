@@ -1,4 +1,5 @@
 import { prisma } from "@backend/prisma";
+import { SONGS_PAGE, SONGS_PAGE_MAX } from "@shared/pagination";
 import type { ProficiencyLevel, Readiness } from "@shared/proficiency";
 import type { User } from "better-auth/types";
 import type { Prisma } from "../../generated/prisma/client";
@@ -21,6 +22,11 @@ export type SongsListQuery = {
 	 * the setlist builder sorts on. Without it `readiness` comes back null.
 	 */
 	lineupId?: string;
+	/**
+	 * Page size. Defaults to `SONGS_PAGE` and is clamped to `SONGS_PAGE_MAX` rather than
+	 * rejected — a caller asking for too much should get a sane page, not a 422.
+	 */
+	limit?: number;
 };
 
 export async function songsList({
@@ -67,6 +73,12 @@ export async function songsList({
 	const songs = await prisma.song.findMany({
 		where: { AND: and },
 		orderBy: { name: "asc" },
+		// This query used to be unbounded, and the Library fired it on every keystroke:
+		// a full-library scan per character, with every row serialized back (§D27).
+		take: Math.min(
+			Math.max(1, Math.trunc(query.limit ?? SONGS_PAGE)),
+			SONGS_PAGE_MAX,
+		),
 		include: {
 			organization: {
 				select: { id: true, name: true, slug: true, metadata: true },

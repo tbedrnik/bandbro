@@ -11,7 +11,10 @@ import { IconCheck } from "@tabler/icons-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-export const Route = createFileRoute("/design")({
+// The design system sheet is an internal reference, not a page for the public. It used
+// to sit at the route root — outside `_protected` — so anyone signed out could enumerate
+// it, and its imports landed in every visitor's bundle (CLAUDE.md §D27).
+export const Route = createFileRoute("/_protected/design")({
 	component: DesignSystemPage,
 });
 

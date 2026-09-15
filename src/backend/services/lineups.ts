@@ -125,15 +125,67 @@ export async function lineupsList({
 		});
 	}
 
-	const memberships = await prisma.member.findMany({
-		where: { userId },
-		select: { organizationId: true },
-	});
-	for (const orgId of new Set(memberships.map((m) => m.organizationId))) {
-		await ensureDefaultLineup(orgId);
+	// Across every band at once, rather than `ensureDefaultLineup` in a loop. Measured
+	// for a user in four bands: 32 statements per request down to 5, for work that is a
+	// no-op after the first ever call (CLAUDE.md §D27). Batching it is only possible
+	// because a default lineup's id is *derived* from its band's, so the rows can be
+	// looked up before any of them exist.
+	//
+	// (Five, not two, because Prisma issues a statement per included relation — the
+	// point is that the count no longer grows with the number of bands.)
+	const readable = { organization: { members: { some: { userId } } } };
+
+	const [members, lineups] = await Promise.all([
+		prisma.member.findMany({
+			where: readable,
+			select: {
+				organizationId: true,
+				userId: true,
+				organization: { select: { name: true } },
+			},
+		}),
+		prisma.lineup.findMany({
+			where: readable,
+			orderBy: [{ isDefault: "desc" }, { name: "asc" }],
+			include: lineupInclude,
+		}),
+	]);
+
+	const bands = new Map<string, Set<string>>();
+	for (const m of members) {
+		const band = bands.get(m.organizationId) ?? new Set<string>();
+		band.add(m.userId);
+		bands.set(m.organizationId, band);
 	}
+	const defaults = new Map(
+		lineups.filter((l) => l.isDefault).map((l) => [l.id, l]),
+	);
+
+	// Reconcile, and only then. A band with no default lineup yet, or one that hasn't
+	// caught up with somebody who joined since, are both rare — so the writes, and the
+	// re-read they force, happen only when there is something to do. The steady state
+	// is the two reads above.
+	let changed = false;
+	for (const [organizationId, userIds] of bands) {
+		const lineup = defaults.get(defaultLineupId(organizationId));
+		if (!lineup) {
+			await ensureDefaultLineup(organizationId);
+			changed = true;
+			continue;
+		}
+		const present = new Set(lineup.members.map((m) => m.userId));
+		const missing = [...userIds].filter((id) => !present.has(id));
+		if (missing.length) {
+			await prisma.lineupMember.createMany({
+				data: missing.map((id) => ({ lineupId: lineup.id, userId: id })),
+			});
+			changed = true;
+		}
+	}
+	if (!changed) return lineups;
+
 	return prisma.lineup.findMany({
-		where: { organization: { members: { some: { userId } } } },
+		where: readable,
 		orderBy: [{ isDefault: "desc" }, { name: "asc" }],
 		include: lineupInclude,
 	});

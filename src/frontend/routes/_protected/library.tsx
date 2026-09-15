@@ -18,8 +18,10 @@ import {
 	useRememberedScope,
 	useScopes,
 } from "@frontend/lib/scopes";
+import { useDebounced } from "@frontend/lib/useDebounced";
 import { cn } from "@frontend/lib/utils";
 import { displayKey } from "@shared/notation";
+import { SONGS_PAGE } from "@shared/pagination";
 import { LEVEL_LABELS, type ProficiencyLevel } from "@shared/proficiency";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -41,13 +43,19 @@ function LibraryPage() {
 	const { scopes, bands, personal, isPending: scopesPending } = useScopes();
 	const [scopeParam, setScopeParam] = useRememberedScope(scopes, scopesPending);
 	const [q, setQ] = useState("");
+	// The box stays live; only the request waits for the typing to stop (§D27).
+	const query = useDebounced(q);
 	const [mine, setMine] = useState<ProficiencyLevel | "ALL">("ALL");
 	const online = useOnline();
 
 	const active: Scope = scopes.find((s) => s.param === scopeParam) ?? scopes[0];
 
 	const { data: songs, isPending } = useQuery({
-		...api.songs.get.queryOptions({ scope: scopeParam, ...(q ? { q } : {}) }),
+		...api.songs.get.queryOptions({
+			scope: scopeParam,
+			limit: SONGS_PAGE,
+			...(query ? { q: query } : {}),
+		}),
 		// Offline the fetch can only fail; retrying it three times just holds the screen
 		// on "Loading…" before it can say so.
 		retry: online ? 3 : false,
@@ -94,8 +102,12 @@ function LibraryPage() {
 						{DESCRIPTIONS[active?.kind ?? "band"]}
 					</p>
 				</div>
+				{/* A page that came back exactly full is the only evidence there is more
+				    behind it, so say so rather than silently truncating (§D27). */}
 				<div className="font-mono text-sm text-muted-foreground">
 					{visible.length} songs
+					{(songs?.length ?? 0) >= SONGS_PAGE &&
+						" (first page — search to narrow)"}
 				</div>
 			</div>
 

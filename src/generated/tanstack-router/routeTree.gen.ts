@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './../../frontend/routes/__root'
 import { Route as OfflineRouteImport } from './../../frontend/routes/offline'
-import { Route as DesignRouteImport } from './../../frontend/routes/design'
 import { Route as ProtectedLayoutRouteImport } from './../../frontend/routes/_protected/layout'
 import { Route as AuthLayoutRouteImport } from './../../frontend/routes/_auth/layout'
 import { Route as SIndexRouteImport } from './../../frontend/routes/s.index'
@@ -22,6 +21,7 @@ import { Route as ProtectedSuggestionsRouteImport } from './../../frontend/route
 import { Route as ProtectedSetlistsRouteImport } from './../../frontend/routes/_protected/setlists'
 import { Route as ProtectedPreferencesRouteImport } from './../../frontend/routes/_protected/preferences'
 import { Route as ProtectedLibraryRouteImport } from './../../frontend/routes/_protected/library'
+import { Route as ProtectedDesignRouteImport } from './../../frontend/routes/_protected/design'
 import { Route as ProtectedBandsRouteImport } from './../../frontend/routes/_protected/bands'
 import { Route as AuthRegisterRouteImport } from './../../frontend/routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './../../frontend/routes/_auth/login'
@@ -35,11 +35,6 @@ import { Route as ProtectedSetlistsIdPrintRouteImport } from './../../frontend/r
 const OfflineRoute = OfflineRouteImport.update({
   id: '/offline',
   path: '/offline',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DesignRoute = DesignRouteImport.update({
-  id: '/design',
-  path: '/design',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProtectedLayoutRoute = ProtectedLayoutRouteImport.update({
@@ -95,6 +90,11 @@ const ProtectedLibraryRoute = ProtectedLibraryRouteImport.update({
   path: '/library',
   getParentRoute: () => ProtectedLayoutRoute,
 } as any)
+const ProtectedDesignRoute = ProtectedDesignRouteImport.update({
+  id: '/design',
+  path: '/design',
+  getParentRoute: () => ProtectedLayoutRoute,
+} as any)
 const ProtectedBandsRoute = ProtectedBandsRouteImport.update({
   id: '/bands',
   path: '/bands',
@@ -144,11 +144,11 @@ const ProtectedSetlistsIdPrintRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof ProtectedIndexRoute
-  '/design': typeof DesignRoute
   '/offline': typeof OfflineRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/bands': typeof ProtectedBandsRoute
+  '/design': typeof ProtectedDesignRoute
   '/library': typeof ProtectedLibraryRoute
   '/preferences': typeof ProtectedPreferencesRoute
   '/setlists': typeof ProtectedSetlistsRouteWithChildren
@@ -166,11 +166,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof ProtectedIndexRoute
-  '/design': typeof DesignRoute
   '/offline': typeof OfflineRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/bands': typeof ProtectedBandsRoute
+  '/design': typeof ProtectedDesignRoute
   '/library': typeof ProtectedLibraryRoute
   '/preferences': typeof ProtectedPreferencesRoute
   '/setlists': typeof ProtectedSetlistsRouteWithChildren
@@ -190,11 +190,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_auth': typeof AuthLayoutRouteWithChildren
   '/_protected': typeof ProtectedLayoutRouteWithChildren
-  '/design': typeof DesignRoute
   '/offline': typeof OfflineRoute
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
   '/_protected/bands': typeof ProtectedBandsRoute
+  '/_protected/design': typeof ProtectedDesignRoute
   '/_protected/library': typeof ProtectedLibraryRoute
   '/_protected/preferences': typeof ProtectedPreferencesRoute
   '/_protected/setlists': typeof ProtectedSetlistsRouteWithChildren
@@ -215,11 +215,11 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/design'
     | '/offline'
     | '/login'
     | '/register'
     | '/bands'
+    | '/design'
     | '/library'
     | '/preferences'
     | '/setlists'
@@ -237,11 +237,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/design'
     | '/offline'
     | '/login'
     | '/register'
     | '/bands'
+    | '/design'
     | '/library'
     | '/preferences'
     | '/setlists'
@@ -260,11 +260,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_auth'
     | '/_protected'
-    | '/design'
     | '/offline'
     | '/_auth/login'
     | '/_auth/register'
     | '/_protected/bands'
+    | '/_protected/design'
     | '/_protected/library'
     | '/_protected/preferences'
     | '/_protected/setlists'
@@ -285,7 +285,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthLayoutRoute: typeof AuthLayoutRouteWithChildren
   ProtectedLayoutRoute: typeof ProtectedLayoutRouteWithChildren
-  DesignRoute: typeof DesignRoute
   OfflineRoute: typeof OfflineRoute
   JoinCodeRoute: typeof JoinCodeRoute
   SCodeRoute: typeof SCodeRoute
@@ -300,13 +299,6 @@ declare module '@tanstack/react-router' {
       path: '/offline'
       fullPath: '/offline'
       preLoaderRoute: typeof OfflineRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/design': {
-      id: '/design'
-      path: '/design'
-      fullPath: '/design'
-      preLoaderRoute: typeof DesignRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_protected': {
@@ -384,6 +376,13 @@ declare module '@tanstack/react-router' {
       path: '/library'
       fullPath: '/library'
       preLoaderRoute: typeof ProtectedLibraryRouteImport
+      parentRoute: typeof ProtectedLayoutRoute
+    }
+    '/_protected/design': {
+      id: '/_protected/design'
+      path: '/design'
+      fullPath: '/design'
+      preLoaderRoute: typeof ProtectedDesignRouteImport
       parentRoute: typeof ProtectedLayoutRoute
     }
     '/_protected/bands': {
@@ -481,6 +480,7 @@ const ProtectedSetlistsRouteWithChildren =
 
 interface ProtectedLayoutRouteChildren {
   ProtectedBandsRoute: typeof ProtectedBandsRoute
+  ProtectedDesignRoute: typeof ProtectedDesignRoute
   ProtectedLibraryRoute: typeof ProtectedLibraryRoute
   ProtectedPreferencesRoute: typeof ProtectedPreferencesRoute
   ProtectedSetlistsRoute: typeof ProtectedSetlistsRouteWithChildren
@@ -494,6 +494,7 @@ interface ProtectedLayoutRouteChildren {
 
 const ProtectedLayoutRouteChildren: ProtectedLayoutRouteChildren = {
   ProtectedBandsRoute: ProtectedBandsRoute,
+  ProtectedDesignRoute: ProtectedDesignRoute,
   ProtectedLibraryRoute: ProtectedLibraryRoute,
   ProtectedPreferencesRoute: ProtectedPreferencesRoute,
   ProtectedSetlistsRoute: ProtectedSetlistsRouteWithChildren,
@@ -512,7 +513,6 @@ const ProtectedLayoutRouteWithChildren = ProtectedLayoutRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthLayoutRoute: AuthLayoutRouteWithChildren,
   ProtectedLayoutRoute: ProtectedLayoutRouteWithChildren,
-  DesignRoute: DesignRoute,
   OfflineRoute: OfflineRoute,
   JoinCodeRoute: JoinCodeRoute,
   SCodeRoute: SCodeRoute,

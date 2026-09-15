@@ -47,9 +47,11 @@ import {
 } from "@frontend/lib/offline";
 import { useBandRoles } from "@frontend/lib/roles";
 import { useScopes } from "@frontend/lib/scopes";
+import { useDebounced } from "@frontend/lib/useDebounced";
 import { useFanSession } from "@frontend/lib/useFanSession";
 import { cn } from "@frontend/lib/utils";
 import { displayKey } from "@shared/notation";
+import { SONGS_PAGE } from "@shared/pagination";
 import { readinessRank } from "@shared/proficiency";
 import {
 	IconCopy,
@@ -102,6 +104,8 @@ function SetlistDetail() {
 	const online = useOnline();
 	const [adding, setAdding] = useState(false);
 	const [q, setQ] = useState("");
+	// One request per pause in the typing, not per character (§D27).
+	const searchQuery = useDebounced(q);
 	const [downloaded, setDownloaded] = useState(() => isDownloaded(id));
 	const [downloadFailed, setDownloadFailed] = useState(false);
 	const [shareOpen, setShareOpen] = useState(false);
@@ -182,7 +186,8 @@ function SetlistDetail() {
 	// which is the whole point of marking who can play what (§D26).
 	const { data: searchResults } = useQuery({
 		...api.songs.get.queryOptions({
-			...(q ? { q } : {}),
+			limit: SONGS_PAGE,
+			...(searchQuery ? { q: searchQuery } : {}),
 			...(setlistLineupId ? { lineupId: setlistLineupId } : {}),
 		}),
 		enabled: adding && online,
