@@ -1,7 +1,7 @@
 import { prisma } from "@backend/prisma";
 import { parseChordproMeta } from "@shared/chordpro";
 import { lineupLabel } from "@shared/lineups";
-import { getMemberRole, HttpError } from "./scope";
+import { HttpError, requireWrite } from "./scope";
 
 /**
  * Live "fan" sessions — the public, read-only side of a gig (CLAUDE.md fan-experience
@@ -65,7 +65,23 @@ function countWatching(code: string): number {
 	return live;
 }
 
-/** Create (or reuse) the active fan session for a setlist. Any band member may share. */
+/**
+ * How long a shared session stays readable. A gig is an evening; nothing in the app used
+ * to set `active = false`, so every setlist ever shared stayed publicly readable at a
+ * 5-character code forever — and the accumulated live codes are what make guessing one
+ * worth attempting at all. Twelve hours covers a festival day and a very late load-out.
+ */
+const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+
+/** Sessions that are still live: explicitly active, and started recently enough. */
+function liveWhere() {
+	return {
+		active: true,
+		createdAt: { gte: new Date(Date.now() - SESSION_TTL_MS) },
+	};
+}
+
+/** Create (or reuse) the active fan session for a setlist. */
 export async function liveSessionCreate({
 	userId,
 	songbookId,
@@ -79,13 +95,13 @@ export async function liveSessionCreate({
 	});
 	if (!songbook) throw new HttpError(404, "Setlist not found.");
 
-	const role = await getMemberRole(userId, songbook.organizationId);
-	if (!role) {
-		throw new HttpError(403, "You must be a member of this band to share it.");
-	}
+	// Sharing publishes the band's chart text at a world-readable URL, which is a
+	// decision about the band's library rather than a way of reading it — so it needs a
+	// write role, not merely membership (§D27).
+	await requireWrite(userId, songbook.organizationId);
 
 	const existing = await prisma.liveSession.findFirst({
-		where: { songbookId, active: true },
+		where: { songbookId, ...liveWhere() },
 		select: { code: true, currentSongIndex: true },
 	});
 	if (existing) {
@@ -116,14 +132,75 @@ export async function liveSessionSetCurrent({
 	});
 	if (!session) throw new HttpError(404, "Session not found.");
 
-	const role = await getMemberRole(userId, session.organizationId);
-	if (!role) throw new HttpError(403, "You don't control this session.");
+	// Moving the index moves every screen in the room, so it is a write too.
+	await requireWrite(userId, session.organizationId);
 
 	await prisma.liveSession.update({
 		where: { id: session.id },
 		data: { currentSongIndex },
 	});
 	return { ok: true as const };
+}
+
+/** Stop sharing: the code goes dead immediately, for everyone holding it. */
+export async function liveSessionEnd({
+	userId,
+	code,
+}: {
+	userId: string;
+	code: string;
+}) {
+	const session = await prisma.liveSession.findUnique({
+		where: { code: code.toUpperCase() },
+		select: { id: true, organizationId: true },
+	});
+	if (!session) throw new HttpError(404, "Session not found.");
+	await requireWrite(userId, session.organizationId);
+
+	await prisma.liveSession.update({
+		where: { id: session.id },
+		data: { active: false },
+	});
+	return { ok: true as const };
+}
+
+/**
+ * The cheap half of the public read: just where the band is now.
+ *
+ * The full read ships every song's complete ChordPro, and fans poll every few seconds —
+ * so at a hundred phones that was megabytes a second of the same unchanged text, on the
+ * same two cores serving the band's own Live mode. This carries only what actually
+ * changes; the songs are fetched once (§D27).
+ */
+export async function liveSessionNowRead({
+	code,
+	clientId,
+}: {
+	code: string;
+	clientId?: string;
+}) {
+	const normalized = code.toUpperCase();
+	const session = await prisma.liveSession.findFirst({
+		where: { code: normalized, ...liveWhere() },
+		select: {
+			currentSongIndex: true,
+			songbook: { select: { _count: { select: { songs: true } } } },
+		},
+	});
+	if (!session) {
+		throw new HttpError(404, "This session has ended or never existed.");
+	}
+	if (clientId) recordWatcher(normalized, clientId);
+
+	const songCount = session.songbook._count.songs;
+	return {
+		currentSongIndex: Math.min(
+			Math.max(session.currentSongIndex, 0),
+			Math.max(songCount - 1, 0),
+		),
+		songCount,
+		watching: countWatching(normalized),
+	};
 }
 
 /**
@@ -140,7 +217,7 @@ export async function liveSessionPublicRead({
 }) {
 	const normalized = code.toUpperCase();
 	const session = await prisma.liveSession.findFirst({
-		where: { code: normalized, active: true },
+		where: { code: normalized, ...liveWhere() },
 		include: {
 			songbook: {
 				include: {

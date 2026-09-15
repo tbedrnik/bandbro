@@ -19,6 +19,8 @@ import {
 } from "./services/lineups";
 import {
 	liveSessionCreate,
+	liveSessionEnd,
+	liveSessionNowRead,
 	liveSessionPublicRead,
 	liveSessionSetCurrent,
 } from "./services/liveSessions";
@@ -513,6 +515,23 @@ export const api = new Elysia({ prefix: "/api" })
 					}),
 				},
 			)
+			// The cheap poll: where the band is now, and nothing else. Fans hit this every
+			// few seconds; the songs come from "/:code" once (§D27).
+			.get(
+				"/:code/now",
+				({ params, query }) =>
+					liveSessionNowRead({ code: params.code, clientId: query.clientId }),
+				{
+					query: t.Object({
+						clientId: t.Optional(t.String({ maxLength: ID })),
+					}),
+					response: t.Object({
+						currentSongIndex: t.Integer(),
+						songCount: t.Integer(),
+						watching: t.Integer(),
+					}),
+				},
+			)
 			// Band creates (or reuses) the share session for a setlist.
 			.post(
 				"/",
@@ -536,6 +555,13 @@ export const api = new Elysia({ prefix: "/api" })
 					auth: true,
 					body: t.Object({ currentSongIndex: t.Integer({ minimum: 0 }) }),
 				},
+			)
+			// Stop sharing — the code goes dead for everyone holding it.
+			.post(
+				"/:code/end",
+				({ params, user }) =>
+					liveSessionEnd({ userId: user.id, code: params.code }),
+				{ auth: true },
 			),
 	)
 	.group("/bands", (group) =>

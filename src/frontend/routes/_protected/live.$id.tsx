@@ -43,6 +43,8 @@ import {
 } from "@frontend/lib/offline";
 import { useFanSession } from "@frontend/lib/useFanSession";
 import { useFitScale } from "@frontend/lib/useFitScale";
+import { useSongKeys, useSongSwipe } from "@frontend/lib/useSongNavigation";
+import { useWakeLock } from "@frontend/lib/useWakeLock";
 import { cn } from "@frontend/lib/utils";
 import { displayKey } from "@shared/notation";
 import type { ChordView } from "@shared/transpose";
@@ -61,7 +63,7 @@ import {
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export const Route = createFileRoute("/_protected/live/$id")({
 	// `?song=` opens the set at a given position — how the offline search jumps straight
@@ -107,6 +109,8 @@ function LiveMode() {
 	// that never had one there is still a downloaded setlist worth performing.
 	const user = useUser({ optional: true });
 	const { data: setlist, online } = useLiveSetlist(id);
+	// A chart is read, not touched, which is exactly what an OS calls idle (§D27).
+	useWakeLock();
 	const { song: openAt } = Route.useSearch();
 
 	const [index, setIndex] = useState(openAt ?? 0);
@@ -127,6 +131,24 @@ function LiveMode() {
 
 	const songs = setlist?.songs ?? [];
 	const entry = songs[index];
+
+	// Declared here, above the loading/empty guards, because these are hooks: `goTo`
+	// below is the same clamp, but it cannot be reached until the set has loaded.
+	const step = useCallback(
+		(delta: number) => {
+			setIndex((i) => Math.min(songs.length - 1, Math.max(0, i + delta)));
+			setPanel(null);
+		},
+		[songs.length],
+	);
+	const onPrev = useCallback(() => step(-1), [step]);
+	const onNext = useCallback(() => step(1), [step]);
+
+	// Arrows, page up/down and space change song — which is also every Bluetooth
+	// page-turner pedal on the market, since that is all a pedal sends (§D27). Disabled
+	// while the drawer is open, so Escape and arrows belong to the panel.
+	useSongKeys({ onPrev, onNext, enabled: panel === null });
+	const swipe = useSongSwipe({ onPrev, onNext });
 
 	// Once the band has opened "Share with fans", keep the live session's current-song
 	// index in sync so fans auto-follow the set. A failed sync is silent by design: the
@@ -288,6 +310,7 @@ function LiveMode() {
 			    used to absorb on a notched phone. */}
 			<div
 				ref={scrollRef}
+				{...swipe}
 				className="live-scroll min-h-0 flex-1 overflow-auto px-6 pb-4 pt-[calc(12px+env(safe-area-inset-top))]"
 			>
 				<SongSheet
@@ -524,6 +547,22 @@ function LiveMode() {
 									className="mt-1 inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 font-display text-[13px] font-semibold text-primary-foreground"
 								>
 									<IconShare3 className="size-4" /> Share with fans
+								</button>
+							)}
+
+							{/* A shared code used to stay live forever — last month's QR still
+							    opened the band's whole set. Ending it is the band's call, so it
+							    sits next to the share button that created it (§D27). */}
+							{online && fan.code && (
+								<button
+									type="button"
+									onClick={() => {
+										void fan.end();
+										setShareOpen(false);
+									}}
+									className="mt-1 inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-secondary px-4 font-display text-[13px] font-semibold"
+								>
+									Stop sharing
 								</button>
 							)}
 
