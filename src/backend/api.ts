@@ -46,7 +46,7 @@ import { songbooksList } from "./services/songbooksList";
 import { songbooksRead } from "./services/songbooksRead";
 import { songbooksUpdate } from "./services/songbooksUpdate";
 import { songsCreate } from "./services/songsCreate";
-import { songsDelete } from "./services/songsDelete";
+import { songsDelete, songsDeleteImpact } from "./services/songsDelete";
 import { songsFork } from "./services/songsFork";
 import { songsImport } from "./services/songsImport";
 import { songsList } from "./services/songsList";
@@ -244,12 +244,29 @@ export const api = new Elysia({ prefix: "/api" })
 					}),
 				},
 			)
+			// What deleting this song would take with it — read first, so the confirmation
+			// can name the number (§D27).
+			.get(
+				"/:slug/delete-impact",
+				({ params, user }) =>
+					songsDeleteImpact({ slug: params.slug, userId: user.id }),
+				{ auth: true, response: t.Object({ setlists: t.Integer() }) },
+			)
+			// Deleting a song strips it from every setlist that referenced it, so the count
+			// must be confirmed back (§D27).
 			.delete(
 				"/:slug",
-				({ params, user }) =>
-					songsDelete({ slug: params.slug, userId: user.id }),
+				({ params, user, query }) =>
+					songsDelete({
+						slug: params.slug,
+						userId: user.id,
+						confirmSetlists: query.confirmSetlists,
+					}),
 				{
 					auth: true,
+					query: t.Object({
+						confirmSetlists: t.Optional(t.Integer({ minimum: 0 })),
+					}),
 				},
 			)
 			.post(

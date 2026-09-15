@@ -31,6 +31,7 @@ const { forkChartInto } = await import("./forkChart");
 const { songsUpdate } = await import("./songsUpdate");
 const { suggestionsAccept, suggestionsCreate } = await import("./suggestions");
 const { bandMemberships } = await import("./bandMemberships");
+const { songsDelete, songsDeleteImpact } = await import("./songsDelete");
 const { requireWrite, requireMember, requireAdmin, readableScopeWhere } =
 	await import("./scope");
 const { lineupReadinessFor, proficiencySet } = await import("./proficiency");
@@ -871,5 +872,87 @@ describe("bandMemberships", () => {
 		const mine = await bandMemberships({ userId: ids.dave });
 		expect(mine.filter((b) => b.id === ids.banda)).toHaveLength(1);
 		expect(mine.find((b) => b.id === ids.banda)?.role).toBe("writer");
+	});
+});
+
+describe("songsDelete", () => {
+	test("refuses until the setlist impact is acknowledged, and says how many", async () => {
+		const song = await prisma.song.create({
+			data: {
+				name: "Doomed",
+				slug: "doomed",
+				organizationId: ids.banda,
+				charts: { create: { content: "[C]bye", organizationId: ids.banda } },
+			},
+			include: { charts: true },
+		});
+		const chartId = song.charts[0]!.id;
+		const set = await songbooksCreate({
+			userId: ids.tomas,
+			payload: {
+				title: "Holds the doomed song",
+				lineupId: defaultLineupId(ids.banda),
+				chartIds: [chartId],
+			},
+		});
+
+		expect(
+			await songsDeleteImpact({ slug: "doomed", userId: ids.tomas }),
+		).toEqual({
+			setlists: 1,
+		});
+
+		// Deleting a song cascades Song → Chart → SongbookSong, so it silently strips the
+		// song from every set that referenced it. An unconfirmed delete is refused.
+		await expect(
+			songsDelete({ slug: "doomed", userId: ids.tomas }),
+		).rejects.toThrow(/1 setlist/);
+		expect(await prisma.song.count({ where: { slug: "doomed" } })).toBe(1);
+
+		// A stale count is not an acknowledgement either.
+		await expect(
+			songsDelete({ slug: "doomed", userId: ids.tomas, confirmSetlists: 0 }),
+		).rejects.toThrow();
+
+		const result = await songsDelete({
+			slug: "doomed",
+			userId: ids.tomas,
+			confirmSetlists: 1,
+		});
+		expect(result.removedFromSetlists).toBe(1);
+		expect(await prisma.song.count({ where: { slug: "doomed" } })).toBe(0);
+		// The setlist survives; it is just shorter.
+		expect(
+			await prisma.songbookSong.count({ where: { songbookId: set.id } }),
+		).toBe(0);
+	});
+
+	test("a song in no setlist deletes without ceremony", async () => {
+		await prisma.song.create({
+			data: {
+				name: "Lonely",
+				slug: "lonely",
+				organizationId: ids.banda,
+				charts: { create: { content: "[C]x", organizationId: ids.banda } },
+			},
+		});
+		expect(
+			await songsDelete({ slug: "lonely", userId: ids.tomas }),
+		).toMatchObject({ deleted: true, removedFromSetlists: 0 });
+	});
+
+	test("a reader cannot delete", async () => {
+		await prisma.song.create({
+			data: {
+				name: "Safe",
+				slug: "safe",
+				organizationId: ids.banda,
+				charts: { create: { content: "[C]x", organizationId: ids.banda } },
+			},
+		});
+		await expect(
+			songsDelete({ slug: "safe", userId: "u_reader" }),
+		).rejects.toThrow();
+		expect(await prisma.song.count({ where: { slug: "safe" } })).toBe(1);
 	});
 });

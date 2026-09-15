@@ -86,6 +86,7 @@ function FanLiveView() {
 	const [theme, setTheme] = useState<FanTheme>("dark");
 	const [transpose, setTranspose] = useState(0);
 	const [open, setOpen] = useState(false);
+	const [shared, setShared] = useState(false);
 
 	// Auto-follow: flash a "Now playing" pill whenever the band advances the set.
 	const [flash, setFlash] = useState(false);
@@ -157,7 +158,22 @@ function FanLiveView() {
 	const displayedKey = song
 		? displayKey(transposeKey(song.key, transpose))
 		: "";
+	const upNext = data.songs[currentIndex + 1];
 	const palette = fanPalette(theme);
+
+	const onShare = async () => {
+		const url = window.location.href;
+		try {
+			// The native sheet where there is one (every phone in the room), clipboard
+			// everywhere else. Both can be refused, and neither is worth an error.
+			if (navigator.share) await navigator.share({ title: data.band, url });
+			else await navigator.clipboard?.writeText(url);
+			setShared(true);
+			setTimeout(() => setShared(false), 2000);
+		} catch {
+			// Dismissed the share sheet, or no clipboard permission.
+		}
+	};
 	const eyebrow = `${data.band} · ${data.title}`;
 
 	return (
@@ -238,6 +254,15 @@ function FanLiveView() {
 						<div className="truncate font-display text-[18px] font-bold leading-[1.1] tracking-[-0.01em]">
 							{song?.title}
 						</div>
+						{/* The artist is computed by the server and was never rendered — for
+						    a covers set it is exactly what a stranger wants to know. */}
+						{(song?.artist || upNext) && (
+							<div className="mt-[3px] truncate text-[11.5px] text-muted-foreground">
+								{song?.artist}
+								{song?.artist && upNext ? " · " : ""}
+								{upNext && <>up next: {upNext.title}</>}
+							</div>
+						)}
 					</div>
 					<IconChevronUp className="size-4 flex-none text-muted-foreground" />
 				</div>
@@ -359,20 +384,29 @@ function FanLiveView() {
 							</div>
 						</div>
 
+						{/* This used to be "Follow {band}" as static text beside a "Tip the
+						    band" button with no onClick — the two things the drawer promised
+						    a room full of strangers, neither of which did anything. A dead
+						    tip button in front of eighty people is worse than no tip button,
+						    so what's here now is the one thing that genuinely works from a
+						    phone with no account: passing the code to whoever is next to you.
+						    A real follow/tip link needs somewhere in the model to live first
+						    (§D27). */}
 						<div className="mt-[11px] flex items-center justify-between gap-2.5 border-t border-border pb-1 pt-[11px]">
 							<div className="min-w-0">
 								<div className="text-[11px] text-muted-foreground">
-									Enjoying the set?
+									{data.songCount} songs tonight · on {currentIndex + 1}
 								</div>
 								<div className="truncate font-display text-[13px] font-semibold">
-									Follow {data.band}
+									{data.band}
 								</div>
 							</div>
 							<button
 								type="button"
+								onClick={onShare}
 								className="flex h-[38px] flex-none items-center gap-1.5 rounded-[10px] bg-primary px-[15px] font-display text-[13px] font-semibold text-primary-foreground"
 							>
-								♥ Tip the band
+								{shared ? "Link copied" : "Share this"}
 							</button>
 						</div>
 					</div>

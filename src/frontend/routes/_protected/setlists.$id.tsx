@@ -20,6 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { api } from "@frontend/api";
+import { ConfirmDelete } from "@frontend/components/ConfirmDelete";
 import { ExportPdfButton } from "@frontend/components/ExportPdfButton";
 import { LineupPicker } from "@frontend/components/LineupPicker";
 import { MetaChip } from "@frontend/components/MetaChip";
@@ -59,6 +60,7 @@ import {
 	IconPlayerPlay,
 	IconPlus,
 	IconShare3,
+	IconTrash,
 	IconX,
 } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -106,6 +108,7 @@ function SetlistDetail() {
 	const [renameOpen, setRenameOpen] = useState(false);
 	const [cloneOpen, setCloneOpen] = useState(false);
 	const [cloneTarget, setCloneTarget] = useState<string | null>(null);
+	const [confirmDelete, setConfirmDelete] = useState(false);
 	// Order shown while a reorder is in flight, so a dragged row doesn't snap back to
 	// its old position for the length of the PUT + refetch. Cleared as soon as the
 	// server's own order changes (it caught up, or a song was added/removed).
@@ -126,6 +129,14 @@ function SetlistDetail() {
 	// success type — see api.ts), so the reason is written here from the status. Without
 	// this a refused change is completely silent: the dragged row just slides back.
 	const updateStatus = (update.error as { status?: number } | null)?.status;
+
+	const remove_ = useMutation({
+		...api.songbooks({ id }).delete.mutationOptions(),
+		onSuccess: () => {
+			queryClient.invalidateQueries(api.songbooks.get.queryFilter());
+			navigate({ to: "/setlists" });
+		},
+	});
 
 	const { data: lineups } = useLineups();
 	const { bands, personal } = useScopes();
@@ -388,11 +399,30 @@ function SetlistDetail() {
 								<DropdownMenuItem onClick={() => setCloneOpen(true)}>
 									<IconCopy className="size-4" /> Duplicate to…
 								</DropdownMenuItem>
+								{/* The endpoint has existed since setlists did; nothing ever
+								    called it, so a set could be made but never removed. */}
+								<DropdownMenuItem
+									onClick={() => setConfirmDelete(true)}
+									className="text-destructive"
+								>
+									<IconTrash className="size-4" /> Delete setlist
+								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
 					)}
 				</div>
 			</div>
+
+			<ConfirmDelete
+				open={confirmDelete}
+				onOpenChange={setConfirmDelete}
+				title="Delete this setlist?"
+				what={`“${setlist.title}” and its running order will be removed.`}
+				consequence="The songs themselves stay in the band's library."
+				confirmLabel="Delete setlist"
+				pending={remove_.isPending}
+				onConfirm={() => remove_.mutate({})}
+			/>
 
 			<NamePromptDialog
 				open={renameOpen}
