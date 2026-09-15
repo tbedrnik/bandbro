@@ -5,6 +5,7 @@ import { NamePromptDialog } from "@frontend/components/NamePromptDialog";
 import { Button } from "@frontend/components/ui/button";
 import { lineupLabel, useLineups } from "@frontend/lib/lineups";
 import { useOnline } from "@frontend/lib/offline";
+import { useBandRoles } from "@frontend/lib/roles";
 import { useScopes } from "@frontend/lib/scopes";
 import { cn } from "@frontend/lib/utils";
 import { IconPlaylist, IconPlus } from "@tabler/icons-react";
@@ -42,7 +43,12 @@ function SetlistsIndex() {
 	});
 	const { data: lineups } = useLineups();
 
-	const writableScopes = [...bands, ...(personal ? [personal] : [])];
+	const { canWriteIn } = useBandRoles();
+	// A Reader can browse a band's setlists but not make one, so the picker only offers
+	// bands they can actually write to (§G2).
+	const writableScopes = [...bands, ...(personal ? [personal] : [])].filter(
+		(s) => canWriteIn(s.id),
+	);
 	const bandName = (organizationId: string) =>
 		writableScopes.find((s) => s.id === organizationId)?.name ?? "Band";
 

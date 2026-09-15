@@ -18,6 +18,7 @@ import { Route as JoinIndexRouteImport } from './../../frontend/routes/join.inde
 import { Route as ProtectedIndexRouteImport } from './../../frontend/routes/_protected/index'
 import { Route as SCodeRouteImport } from './../../frontend/routes/s.$code'
 import { Route as JoinCodeRouteImport } from './../../frontend/routes/join.$code'
+import { Route as ProtectedSuggestionsRouteImport } from './../../frontend/routes/_protected/suggestions'
 import { Route as ProtectedSetlistsRouteImport } from './../../frontend/routes/_protected/setlists'
 import { Route as ProtectedPreferencesRouteImport } from './../../frontend/routes/_protected/preferences'
 import { Route as ProtectedLibraryRouteImport } from './../../frontend/routes/_protected/library'
@@ -73,6 +74,11 @@ const JoinCodeRoute = JoinCodeRouteImport.update({
   id: '/join/$code',
   path: '/join/$code',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProtectedSuggestionsRoute = ProtectedSuggestionsRouteImport.update({
+  id: '/suggestions',
+  path: '/suggestions',
+  getParentRoute: () => ProtectedLayoutRoute,
 } as any)
 const ProtectedSetlistsRoute = ProtectedSetlistsRouteImport.update({
   id: '/setlists',
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/library': typeof ProtectedLibraryRoute
   '/preferences': typeof ProtectedPreferencesRoute
   '/setlists': typeof ProtectedSetlistsRouteWithChildren
+  '/suggestions': typeof ProtectedSuggestionsRoute
   '/join/$code': typeof JoinCodeRoute
   '/s/$code': typeof SCodeRoute
   '/join/': typeof JoinIndexRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByTo {
   '/library': typeof ProtectedLibraryRoute
   '/preferences': typeof ProtectedPreferencesRoute
   '/setlists': typeof ProtectedSetlistsRouteWithChildren
+  '/suggestions': typeof ProtectedSuggestionsRoute
   '/join/$code': typeof JoinCodeRoute
   '/s/$code': typeof SCodeRoute
   '/join': typeof JoinIndexRoute
@@ -190,6 +198,7 @@ export interface FileRoutesById {
   '/_protected/library': typeof ProtectedLibraryRoute
   '/_protected/preferences': typeof ProtectedPreferencesRoute
   '/_protected/setlists': typeof ProtectedSetlistsRouteWithChildren
+  '/_protected/suggestions': typeof ProtectedSuggestionsRoute
   '/join/$code': typeof JoinCodeRoute
   '/s/$code': typeof SCodeRoute
   '/_protected/': typeof ProtectedIndexRoute
@@ -214,6 +223,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/preferences'
     | '/setlists'
+    | '/suggestions'
     | '/join/$code'
     | '/s/$code'
     | '/join/'
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/preferences'
     | '/setlists'
+    | '/suggestions'
     | '/join/$code'
     | '/s/$code'
     | '/join'
@@ -257,6 +268,7 @@ export interface FileRouteTypes {
     | '/_protected/library'
     | '/_protected/preferences'
     | '/_protected/setlists'
+    | '/_protected/suggestions'
     | '/join/$code'
     | '/s/$code'
     | '/_protected/'
@@ -345,6 +357,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/join/$code'
       preLoaderRoute: typeof JoinCodeRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_protected/suggestions': {
+      id: '/_protected/suggestions'
+      path: '/suggestions'
+      fullPath: '/suggestions'
+      preLoaderRoute: typeof ProtectedSuggestionsRouteImport
+      parentRoute: typeof ProtectedLayoutRoute
     }
     '/_protected/setlists': {
       id: '/_protected/setlists'
@@ -465,6 +484,7 @@ interface ProtectedLayoutRouteChildren {
   ProtectedLibraryRoute: typeof ProtectedLibraryRoute
   ProtectedPreferencesRoute: typeof ProtectedPreferencesRoute
   ProtectedSetlistsRoute: typeof ProtectedSetlistsRouteWithChildren
+  ProtectedSuggestionsRoute: typeof ProtectedSuggestionsRoute
   ProtectedIndexRoute: typeof ProtectedIndexRoute
   ProtectedLiveIdRoute: typeof ProtectedLiveIdRoute
   ProtectedSongsSlugRoute: typeof ProtectedSongsSlugRoute
@@ -477,6 +497,7 @@ const ProtectedLayoutRouteChildren: ProtectedLayoutRouteChildren = {
   ProtectedLibraryRoute: ProtectedLibraryRoute,
   ProtectedPreferencesRoute: ProtectedPreferencesRoute,
   ProtectedSetlistsRoute: ProtectedSetlistsRouteWithChildren,
+  ProtectedSuggestionsRoute: ProtectedSuggestionsRoute,
   ProtectedIndexRoute: ProtectedIndexRoute,
   ProtectedLiveIdRoute: ProtectedLiveIdRoute,
   ProtectedSongsSlugRoute: ProtectedSongsSlugRoute,

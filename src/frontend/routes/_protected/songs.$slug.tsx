@@ -14,6 +14,7 @@ import {
 } from "@frontend/components/ui/dropdown-menu";
 import { useUser } from "@frontend/contexts/UserContext";
 import { useOnline } from "@frontend/lib/offline";
+import { useBandRoles } from "@frontend/lib/roles";
 import { useScopes } from "@frontend/lib/scopes";
 import { displayKey } from "@shared/notation";
 import type { ChordView } from "@shared/transpose";
@@ -53,7 +54,10 @@ function SongViewPage() {
 
 	const chart = song?.charts[0];
 	const capo = chart?.capo ?? 0;
-	const writableScopes = [...bands, ...(personal ? [personal] : [])];
+	const { canWriteIn } = useBandRoles();
+	const writableScopes = [...bands, ...(personal ? [personal] : [])].filter(
+		(s) => canWriteIn(s.id),
+	);
 
 	const fork = useMutation({
 		...api.songs({ slug }).fork.post.mutationOptions(),

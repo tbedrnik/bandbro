@@ -29,6 +29,8 @@ const { defaultLineupId, ensureDefaultLineup, lineupsCreate, lineupsDelete } =
 	await import("./lineups");
 const { forkChartInto } = await import("./forkChart");
 const { songsUpdate } = await import("./songsUpdate");
+const { suggestionsAccept, suggestionsCreate } = await import("./suggestions");
+const { bandMemberships } = await import("./bandMemberships");
 const { requireWrite, requireMember, requireAdmin, readableScopeWhere } =
 	await import("./scope");
 const { lineupReadinessFor, proficiencySet } = await import("./proficiency");
@@ -803,5 +805,71 @@ describe("songsUpdate chart ownership", () => {
 			include: { artist: true },
 		});
 		expect(credits.map((c) => c.artist.name)).toEqual(["Bob Dylan"]);
+	});
+});
+
+describe("suggestionsAccept", () => {
+	test("re-derives the denormalized metadata, rather than corrupting it", async () => {
+		const song = await prisma.song.create({
+			data: {
+				name: "Suggested",
+				slug: "suggested",
+				organizationId: ids.banda,
+				charts: {
+					create: {
+						content: "{key: C}\n[C]as written",
+						key: "C",
+						organizationId: ids.banda,
+					},
+				},
+			},
+			include: { charts: true },
+		});
+		const chartId = song.charts[0]!.id;
+
+		// A reader proposes a change of key.
+		const suggestion = await suggestionsCreate({
+			userId: "u_reader",
+			payload: {
+				chartId,
+				proposedContent: "{key: D}\n{capo: 2}\n{tempo: 96}\n[D]as suggested",
+			},
+		});
+
+		await suggestionsAccept({ userId: ids.tomas, id: suggestion.id });
+
+		const after = await prisma.chart.findUniqueOrThrow({
+			where: { id: chartId },
+		});
+		expect(after.content).toContain("as suggested");
+		// Writing only `content` left these stale: the chart rendered in D while the
+		// Library chip, the fan view's transposition base and the PDF header all said C.
+		expect(after.key).toBe("D");
+		expect(after.capo).toBe(2);
+		expect(after.tempo).toBe(96);
+	});
+});
+
+describe("bandMemberships", () => {
+	test("reports the role actually held, per band", async () => {
+		const mine = await bandMemberships({ userId: ids.dave });
+		expect(mine.find((b) => b.id === ids.banda)?.role).toBe("writer");
+		expect(mine.find((b) => b.id === ids.other)).toBeUndefined();
+	});
+
+	test("a duplicated member row keeps the strongest role, not the last one", async () => {
+		// `member` has no unique on (organizationId, userId), so this is reachable.
+		await prisma.member.create({
+			data: {
+				id: "m_dupe_dave",
+				organizationId: ids.banda,
+				userId: ids.dave,
+				role: "reader",
+				createdAt: new Date(),
+			},
+		});
+		const mine = await bandMemberships({ userId: ids.dave });
+		expect(mine.filter((b) => b.id === ids.banda)).toHaveLength(1);
+		expect(mine.find((b) => b.id === ids.banda)?.role).toBe("writer");
 	});
 });

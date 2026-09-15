@@ -11,6 +11,7 @@ import {
 	bandInvitesCreate,
 	bandInvitesList,
 } from "./services/bandInvites";
+import { bandMemberships } from "./services/bandMemberships";
 import {
 	lineupsCreate,
 	lineupsDelete,
@@ -55,6 +56,7 @@ import {
 	suggestionsAccept,
 	suggestionsCreate,
 	suggestionsList,
+	suggestionsPendingCount,
 	suggestionsReject,
 } from "./services/suggestions";
 
@@ -566,6 +568,17 @@ export const api = new Elysia({ prefix: "/api" })
 	)
 	.group("/bands", (group) =>
 		group
+			// The caller's own role in each band. better-auth's org list doesn't carry it.
+			.get("/memberships", ({ user }) => bandMemberships({ userId: user.id }), {
+				auth: true,
+				response: t.Array(
+					t.Object({
+						id: t.String(),
+						name: t.String(),
+						role: t.String(),
+					}),
+				),
+			})
 			// Public, no-auth preview of an invite code — the join page names the band and
 			// the role on offer before it asks anyone to sign in (CLAUDE.md §D13).
 			.get("/join/:code", ({ params }) =>
@@ -637,6 +650,13 @@ export const api = new Elysia({ prefix: "/api" })
 	)
 	.group("/suggestions", (group) =>
 		group
+			// How many are waiting, across every band the caller can write to — the badge
+			// that makes the feature discoverable at all.
+			.get(
+				"/pending-count",
+				({ user }) => suggestionsPendingCount({ userId: user.id }),
+				{ auth: true, response: t.Object({ count: t.Integer() }) },
+			)
 			.post(
 				"/",
 				({ user, body }) =>

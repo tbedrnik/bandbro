@@ -17,6 +17,7 @@ const SECTIONS: Record<string, string> = {
 	"/setlists": "Setlists",
 	"/bands": "Bands",
 	"/preferences": "Preferences",
+	"/suggestions": "Suggestions",
 	"/songs": "Library",
 };
 

@@ -12,6 +12,7 @@ import {
 import { Input } from "@frontend/components/ui/input";
 import { mutationErrorMessage } from "@frontend/lib/mutationError";
 import { useOnline } from "@frontend/lib/offline";
+import { useBandRoles } from "@frontend/lib/roles";
 import {
 	type Scope,
 	useRememberedScope,
@@ -52,7 +53,11 @@ function LibraryPage() {
 		retry: online ? 3 : false,
 	});
 
-	const writableScopes = [...bands, ...(personal ? [personal] : [])];
+	const { canWriteIn } = useBandRoles();
+	// "Writable" now means it, rather than "every band you're in" (§G2).
+	const writableScopes = [...bands, ...(personal ? [personal] : [])].filter(
+		(s) => canWriteIn(s.id),
+	);
 
 	// "What can't I play yet?" is the question one shared library can answer and three
 	// separate ones can't (§D26) — a bandmate can find the gaps and go learn them
@@ -72,7 +77,9 @@ function LibraryPage() {
 				{/* Both write to the server; ImportSongButton hides itself offline (§D7). */}
 				<div className="flex gap-2">
 					<ImportSongButton />
-					{online && (
+					{/* Nowhere to save a new song is the same as not being able to make
+					    one, so the button goes rather than leading to a dead editor (§G2). */}
+					{online && writableScopes.length > 0 && (
 						<Button render={<Link to="/songs/new" />}>
 							<IconPlus className="size-4" /> New song
 						</Button>
@@ -237,7 +244,7 @@ function LibraryPage() {
 										Open
 									</Button>
 									{/* Forking copies the song server-side. */}
-									{online && (
+									{online && writableScopes.length > 0 && (
 										<ForkButton
 											slug={song.slug}
 											writableScopes={writableScopes}

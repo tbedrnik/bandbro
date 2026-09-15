@@ -44,6 +44,7 @@ import {
 	useOfflineSync,
 	useOnline,
 } from "@frontend/lib/offline";
+import { useBandRoles } from "@frontend/lib/roles";
 import { useScopes } from "@frontend/lib/scopes";
 import { useFanSession } from "@frontend/lib/useFanSession";
 import { cn } from "@frontend/lib/utils";
@@ -128,6 +129,7 @@ function SetlistDetail() {
 
 	const { data: lineups } = useLineups();
 	const { bands, personal } = useScopes();
+	const { canWriteIn } = useBandRoles();
 	const clone = useMutation({
 		...api.songbooks({ id }).clone.post.mutationOptions(),
 		onSuccess: (created) => {
@@ -224,9 +226,16 @@ function SetlistDetail() {
 		);
 	}
 
+	// A Reader may open, read, transpose, download and perform a set — but not change it.
+	// Before this they got the drag handles, the ✕ and the add box, and the server refused
+	// each one (§G2).
+	const editable = online && canWriteIn(setlist.organizationId);
+
 	// Every lineup this set could be duplicated onto, each carrying its band's name for
 	// the picker's "Banda · Duo Tomi Kohy" label.
-	const writableScopes = [...bands, ...(personal ? [personal] : [])];
+	const writableScopes = [...bands, ...(personal ? [personal] : [])].filter(
+		(s) => canWriteIn(s.id),
+	);
 	const cloneOptions = (lineups ?? []).flatMap((lineup) => {
 		const band = writableScopes.find((s) => s.id === lineup.organizationId);
 		return band ? [{ ...lineup, bandName: band.name }] : [];
@@ -269,7 +278,7 @@ function SetlistDetail() {
 	};
 
 	const rows = ordered.map((entry, i) =>
-		online ? (
+		editable ? (
 			<SortableSongRow
 				key={entry.chartId}
 				entry={entry}
@@ -361,8 +370,9 @@ function SetlistDetail() {
 					>
 						<IconPlayerPlay className="size-4" /> Live mode
 					</Button>
-					{/* Renaming and cloning are both writes — nothing to offer offline (§D7). */}
-					{online && (
+					{/* Renaming and cloning are both writes — nothing to offer offline (§D7),
+					    and nothing to offer a Reader (§G2). */}
+					{editable && (
 						<DropdownMenu>
 							<DropdownMenuTrigger
 								render={
@@ -479,11 +489,13 @@ function SetlistDetail() {
 			{/* Songs — online, drag the handle on the left to reorder the set. */}
 			{ordered.length === 0 ? (
 				<div className="mt-6 rounded-xl border border-border px-4 py-10 text-center text-muted-foreground">
-					{online
+					{editable
 						? "No songs yet — add some below."
-						: "This downloaded set has no songs."}
+						: online
+							? "No songs in this set yet."
+							: "This downloaded set has no songs."}
 				</div>
-			) : online ? (
+			) : editable ? (
 				<DndContext
 					sensors={sensors}
 					collisionDetection={closestCenter}
@@ -501,8 +513,9 @@ function SetlistDetail() {
 				<div className="mt-6 rounded-xl border border-border">{rows}</div>
 			)}
 
-			{/* Add songs — a search over the server's libraries plus a PUT, so online only. */}
-			{online ? (
+			{/* Add songs — a search over the server's libraries plus a PUT, so online only,
+			    and writers only (§G2). */}
+			{editable ? (
 				<div className="mt-4">
 					{!adding ? (
 						<Button
@@ -563,8 +576,9 @@ function SetlistDetail() {
 				</div>
 			) : (
 				<p className="mt-4 text-sm text-muted-foreground">
-					You're offline — editing this set needs a connection. Use ▶ to open
-					the set in Live mode at that song.
+					{online
+						? "You have read access to this band, so this set is yours to open, transpose and perform — but not to change."
+						: "You're offline — editing this set needs a connection. Use ▶ to open the set in Live mode at that song."}
 				</p>
 			)}
 		</div>

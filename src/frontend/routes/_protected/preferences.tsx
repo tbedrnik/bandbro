@@ -1,16 +1,17 @@
+import { api } from "@frontend/api";
 import { auth } from "@frontend/auth";
 import { CapoToggle } from "@frontend/components/CapoToggle";
-import { RoleBadge } from "@frontend/components/RoleBadge";
+import { RoleBadge, roleLabel } from "@frontend/components/RoleBadge";
 import { UserAvatar } from "@frontend/components/UserAvatar";
 import { Button } from "@frontend/components/ui/button";
 import { useUser } from "@frontend/contexts/UserContext";
 import { useOnline } from "@frontend/lib/offline";
 import { usePushNotifications } from "@frontend/lib/push";
-import { useScopes } from "@frontend/lib/scopes";
 import { useTheme } from "@frontend/lib/theme";
 import { cn } from "@frontend/lib/utils";
 import type { ChordView } from "@shared/transpose";
-import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_protected/preferences")({
@@ -20,18 +21,32 @@ export const Route = createFileRoute("/_protected/preferences")({
 function PreferencesPage() {
 	const user = useUser();
 	const { theme, setTheme } = useTheme();
-	const { bands, personal } = useScopes();
 	const online = useOnline();
+	const memberships = useQuery({
+		...api.bands.memberships.get.queryOptions({}),
+		retry: online ? 3 : false,
+	});
 	const [view, setView] = useState<ChordView>(
 		(user.defaultChordView as ChordView) ?? "fingered",
 	);
 	const [saved, setSaved] = useState(false);
-
+	const [saveError, setSaveError] = useState(false);
 	const onChangeView = async (next: ChordView) => {
+		const previous = view;
 		setView(next);
-		await auth.updateUser({ defaultChordView: next });
-		setSaved(true);
-		setTimeout(() => setSaved(false), 1500);
+		setSaveError(false);
+		try {
+			// better-auth resolves with `{error}` rather than throwing for a rejected
+			// write, so both have to be handled — otherwise the toggle stayed flipped and
+			// said "Saved" for a change that never landed, then reverted on next load.
+			const res = await auth.updateUser({ defaultChordView: next });
+			if (res?.error) throw new Error(res.error.message ?? "failed");
+			setSaved(true);
+			setTimeout(() => setSaved(false), 1500);
+		} catch {
+			setView(previous);
+			setSaveError(true);
+		}
 	};
 
 	return (
@@ -66,7 +81,14 @@ function PreferencesPage() {
 					<div className="mt-4 flex items-center gap-4">
 						<CapoToggle value={view} onValueChange={onChangeView} />
 						{saved && (
-							<span className="font-mono text-xs text-ok">✓ saved</span>
+							<span role="status" className="font-mono text-xs text-ok">
+								✓ saved
+							</span>
+						)}
+						{saveError && (
+							<span role="alert" className="text-xs text-destructive">
+								Couldn't save — the setting was put back.
+							</span>
 						)}
 					</div>
 				) : (
@@ -117,17 +139,28 @@ function PreferencesPage() {
 			<section className="mt-6 rounded-xl border border-border bg-card p-6">
 				<h2 className="font-display text-lg font-semibold">Band memberships</h2>
 				<div className="mt-4 flex flex-col gap-2">
-					{[...bands, ...(personal ? [personal] : [])].map((scope) => (
-						<div
-							key={scope.param}
-							className="flex items-center justify-between rounded-lg border border-border px-4 py-2.5"
+					{memberships.isPending && (
+						<p className="text-sm text-muted-foreground">Loading…</p>
+					)}
+					{memberships.data?.map((band) => (
+						<Link
+							key={band.id}
+							to="/bands"
+							className="flex items-center justify-between rounded-lg border border-border px-4 py-2.5 transition-colors hover:border-primary"
 						>
 							<span className="font-display text-sm font-medium">
-								{scope.name}
+								{band.name}
 							</span>
-							<RoleBadge role="Admin" />
-						</div>
+							{/* The real role. This was hardcoded to "Admin" for every band,
+							    which told a Reader they could manage the band (§D27). */}
+							<RoleBadge role={roleLabel(band.role)} />
+						</Link>
 					))}
+					{memberships.data?.length === 0 && (
+						<p className="text-sm text-muted-foreground">
+							You're not in any band yet.
+						</p>
+					)}
 				</div>
 			</section>
 		</div>
